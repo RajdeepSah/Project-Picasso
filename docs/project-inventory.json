@@ -1,0 +1,3620 @@
+{
+  "schema_version": 1,
+  "scope": [
+    "Drawbot_C",
+    "SdCard",
+    "WallDrawingMachine.ino"
+  ],
+  "summary": {
+    "files": 543,
+    "bytes": 702555707,
+    "root_sketch_bytes": 0,
+    "trees": {
+      "Drawbot_C": {
+        "files": 275,
+        "bytes": 654019252,
+        "extensions": {
+          ".adoc": 2,
+          ".c": 99,
+          ".cpp": 15,
+          ".exe": 6,
+          ".h": 21,
+          ".ino": 67,
+          ".inx": 1,
+          ".jpg": 10,
+          ".md": 3,
+          ".nc": 10,
+          ".pdf": 6,
+          ".properties": 4,
+          ".py": 5,
+          ".pyc": 4,
+          ".rar": 1,
+          ".stl": 1,
+          ".svg": 9,
+          ".txt": 7,
+          ".yml": 1,
+          ".zip": 1,
+          "[none]": 2
+        }
+      },
+      "SdCard": {
+        "files": 267,
+        "bytes": 48536455,
+        "extensions": {
+          ".adoc": 2,
+          ".c": 99,
+          ".cpp": 15,
+          ".dat": 1,
+          ".exe": 3,
+          ".gcode": 1,
+          ".h": 21,
+          ".ino": 67,
+          ".jpg": 10,
+          ".md": 3,
+          ".nc": 14,
+          ".pdf": 3,
+          ".properties": 4,
+          ".stl": 1,
+          ".svg": 9,
+          ".txt": 10,
+          ".yml": 1,
+          "[none]": 3
+        }
+      }
+    },
+    "shared_relative_paths": 257,
+    "identical_shared_files": 256,
+    "changed_shared_paths": [
+      "02 arduino code/Walldraw/Walldraw.ino"
+    ],
+    "only_in_Drawbot_C": [
+      "03 Tools/1、G code generation tool/Instructions for use.pdf",
+      "03 Tools/1、G code generation tool/Youzhihui NC/unicorn.inx",
+      "03 Tools/1、G code generation tool/Youzhihui NC/unicorn.py",
+      "03 Tools/1、G code generation tool/Youzhihui NC/unicorn/__init__.py",
+      "03 Tools/1、G code generation tool/Youzhihui NC/unicorn/__pycache__/__init__.cpython-38.pyc",
+      "03 Tools/1、G code generation tool/Youzhihui NC/unicorn/__pycache__/context.cpython-38.pyc",
+      "03 Tools/1、G code generation tool/Youzhihui NC/unicorn/__pycache__/entities.cpython-38.pyc",
+      "03 Tools/1、G code generation tool/Youzhihui NC/unicorn/__pycache__/svg_parser.cpython-38.pyc",
+      "03 Tools/1、G code generation tool/Youzhihui NC/unicorn/context.py",
+      "03 Tools/1、G code generation tool/Youzhihui NC/unicorn/entities.py",
+      "03 Tools/1、G code generation tool/Youzhihui NC/unicorn/svg_parser.py",
+      "03 Tools/1、G code generation tool/inkscape-1.0-x64.exe",
+      "03 Tools/1、G code generation tool/inkscape-1.0-x86.exe",
+      "03 Tools/2、G code viewing tool/CIMCOEdit.exe",
+      "03 Tools/2、G code viewing tool/Instructions for use.pdf",
+      "03 Tools/4、Art photo G Code processing tool/Drawbot_image_to_gcode_v2.rar",
+      "03 Tools/4、Art photo G Code processing tool/Instructions for use.pdf",
+      "03 Tools/4、Art photo G Code processing tool/processing-3.5.4.zip"
+    ],
+    "only_in_SdCard": [
+      "01 Test GCode/Washburn logo/Washburn logo.txt",
+      "01 Test GCode/cat.nc",
+      "01 Test GCode/circle.nc",
+      "01 Test GCode/mandala_11x14.gcode",
+      "01 Test GCode/skeleton.nc",
+      "03 Tools/1、2、4 G code tool.txt",
+      "All information links.txt",
+      "System Volume Information/IndexerVolumeGuid",
+      "System Volume Information/WPSettings.dat",
+      "main.nc"
+    ],
+    "gcode_files_including_logo_txt": 26
+  },
+  "symlinks_skipped": [],
+  "firmware": {
+    "Drawbot_C/02 arduino code/Walldraw/Walldraw.ino": {
+      "line_count": 725,
+      "defines": {
+        "STEPS_PER_TURN": "(2048)",
+        "SPOOL_DIAMETER": "(35)",
+        "X_SEPARATION": "350",
+        "LIMYMAX": "(-250)",
+        "LIMYMIN": "(250)",
+        "PEN_UP_ANGLE": "85",
+        "PEN_DOWN_ANGLE": "70",
+        "BAUD": "(115200)",
+        "MAX_BUF": "(64)",
+        "TPD": "300",
+        "step_delay": "1",
+        "M1_REEL_OUT": "-1",
+        "M1_REEL_IN": "1",
+        "M2_REEL_OUT": "1",
+        "M2_REEL_IN": "-1"
+      }
+    },
+    "SdCard/02 arduino code/Walldraw/Walldraw.ino": {
+      "line_count": 721,
+      "defines": {
+        "STEPS_PER_TURN": "(2048)",
+        "SPOOL_DIAMETER": "(35)",
+        "X_SEPARATION": "400",
+        "LIMYMAX": "(-250)",
+        "LIMYMIN": "(250)",
+        "PEN_UP_ANGLE": "85",
+        "PEN_DOWN_ANGLE": "70",
+        "BAUD": "(115200)",
+        "MAX_BUF": "(64)",
+        "TPD": "300",
+        "step_delay": "1",
+        "M1_REEL_OUT": "-1",
+        "M1_REEL_IN": "1",
+        "M2_REEL_OUT": "1",
+        "M2_REEL_IN": "-1"
+      }
+    }
+  },
+  "gcode": {
+    "Drawbot_C/01 Test GCode/Bikini/main.nc": {
+      "line_count": 1418,
+      "ends_with_lf": true,
+      "max_line_bytes_excluding_terminator": 37,
+      "commands": {
+        "G0": 91,
+        "G1": 1234
+      },
+      "lexical_flags": {
+        "lines_with_both_xy_axes": 1236,
+        "lines_with_comments": 135,
+        "standalone_z_lines": 89
+      },
+      "explicit_coordinate_bounds_mm_assumed": {
+        "X": {
+          "min": -71.9,
+          "max": 82.78
+        },
+        "Y": {
+          "min": -71.47,
+          "max": 70.29
+        },
+        "Z": {
+          "min": 0.0,
+          "max": 20.0
+        }
+      },
+      "interpretation": "Explicit numeric words only; units, offsets, arcs and modal state are not resolved. Not a compatibility or safety certificate."
+    },
+    "Drawbot_C/01 Test GCode/Crab/main.nc": {
+      "line_count": 1788,
+      "ends_with_lf": true,
+      "max_line_bytes_excluding_terminator": 37,
+      "commands": {
+        "G0": 103,
+        "G1": 1580
+      },
+      "lexical_flags": {
+        "lines_with_both_xy_axes": 1582,
+        "lines_with_comments": 153,
+        "standalone_z_lines": 101
+      },
+      "explicit_coordinate_bounds_mm_assumed": {
+        "X": {
+          "min": -53.41,
+          "max": 54.3
+        },
+        "Y": {
+          "min": -46.15,
+          "max": 28.81
+        },
+        "Z": {
+          "min": 0.0,
+          "max": 20.0
+        }
+      },
+      "interpretation": "Explicit numeric words only; units, offsets, arcs and modal state are not resolved. Not a compatibility or safety certificate."
+    },
+    "Drawbot_C/01 Test GCode/Girl/main.nc": {
+      "line_count": 1783,
+      "ends_with_lf": true,
+      "max_line_bytes_excluding_terminator": 37,
+      "commands": {
+        "G0": 129,
+        "G1": 1523
+      },
+      "lexical_flags": {
+        "lines_with_both_xy_axes": 1525,
+        "lines_with_comments": 192,
+        "standalone_z_lines": 127
+      },
+      "explicit_coordinate_bounds_mm_assumed": {
+        "X": {
+          "min": -83.32,
+          "max": 87.42
+        },
+        "Y": {
+          "min": -58.69,
+          "max": 72.72
+        },
+        "Z": {
+          "min": 0.0,
+          "max": 20.0
+        }
+      },
+      "interpretation": "Explicit numeric words only; units, offsets, arcs and modal state are not resolved. Not a compatibility or safety certificate."
+    },
+    "Drawbot_C/01 Test GCode/Girl1/main.nc": {
+      "line_count": 1664,
+      "ends_with_lf": true,
+      "max_line_bytes_excluding_terminator": 38,
+      "commands": {
+        "G0": 301,
+        "G1": 1060
+      },
+      "lexical_flags": {
+        "lines_with_both_xy_axes": 1062,
+        "lines_with_comments": 450,
+        "standalone_z_lines": 299
+      },
+      "explicit_coordinate_bounds_mm_assumed": {
+        "X": {
+          "min": -87.51,
+          "max": 84.2
+        },
+        "Y": {
+          "min": -105.2,
+          "max": 102.55
+        },
+        "Z": {
+          "min": 0.0,
+          "max": 20.0
+        }
+      },
+      "interpretation": "Explicit numeric words only; units, offsets, arcs and modal state are not resolved. Not a compatibility or safety certificate."
+    },
+    "Drawbot_C/01 Test GCode/Hamburger/main.nc": {
+      "line_count": 282,
+      "ends_with_lf": true,
+      "max_line_bytes_excluding_terminator": 37,
+      "commands": {
+        "G0": 35,
+        "G1": 210
+      },
+      "lexical_flags": {
+        "lines_with_both_xy_axes": 212,
+        "lines_with_comments": 51,
+        "standalone_z_lines": 33
+      },
+      "explicit_coordinate_bounds_mm_assumed": {
+        "X": {
+          "min": -39.33,
+          "max": 32.89
+        },
+        "Y": {
+          "min": -13.88,
+          "max": 38.83
+        },
+        "Z": {
+          "min": 0.0,
+          "max": 20.0
+        }
+      },
+      "interpretation": "Explicit numeric words only; units, offsets, arcs and modal state are not resolved. Not a compatibility or safety certificate."
+    },
+    "Drawbot_C/01 Test GCode/TOM/main.nc": {
+      "line_count": 3070,
+      "ends_with_lf": true,
+      "max_line_bytes_excluding_terminator": 38,
+      "commands": {
+        "G0": 255,
+        "G1": 2559
+      },
+      "lexical_flags": {
+        "lines_with_both_xy_axes": 2561,
+        "lines_with_comments": 380,
+        "standalone_z_lines": 253
+      },
+      "explicit_coordinate_bounds_mm_assumed": {
+        "X": {
+          "min": -95.95,
+          "max": 95.59
+        },
+        "Y": {
+          "min": -114.89,
+          "max": 114.78
+        },
+        "Z": {
+          "min": 0.0,
+          "max": 20.0
+        }
+      },
+      "interpretation": "Explicit numeric words only; units, offsets, arcs and modal state are not resolved. Not a compatibility or safety certificate."
+    },
+    "Drawbot_C/01 Test GCode/airliner/main.nc": {
+      "line_count": 501,
+      "ends_with_lf": true,
+      "max_line_bytes_excluding_terminator": 37,
+      "commands": {
+        "G0": 57,
+        "G1": 385
+      },
+      "lexical_flags": {
+        "lines_with_both_xy_axes": 387,
+        "lines_with_comments": 84,
+        "standalone_z_lines": 55
+      },
+      "explicit_coordinate_bounds_mm_assumed": {
+        "X": {
+          "min": -85.09,
+          "max": 86.05
+        },
+        "Y": {
+          "min": -61.65,
+          "max": 47.75
+        },
+        "Z": {
+          "min": 0.0,
+          "max": 20.0
+        }
+      },
+      "interpretation": "Explicit numeric words only; units, offsets, arcs and modal state are not resolved. Not a compatibility or safety certificate."
+    },
+    "Drawbot_C/01 Test GCode/banana/main.nc": {
+      "line_count": 2677,
+      "ends_with_lf": true,
+      "max_line_bytes_excluding_terminator": 33,
+      "commands": {
+        "G0": 41,
+        "G1": 2635
+      },
+      "lexical_flags": {
+        "lines_with_both_xy_axes": 2637,
+        "lines_with_comments": 39,
+        "standalone_z_lines": 39
+      },
+      "explicit_coordinate_bounds_mm_assumed": {
+        "X": {
+          "min": -59.88,
+          "max": 60.0
+        },
+        "Y": {
+          "min": -60.59,
+          "max": 60.59
+        },
+        "Z": {
+          "min": 0.0,
+          "max": 20.0
+        }
+      },
+      "interpretation": "Explicit numeric words only; units, offsets, arcs and modal state are not resolved. Not a compatibility or safety certificate."
+    },
+    "Drawbot_C/01 Test GCode/receding figure/main.nc": {
+      "line_count": 1097,
+      "ends_with_lf": true,
+      "max_line_bytes_excluding_terminator": 38,
+      "commands": {
+        "G0": 263,
+        "G1": 569
+      },
+      "lexical_flags": {
+        "lines_with_both_xy_axes": 571,
+        "lines_with_comments": 393,
+        "standalone_z_lines": 261
+      },
+      "explicit_coordinate_bounds_mm_assumed": {
+        "X": {
+          "min": -76.11,
+          "max": 81.58
+        },
+        "Y": {
+          "min": -44.93,
+          "max": 50.54
+        },
+        "Z": {
+          "min": 0.0,
+          "max": 20.0
+        }
+      },
+      "interpretation": "Explicit numeric words only; units, offsets, arcs and modal state are not resolved. Not a compatibility or safety certificate."
+    },
+    "Drawbot_C/01 Test GCode/receding figure1/main.nc": {
+      "line_count": 3959,
+      "ends_with_lf": true,
+      "max_line_bytes_excluding_terminator": 38,
+      "commands": {
+        "G0": 1065,
+        "G1": 1827
+      },
+      "lexical_flags": {
+        "lines_with_both_xy_axes": 1829,
+        "lines_with_comments": 1596,
+        "standalone_z_lines": 1063
+      },
+      "explicit_coordinate_bounds_mm_assumed": {
+        "X": {
+          "min": -94.16,
+          "max": 85.07
+        },
+        "Y": {
+          "min": -110.43,
+          "max": 25.54
+        },
+        "Z": {
+          "min": 0.0,
+          "max": 20.0
+        }
+      },
+      "interpretation": "Explicit numeric words only; units, offsets, arcs and modal state are not resolved. Not a compatibility or safety certificate."
+    },
+    "SdCard/01 Test GCode/Bikini/main.nc": {
+      "line_count": 1418,
+      "ends_with_lf": true,
+      "max_line_bytes_excluding_terminator": 37,
+      "commands": {
+        "G0": 91,
+        "G1": 1234
+      },
+      "lexical_flags": {
+        "lines_with_both_xy_axes": 1236,
+        "lines_with_comments": 135,
+        "standalone_z_lines": 89
+      },
+      "explicit_coordinate_bounds_mm_assumed": {
+        "X": {
+          "min": -71.9,
+          "max": 82.78
+        },
+        "Y": {
+          "min": -71.47,
+          "max": 70.29
+        },
+        "Z": {
+          "min": 0.0,
+          "max": 20.0
+        }
+      },
+      "interpretation": "Explicit numeric words only; units, offsets, arcs and modal state are not resolved. Not a compatibility or safety certificate."
+    },
+    "SdCard/01 Test GCode/Crab/main.nc": {
+      "line_count": 1788,
+      "ends_with_lf": true,
+      "max_line_bytes_excluding_terminator": 37,
+      "commands": {
+        "G0": 103,
+        "G1": 1580
+      },
+      "lexical_flags": {
+        "lines_with_both_xy_axes": 1582,
+        "lines_with_comments": 153,
+        "standalone_z_lines": 101
+      },
+      "explicit_coordinate_bounds_mm_assumed": {
+        "X": {
+          "min": -53.41,
+          "max": 54.3
+        },
+        "Y": {
+          "min": -46.15,
+          "max": 28.81
+        },
+        "Z": {
+          "min": 0.0,
+          "max": 20.0
+        }
+      },
+      "interpretation": "Explicit numeric words only; units, offsets, arcs and modal state are not resolved. Not a compatibility or safety certificate."
+    },
+    "SdCard/01 Test GCode/Girl/main.nc": {
+      "line_count": 1783,
+      "ends_with_lf": true,
+      "max_line_bytes_excluding_terminator": 37,
+      "commands": {
+        "G0": 129,
+        "G1": 1523
+      },
+      "lexical_flags": {
+        "lines_with_both_xy_axes": 1525,
+        "lines_with_comments": 192,
+        "standalone_z_lines": 127
+      },
+      "explicit_coordinate_bounds_mm_assumed": {
+        "X": {
+          "min": -83.32,
+          "max": 87.42
+        },
+        "Y": {
+          "min": -58.69,
+          "max": 72.72
+        },
+        "Z": {
+          "min": 0.0,
+          "max": 20.0
+        }
+      },
+      "interpretation": "Explicit numeric words only; units, offsets, arcs and modal state are not resolved. Not a compatibility or safety certificate."
+    },
+    "SdCard/01 Test GCode/Girl1/main.nc": {
+      "line_count": 1664,
+      "ends_with_lf": true,
+      "max_line_bytes_excluding_terminator": 38,
+      "commands": {
+        "G0": 301,
+        "G1": 1060
+      },
+      "lexical_flags": {
+        "lines_with_both_xy_axes": 1062,
+        "lines_with_comments": 450,
+        "standalone_z_lines": 299
+      },
+      "explicit_coordinate_bounds_mm_assumed": {
+        "X": {
+          "min": -87.51,
+          "max": 84.2
+        },
+        "Y": {
+          "min": -105.2,
+          "max": 102.55
+        },
+        "Z": {
+          "min": 0.0,
+          "max": 20.0
+        }
+      },
+      "interpretation": "Explicit numeric words only; units, offsets, arcs and modal state are not resolved. Not a compatibility or safety certificate."
+    },
+    "SdCard/01 Test GCode/Hamburger/main.nc": {
+      "line_count": 282,
+      "ends_with_lf": true,
+      "max_line_bytes_excluding_terminator": 37,
+      "commands": {
+        "G0": 35,
+        "G1": 210
+      },
+      "lexical_flags": {
+        "lines_with_both_xy_axes": 212,
+        "lines_with_comments": 51,
+        "standalone_z_lines": 33
+      },
+      "explicit_coordinate_bounds_mm_assumed": {
+        "X": {
+          "min": -39.33,
+          "max": 32.89
+        },
+        "Y": {
+          "min": -13.88,
+          "max": 38.83
+        },
+        "Z": {
+          "min": 0.0,
+          "max": 20.0
+        }
+      },
+      "interpretation": "Explicit numeric words only; units, offsets, arcs and modal state are not resolved. Not a compatibility or safety certificate."
+    },
+    "SdCard/01 Test GCode/TOM/main.nc": {
+      "line_count": 3070,
+      "ends_with_lf": true,
+      "max_line_bytes_excluding_terminator": 38,
+      "commands": {
+        "G0": 255,
+        "G1": 2559
+      },
+      "lexical_flags": {
+        "lines_with_both_xy_axes": 2561,
+        "lines_with_comments": 380,
+        "standalone_z_lines": 253
+      },
+      "explicit_coordinate_bounds_mm_assumed": {
+        "X": {
+          "min": -95.95,
+          "max": 95.59
+        },
+        "Y": {
+          "min": -114.89,
+          "max": 114.78
+        },
+        "Z": {
+          "min": 0.0,
+          "max": 20.0
+        }
+      },
+      "interpretation": "Explicit numeric words only; units, offsets, arcs and modal state are not resolved. Not a compatibility or safety certificate."
+    },
+    "SdCard/01 Test GCode/Washburn logo/Washburn logo.txt": {
+      "line_count": 263,
+      "ends_with_lf": true,
+      "max_line_bytes_excluding_terminator": 18,
+      "commands": {
+        "G0": 48,
+        "G1": 215
+      },
+      "lexical_flags": {
+        "lines_with_both_xy_axes": 216,
+        "standalone_z_lines": 47
+      },
+      "explicit_coordinate_bounds_mm_assumed": {
+        "X": {
+          "min": -59.22,
+          "max": 59.98
+        },
+        "Y": {
+          "min": -46.37,
+          "max": 48.12
+        },
+        "Z": {
+          "min": 0.0,
+          "max": 1.0
+        }
+      },
+      "interpretation": "Explicit numeric words only; units, offsets, arcs and modal state are not resolved. Not a compatibility or safety certificate."
+    },
+    "SdCard/01 Test GCode/airliner/main.nc": {
+      "line_count": 501,
+      "ends_with_lf": true,
+      "max_line_bytes_excluding_terminator": 37,
+      "commands": {
+        "G0": 57,
+        "G1": 385
+      },
+      "lexical_flags": {
+        "lines_with_both_xy_axes": 387,
+        "lines_with_comments": 84,
+        "standalone_z_lines": 55
+      },
+      "explicit_coordinate_bounds_mm_assumed": {
+        "X": {
+          "min": -85.09,
+          "max": 86.05
+        },
+        "Y": {
+          "min": -61.65,
+          "max": 47.75
+        },
+        "Z": {
+          "min": 0.0,
+          "max": 20.0
+        }
+      },
+      "interpretation": "Explicit numeric words only; units, offsets, arcs and modal state are not resolved. Not a compatibility or safety certificate."
+    },
+    "SdCard/01 Test GCode/banana/main.nc": {
+      "line_count": 2677,
+      "ends_with_lf": true,
+      "max_line_bytes_excluding_terminator": 33,
+      "commands": {
+        "G0": 41,
+        "G1": 2635
+      },
+      "lexical_flags": {
+        "lines_with_both_xy_axes": 2637,
+        "lines_with_comments": 39,
+        "standalone_z_lines": 39
+      },
+      "explicit_coordinate_bounds_mm_assumed": {
+        "X": {
+          "min": -59.88,
+          "max": 60.0
+        },
+        "Y": {
+          "min": -60.59,
+          "max": 60.59
+        },
+        "Z": {
+          "min": 0.0,
+          "max": 20.0
+        }
+      },
+      "interpretation": "Explicit numeric words only; units, offsets, arcs and modal state are not resolved. Not a compatibility or safety certificate."
+    },
+    "SdCard/01 Test GCode/cat.nc": {
+      "line_count": 557,
+      "ends_with_lf": true,
+      "max_line_bytes_excluding_terminator": 18,
+      "commands": {
+        "G0": 102,
+        "G1": 455
+      },
+      "lexical_flags": {
+        "lines_with_both_xy_axes": 456,
+        "standalone_z_lines": 101
+      },
+      "explicit_coordinate_bounds_mm_assumed": {
+        "X": {
+          "min": -37.0,
+          "max": 37.0
+        },
+        "Y": {
+          "min": -40.3,
+          "max": 40.3
+        },
+        "Z": {
+          "min": 0.0,
+          "max": 1.0
+        }
+      },
+      "interpretation": "Explicit numeric words only; units, offsets, arcs and modal state are not resolved. Not a compatibility or safety certificate."
+    },
+    "SdCard/01 Test GCode/circle.nc": {
+      "line_count": 125,
+      "ends_with_lf": true,
+      "max_line_bytes_excluding_terminator": 18,
+      "commands": {
+        "G0": 4,
+        "G1": 121
+      },
+      "lexical_flags": {
+        "lines_with_both_xy_axes": 122,
+        "standalone_z_lines": 3
+      },
+      "explicit_coordinate_bounds_mm_assumed": {
+        "X": {
+          "min": -50.0,
+          "max": 50.0
+        },
+        "Y": {
+          "min": -50.0,
+          "max": 50.0
+        },
+        "Z": {
+          "min": 0.0,
+          "max": 1.0
+        }
+      },
+      "interpretation": "Explicit numeric words only; units, offsets, arcs and modal state are not resolved. Not a compatibility or safety certificate."
+    },
+    "SdCard/01 Test GCode/mandala_11x14.gcode": {
+      "line_count": 13732,
+      "ends_with_lf": true,
+      "max_line_bytes_excluding_terminator": 96,
+      "commands": {
+        "G0": 624,
+        "G1": 13101,
+        "G17": 1,
+        "G21": 1,
+        "G90": 1,
+        "M2": 1
+      },
+      "lexical_flags": {
+        "lines_with_both_xy_axes": 13102,
+        "lines_with_comments": 6,
+        "lines_with_feed_word": 13725,
+        "standalone_z_lines": 623
+      },
+      "explicit_coordinate_bounds_mm_assumed": {
+        "X": {
+          "min": 0.0,
+          "max": 265.7
+        },
+        "Y": {
+          "min": 0.0,
+          "max": 303.8
+        },
+        "Z": {
+          "min": 0.0,
+          "max": 3.0
+        }
+      },
+      "interpretation": "Explicit numeric words only; units, offsets, arcs and modal state are not resolved. Not a compatibility or safety certificate."
+    },
+    "SdCard/01 Test GCode/receding figure/main.nc": {
+      "line_count": 1097,
+      "ends_with_lf": true,
+      "max_line_bytes_excluding_terminator": 38,
+      "commands": {
+        "G0": 263,
+        "G1": 569
+      },
+      "lexical_flags": {
+        "lines_with_both_xy_axes": 571,
+        "lines_with_comments": 393,
+        "standalone_z_lines": 261
+      },
+      "explicit_coordinate_bounds_mm_assumed": {
+        "X": {
+          "min": -76.11,
+          "max": 81.58
+        },
+        "Y": {
+          "min": -44.93,
+          "max": 50.54
+        },
+        "Z": {
+          "min": 0.0,
+          "max": 20.0
+        }
+      },
+      "interpretation": "Explicit numeric words only; units, offsets, arcs and modal state are not resolved. Not a compatibility or safety certificate."
+    },
+    "SdCard/01 Test GCode/receding figure1/main.nc": {
+      "line_count": 3959,
+      "ends_with_lf": true,
+      "max_line_bytes_excluding_terminator": 38,
+      "commands": {
+        "G0": 1065,
+        "G1": 1827
+      },
+      "lexical_flags": {
+        "lines_with_both_xy_axes": 1829,
+        "lines_with_comments": 1596,
+        "standalone_z_lines": 1063
+      },
+      "explicit_coordinate_bounds_mm_assumed": {
+        "X": {
+          "min": -94.16,
+          "max": 85.07
+        },
+        "Y": {
+          "min": -110.43,
+          "max": 25.54
+        },
+        "Z": {
+          "min": 0.0,
+          "max": 20.0
+        }
+      },
+      "interpretation": "Explicit numeric words only; units, offsets, arcs and modal state are not resolved. Not a compatibility or safety certificate."
+    },
+    "SdCard/01 Test GCode/skeleton.nc": {
+      "line_count": 1090,
+      "ends_with_lf": true,
+      "max_line_bytes_excluding_terminator": 18,
+      "commands": {
+        "G0": 174,
+        "G1": 916
+      },
+      "lexical_flags": {
+        "lines_with_both_xy_axes": 917,
+        "standalone_z_lines": 173
+      },
+      "explicit_coordinate_bounds_mm_assumed": {
+        "X": {
+          "min": -26.9,
+          "max": 26.9
+        },
+        "Y": {
+          "min": -60.0,
+          "max": 60.0
+        },
+        "Z": {
+          "min": 0.0,
+          "max": 1.0
+        }
+      },
+      "interpretation": "Explicit numeric words only; units, offsets, arcs and modal state are not resolved. Not a compatibility or safety certificate."
+    },
+    "SdCard/main.nc": {
+      "line_count": 3868,
+      "ends_with_lf": true,
+      "max_line_bytes_excluding_terminator": 19,
+      "commands": {
+        "G0": 87,
+        "G1": 3781
+      },
+      "lexical_flags": {
+        "lines_with_both_xy_axes": 3781,
+        "standalone_z_lines": 87
+      },
+      "explicit_coordinate_bounds_mm_assumed": {
+        "X": {
+          "min": -105.0,
+          "max": 105.0
+        },
+        "Y": {
+          "min": -105.0,
+          "max": 105.0
+        },
+        "Z": {
+          "min": 0.0,
+          "max": 1.0
+        }
+      },
+      "interpretation": "Explicit numeric words only; units, offsets, arcs and modal state are not resolved. Not a compatibility or safety certificate."
+    }
+  },
+  "manifest": [
+    {
+      "path": "Drawbot_C/01 Test GCode/Bikini/Bikini.jpg",
+      "bytes": 82432,
+      "sha256": "172b5cee383e513bf960174448f55580fb6814a62918d2f5d85716e6bf189a48"
+    },
+    {
+      "path": "Drawbot_C/01 Test GCode/Bikini/Bikini.svg",
+      "bytes": 23739,
+      "sha256": "bfa00daaddc5276a7c23cf7c14d8826d5f8e023054b1d14cf8648f85ca6870d4"
+    },
+    {
+      "path": "Drawbot_C/01 Test GCode/Bikini/main.nc",
+      "bytes": 28165,
+      "sha256": "cc1748537f2b76cddc45d82ffcf3274b6706f6176a730a3bbd3f31f4726ff4aa"
+    },
+    {
+      "path": "Drawbot_C/01 Test GCode/Crab/crab.jpg",
+      "bytes": 97825,
+      "sha256": "6aadb1fec5564349b84c743c9888b1f9dcf3d3622fc1065c6e5025b9ed569c78"
+    },
+    {
+      "path": "Drawbot_C/01 Test GCode/Crab/crab.svg",
+      "bytes": 40766,
+      "sha256": "752443c4e17a08abaca41479816e8c63f5f059490bc38a8864e82d5496aef164"
+    },
+    {
+      "path": "Drawbot_C/01 Test GCode/Crab/main.nc",
+      "bytes": 35319,
+      "sha256": "2550cc2aa3bc09b56adb5aa15494c4dd690a5a97945395dd1f4d72ef2f5c82fd"
+    },
+    {
+      "path": "Drawbot_C/01 Test GCode/Girl/girl.jpg",
+      "bytes": 112646,
+      "sha256": "11ee36f8baa10263d351b6351f9fa047fd57bc21903822e052f6d06f0425ad96"
+    },
+    {
+      "path": "Drawbot_C/01 Test GCode/Girl/girl.svg",
+      "bytes": 34753,
+      "sha256": "6377e336476cc981614f4297bc95c2f60e6c318f1b6958be9404dae8150b9fd3"
+    },
+    {
+      "path": "Drawbot_C/01 Test GCode/Girl/main.nc",
+      "bytes": 35180,
+      "sha256": "cf1f2b81d735737d80af49487296b0bd88cd4fcdf3eb5852995b6efe7e317764"
+    },
+    {
+      "path": "Drawbot_C/01 Test GCode/Girl1/Girl1.jpg",
+      "bytes": 138231,
+      "sha256": "ff911e0c885a5e45b1c1dcb1bc739e16beedd59c9b3f1d163c05a8757db1614d"
+    },
+    {
+      "path": "Drawbot_C/01 Test GCode/Girl1/Girl1.svg",
+      "bytes": 23930,
+      "sha256": "612355b1081a53fedefe2b7d3193a5ab9ea678a06b3e48c5cdf105bac3c89667"
+    },
+    {
+      "path": "Drawbot_C/01 Test GCode/Girl1/main.nc",
+      "bytes": 33530,
+      "sha256": "85a55d6e18f5e1b7ed8b3c3d6623c7843c260b332828f042e52b4cf91739eb06"
+    },
+    {
+      "path": "Drawbot_C/01 Test GCode/Hamburger/Hamburger.jpg",
+      "bytes": 20398,
+      "sha256": "5ac530211da4fed14a65a46a763d6ccadc618df4e02b67e34d6b08561c6125fa"
+    },
+    {
+      "path": "Drawbot_C/01 Test GCode/Hamburger/Hamburger.svg",
+      "bytes": 6516,
+      "sha256": "1fe24f9c98a6233cb1fb88cf6a208780f3281fca896917e9cd22be03a9a76275"
+    },
+    {
+      "path": "Drawbot_C/01 Test GCode/Hamburger/main.nc",
+      "bytes": 5449,
+      "sha256": "fa663f4c657a6cb8c3fd4b25363de6359d09bcb4c8803d549600e8c9583db80c"
+    },
+    {
+      "path": "Drawbot_C/01 Test GCode/TOM/main.nc",
+      "bytes": 60521,
+      "sha256": "38b0da90e846f212789c069b372abc2423faad07d4f4f667e507d1a02d680487"
+    },
+    {
+      "path": "Drawbot_C/01 Test GCode/TOM/tom.jpg",
+      "bytes": 91248,
+      "sha256": "da9d6c7d355a47a0bc8fa7cad57a6f1afab8aaa8c2ec4848d59d34b163fe30aa"
+    },
+    {
+      "path": "Drawbot_C/01 Test GCode/TOM/tom.svg",
+      "bytes": 35744,
+      "sha256": "684de9dac2a3e4ee402b59c19ae64d4da0ccf074af0170435185652b0cba4d4a"
+    },
+    {
+      "path": "Drawbot_C/01 Test GCode/airliner/airliner.jpg",
+      "bytes": 45859,
+      "sha256": "872a7b6cbc583b48b6841cee42a00e207f3fee7f45812448f84c41f4d1fc0d87"
+    },
+    {
+      "path": "Drawbot_C/01 Test GCode/airliner/airliner.svg",
+      "bytes": 11469,
+      "sha256": "afe4825e7e96c23a133369bf6c40e872ffcc11ce0474047d6cc3baad6ca74de3"
+    },
+    {
+      "path": "Drawbot_C/01 Test GCode/airliner/main.nc",
+      "bytes": 9844,
+      "sha256": "d3fce3022eed9a29b4c37fb8bb7b33c33ceb52c81670679f2ff3454923145909"
+    },
+    {
+      "path": "Drawbot_C/01 Test GCode/banana/banana.jpg",
+      "bytes": 229052,
+      "sha256": "a1a35a96e7ef19c1f856a17d8dc5964c5056cf799fcb8210b8aadd2ed1ac7841"
+    },
+    {
+      "path": "Drawbot_C/01 Test GCode/banana/main.nc",
+      "bytes": 52425,
+      "sha256": "c08e096dce7f34d05325ecfd783c2e690bb7f8cfbdf03c7614f13d0be0581ea3"
+    },
+    {
+      "path": "Drawbot_C/01 Test GCode/receding figure/main.nc",
+      "bytes": 22405,
+      "sha256": "a60696fd52b1f0315fef89a7cea6e730bc794a90328bb9561b87b23f3f8f47ce"
+    },
+    {
+      "path": "Drawbot_C/01 Test GCode/receding figure/receding figure.jpg",
+      "bytes": 49951,
+      "sha256": "c9a1118f311592d198fcea4c3ea0fc81aeb2c4312991528b7ac9c08d9ca22f1e"
+    },
+    {
+      "path": "Drawbot_C/01 Test GCode/receding figure/receding figure.svg",
+      "bytes": 12688,
+      "sha256": "53751cd3793ad46b7ffeab52e43bab2ec970468b9337452040cac957bd8c1608"
+    },
+    {
+      "path": "Drawbot_C/01 Test GCode/receding figure1/main.nc",
+      "bytes": 80897,
+      "sha256": "9ed3856caa4fec752a1e686354f384fad63d5af3ca7dc609b6408afbda06875b"
+    },
+    {
+      "path": "Drawbot_C/01 Test GCode/receding figure1/receding figure1.jpg",
+      "bytes": 74917,
+      "sha256": "168f5184d9e3c0894d7001a4954453d2d0cff90846d3f8dafdee0f62ec2f0d20"
+    },
+    {
+      "path": "Drawbot_C/01 Test GCode/receding figure1/receding figure1.svg",
+      "bytes": 37354,
+      "sha256": "29614654242942c17a78942e9c4773da2b7ef0787b87553659f0e61143228d89"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Driver/CH340DS1.PDF",
+      "bytes": 141836,
+      "sha256": "8c572f94fbd780f9f4e694c67dc2768fc7994d62fe88e2cf1a24d00e40bd0713"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Driver/CH341SER.EXE",
+      "bytes": 233018,
+      "sha256": "5c79a8c123d3fa03274fdccc8fad722aaf3b703df35c39b4b42f0b5bfbb26dfd"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/Explanation.txt",
+      "bytes": 456,
+      "sha256": "c26a237a0124efba3d3ade2effbbd883cdcd72e342b2a0649a5c8b010e1f2309"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/Offline installation library.exe",
+      "bytes": 7903615,
+      "sha256": "ed734fe9065f8e19e617b2675ca1c47190a11154d0e555c8766bfb7958d4e235"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/SD/.travis.yml",
+      "bytes": 3468,
+      "sha256": "d9a5efc05277b40ba9a63dfe0e6fe986a6d4e74c04896e14a54dc5419230fa03"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/SD/README.adoc",
+      "bytes": 1029,
+      "sha256": "f9931d8a82e52c2b1f05f486deeb4dd1c170a17f75881f774391f94b562ab8cc"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/SD/examples/CardInfo/CardInfo.ino",
+      "bytes": 3566,
+      "sha256": "b2b60470b55dbe02992e45e41a10bc0c847240a9529618aba494488e7b9ec492"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/SD/examples/Datalogger/Datalogger.ino",
+      "bytes": 1795,
+      "sha256": "00148886ac68137ffb7a72adbed0c5b466438c87c8cfc1d7360de64d131f05b8"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/SD/examples/DumpFile/DumpFile.ino",
+      "bytes": 1422,
+      "sha256": "3945e4c07aa228f62074d26815ed91e4d74b6ee4bda6070a2708709722e88f6f"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/SD/examples/Files/Files.ino",
+      "bytes": 1586,
+      "sha256": "78789146a22df13ead09896d76b9c22bcfe6d46029d34a5c0e3498295c34c572"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/SD/examples/NonBlockingWrite/NonBlockingWrite.ino",
+      "bytes": 2268,
+      "sha256": "0e1a2f9df3aa0bacbbf260b9b5a5da059e9d9d9d1991045076497a3988797592"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/SD/examples/ReadWrite/ReadWrite.ino",
+      "bytes": 1760,
+      "sha256": "18372078a35081977e740ac1b4de5459900160c7d096fc8d1fd6ff7c445f4cb9"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/SD/examples/listfiles/listfiles.ino",
+      "bytes": 1512,
+      "sha256": "728e9332f8be84b600abbd6fa6852addd90e331778f799ed6e3add6d7c35d113"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/SD/extras/codespell-ignore-words-list.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/SD/keywords.txt",
+      "bytes": 673,
+      "sha256": "70bced56cddad05b014200210c7cd1a294ce760614b779e2d3fbe0410f350738"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/SD/library.properties",
+      "bytes": 413,
+      "sha256": "fee91e19c09d13c677a69c1b2e96c07a98769d4aa1c6d6ce57a4051102f54c03"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/SD/src/File.cpp",
+      "bytes": 2801,
+      "sha256": "99cf957d01ad7ddc8acee3ebe2c11cca0f8566103b05610c0c733efee640decb"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/SD/src/README.txt",
+      "bytes": 401,
+      "sha256": "ded87a64f07f65c8d508780fd7beded578ed6529695bba1f627a140e3e349ae0"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/SD/src/SD.cpp",
+      "bytes": 16278,
+      "sha256": "1ed895f215fcda362c817e17d7dceaaf219d65dec04accdbbca185e70548b204"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/SD/src/SD.h",
+      "bytes": 4160,
+      "sha256": "b402c80226fb07a98f03bc03a35b1eb1dd3dd44190716dfb7eee1118b56e9517"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/SD/src/utility/FatStructs.h",
+      "bytes": 15464,
+      "sha256": "a9c40dba025e31e4991cacec2a5278fa2fd8634b1df7027e5079d8860ba3915e"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/SD/src/utility/Sd2Card.cpp",
+      "bytes": 22384,
+      "sha256": "efc56f718e3c14a49888c8aebf6e1aca0d189eab8cd5edda6c729c0c92638f31"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/SD/src/utility/Sd2Card.h",
+      "bytes": 10394,
+      "sha256": "e4378efda4c4c20ce8834932b4a0da5831e4e1ca1fc37f86eb4f8a946069ab3d"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/SD/src/utility/Sd2PinMap.h",
+      "bytes": 18228,
+      "sha256": "ebc5234341fcad1d81f5fde230f6681c3c61d34a0e1cba9bca44431b41d10a5a"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/SD/src/utility/SdFat.h",
+      "bytes": 24297,
+      "sha256": "3e4073cf9a323f83fb139b9ededb9f3b4e37f3aa9419d9700cf36f40de1bfe0f"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/SD/src/utility/SdFatUtil.h",
+      "bytes": 2699,
+      "sha256": "285c1e5d3d63e4cfe806fb8081276a0bfba266bd47e3324447401affd75f9944"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/SD/src/utility/SdFatmainpage.h",
+      "bytes": 8429,
+      "sha256": "a78ff629d9214f0af0f8eeb629643b568b368380bf95b3b7ce96bb6c2ff66177"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/SD/src/utility/SdFile.cpp",
+      "bytes": 44920,
+      "sha256": "8637d0bfabf5e726b278dfa4bbd31ada26d76c2a8acb1dec401ff51178a9886a"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/SD/src/utility/SdInfo.h",
+      "bytes": 7258,
+      "sha256": "75d413603fad66d5ddb7176b575b74632c7d1bb5d112461f2982f265168ed107"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/SD/src/utility/SdVolume.cpp",
+      "bytes": 10469,
+      "sha256": "fe3eadb23c31bc18a0c7f3722d12d8d3ee49a69764fa38a24ea957f555bb147e"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/Servo/README.adoc",
+      "bytes": 1029,
+      "sha256": "f957002deb70887a8ffd680291c68935d995af8f29512d0910fffd082e3445d7"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/Servo/examples/Knob/Knob.ino",
+      "bytes": 923,
+      "sha256": "d4470296096bbc1f7cb6b29f59f437f2a85e90fb90fe47fbc1742abd44d504e9"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/Servo/examples/Sweep/Sweep.ino",
+      "bytes": 1020,
+      "sha256": "db5d5d7a5022ce48a0e0e4d6173675507065a36af01e7df9441fbf3e94b7d9d7"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/Servo/keywords.txt",
+      "bytes": 586,
+      "sha256": "59ae2d3c412f136b04c2cb00019dc9f93ba0d56b409c1c3241adb48413e17d2e"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/Servo/library.properties",
+      "bytes": 510,
+      "sha256": "bfa988c2ad8a4234684d8fe0ed02e41eae97b8f3f0f777b0cf90effa721409ef"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/Servo/src/Servo.h",
+      "bytes": 5253,
+      "sha256": "5358edbf688e3fe85165676107a53b543a1e513a6f551862a5f4ea987670718e"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/Servo/src/avr/Servo.cpp",
+      "bytes": 10905,
+      "sha256": "11e159345dd9e6875f3fe7f3619baebc268844814b9cf91b50e3055296a13a38"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/Servo/src/avr/ServoTimers.h",
+      "bytes": 2175,
+      "sha256": "32e5d2ca7ba83f3dc41a690e5361c9eccaf993191ec525697350d0d82b87b97c"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/Servo/src/mbed/Servo.cpp",
+      "bytes": 3296,
+      "sha256": "cf6811f3a369ac49e4f552c6b9aba566157c7f59164debf6107513476b9669a4"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/Servo/src/mbed/ServoTimers.h",
+      "bytes": 24,
+      "sha256": "4c1fecfb9cd267033ca8433165a749c3e017b7586baeaeadf9ab25696373ed84"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/Servo/src/megaavr/Servo.cpp",
+      "bytes": 7132,
+      "sha256": "81a0f98f219c76edab871546db002bbbf179afeea10f25ff472cb1eebeb67380"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/Servo/src/megaavr/ServoTimers.h",
+      "bytes": 1535,
+      "sha256": "a62bb3292892e49d1f6d2bb61039fd04d102ecd47c26880598ce9b3fc6d8aaee"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/Servo/src/nrf52/Servo.cpp",
+      "bytes": 4239,
+      "sha256": "d73e932a8ca708bc9ee47514f927abe5a617a702c15e8cfb78409c0e3518f485"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/Servo/src/nrf52/ServoTimers.h",
+      "bytes": 1214,
+      "sha256": "28f6f65d7ea8f4645f5140d1bc29f753ae4035263734220efefff1dd63d104d7"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/Servo/src/sam/Servo.cpp",
+      "bytes": 9920,
+      "sha256": "bb3d0a61319a8b5bc6b49887d64dce79430a1988d0a759f2522e2a77eb761a41"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/Servo/src/sam/ServoTimers.h",
+      "bytes": 2637,
+      "sha256": "bc2da5ea4b13d7b6a476459fb68bcb7af7881a61f98c23cd10c32c3837c8347a"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/Servo/src/samd/Servo.cpp",
+      "bytes": 10584,
+      "sha256": "af9179d872df558a9fc9b1fd2c10335f8d52e783bde4c3b9795d1b4586b46b22"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/Servo/src/samd/ServoTimers.h",
+      "bytes": 2415,
+      "sha256": "83d6496cb0e977a3f18f6bb3ad60ea39e210b7902feb5108a1e3cecaa290d418"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/Servo/src/stm32f4/Servo.cpp",
+      "bytes": 5861,
+      "sha256": "0da1dd34cf8da54a5f31f22e872437023b944567dfed931af6bdf15a6a77ab72"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/Servo/src/stm32f4/ServoTimers.h",
+      "bytes": 7179,
+      "sha256": "b60746097ce1857fb66dc8077520b488ebbf709327f2778d16ed34c7bf053bd1"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/TinyStepper_28BYJ_48/Documentation.md",
+      "bytes": 9739,
+      "sha256": "47b8b8ccbb005add163a0939b88309597580b8ad4793a5a0a4353cc7a7765db3"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/TinyStepper_28BYJ_48/Documentation.pdf",
+      "bytes": 73062,
+      "sha256": "0f8ed91bdfdea16413c2a4a137cd089b2d1d2cadbd4ae272dbe8c0728ccebc4c"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/TinyStepper_28BYJ_48/HookupGuide.pdf",
+      "bytes": 18379,
+      "sha256": "03bc6909297f230a8d70153e1a7edc54553f6f2730b5d9ce07713249bd89ef4b"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/TinyStepper_28BYJ_48/LICENSE.txt",
+      "bytes": 1100,
+      "sha256": "dfeb6e8dfa70b3cfdafb2f6f4a9272b69065e04785ac7451ec0070cd2b97b960"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/TinyStepper_28BYJ_48/README.md",
+      "bytes": 818,
+      "sha256": "ed23ab43953c3e205f8203c0fb27bacc79b8dccfed3538f69e6703ee408ab1f9"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/TinyStepper_28BYJ_48/examples/Example1_BasicStepper/Example1_BasicStepper.ino",
+      "bytes": 2653,
+      "sha256": "3cd4558e56b477e2199bbf8197cee7272b34df7ccbade5376c9acd9f89e06b1b"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/TinyStepper_28BYJ_48/examples/Example2_AbsoluteMoves/Example2_AbsoluteMoves.ino",
+      "bytes": 3477,
+      "sha256": "63a4f89f08dd761391e2f276541348475b83e4d474165cee85e1176446bfc2f6"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/TinyStepper_28BYJ_48/examples/Example3_MovingTwoMotorsAtOnce/Example3_MovingTwoMotorsAtOnce.ino",
+      "bytes": 5832,
+      "sha256": "8222790634cf663adbf8a5c83b6b4404662e5411d5bb0a5281ef83a754bc47e8"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/TinyStepper_28BYJ_48/examples/Example4_MovingWhileDoingOtherThingsToo/Example4_MovingWhileDoingOtherThingsToo.ino",
+      "bytes": 3510,
+      "sha256": "cfd5eee910cb1bf910fdc7ae182bb7243df4f7a985a976c037a147ffaf9dc2ac"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/TinyStepper_28BYJ_48/library.properties",
+      "bytes": 472,
+      "sha256": "8f1e86809d484c736219db8c3060ce53904b8775e8791b69c135e9f56d209fc9"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/TinyStepper_28BYJ_48/src/TinyStepper_28BYJ_48.cpp",
+      "bytes": 15443,
+      "sha256": "1445ab50813b292fc5d6a20e32db0e0c6c395c005b455462cec5362e7418b4bc"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/TinyStepper_28BYJ_48/src/TinyStepper_28BYJ_48.h",
+      "bytes": 2365,
+      "sha256": "e03ee9e226a9c11540e1011034672012891c795ab474bfeb222267a0d86cd8a1"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/LICENSE",
+      "bytes": 3999,
+      "sha256": "8036926d9114ede461a6e3b0f2a7174d36d29989fb0235bd4e17fe80f726538b"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/README.md",
+      "bytes": 459,
+      "sha256": "34e2945e739f688b8ab939ddad1a0471fa5af8800916c83d58a11d36baf84989"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/full_buffer/FPS/FPS.ino",
+      "bytes": 41746,
+      "sha256": "ce6d5b9e1d61be8eb91b453e10533476634183f1a3dc42cbbd061d17e6eb0a72"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/full_buffer/FontUsage/FontUsage.ino",
+      "bytes": 36755,
+      "sha256": "ceb78957fa5cc2d24ab5ed8aa1fed30c198da0193576f041e1189439a7ccadc6"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/full_buffer/GraphicsTest/GraphicsTest.ino",
+      "bytes": 37409,
+      "sha256": "ef7f765344e7237de1becc77e073aaf6b2d89ad9bf3e70f248c9a1969006ea28"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/full_buffer/HelloWorld/HelloWorld.ino",
+      "bytes": 31363,
+      "sha256": "174b4c19faf4c0b98a331c6ef80234243ee6efbaece7a1bdc48a27b50e1d348f"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/full_buffer/IconMenu/IconMenu.ino",
+      "bytes": 36246,
+      "sha256": "b705c14d5c4e9f3e04dd9218280203e84f4a9c9af32f06b8551e12d7fd7a7429"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/full_buffer/PrintUTF8/PrintUTF8.ino",
+      "bytes": 31565,
+      "sha256": "9d05fff89d95d958e274e542e284b0e3962ee8e6a2ea540baab0c33f41a7997f"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/full_buffer/ScreenShot/ScreenShot.ino",
+      "bytes": 31875,
+      "sha256": "f37f8f6885a78639a9f91c3648511b8cc0e5a92d2c42fe94fa6bc669f0064b80"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/full_buffer/SelectionList/SelectionList.ino",
+      "bytes": 32526,
+      "sha256": "a01bfe2947c88d91f8d8f2cf15be69f053e453c354f1860774cb47d170ad96d0"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/full_buffer/Shennong/Shennong.ino",
+      "bytes": 38248,
+      "sha256": "5b7cd388cd9299be048242fde775e28ddcf2ff7c7f045f9a0fc706f329746285"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/full_buffer/U8g2Logo/U8g2Logo.ino",
+      "bytes": 32656,
+      "sha256": "d4c09ff53bf16d9acf61ae60769757dcfb7bc6de793173b093031c7df00c07d0"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/full_buffer/UpdateArea/UpdateArea.ino",
+      "bytes": 33315,
+      "sha256": "95f9656fa06f67859b54986ac378b577c0b501afea376ae1652569020e8657c3"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/full_buffer/Weather/Weather.ino",
+      "bytes": 35129,
+      "sha256": "cf6273ce3429235446f0679737a8a02020d94c6d2150b825eb6e7cdefabf105f"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/games/LittleRookChess/LittleRookChess.ino",
+      "bytes": 65048,
+      "sha256": "bb92445e057f0624c9fc6f51c61defed92a4171be7d27c20efe9c122674cf263"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/games/SpaceTrash/SpaceTrash.ino",
+      "bytes": 66379,
+      "sha256": "9f369db200d0b0c9ab8ed8117a88765c1cf57e6015b4fc5e101c06994c3d2018"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/A2Printer/A2Printer.ino",
+      "bytes": 4624,
+      "sha256": "902d0f63541507ed409a1b939b1274a558e0ffcaf7dbe2423ee5eb7bad7ecb1b"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/Chinese/Chinese.ino",
+      "bytes": 31794,
+      "sha256": "6a661e2029752a1cb87e013cd90e305c2ca64a5bcfd65a552637c11d6206c7cc"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/ClipWindow/ClipWindow.ino",
+      "bytes": 32123,
+      "sha256": "9ac3d8df420213d3c89b9ea7e413b09c3b5264711317074a853d5bf093d6a078"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/Clock/Clock.ino",
+      "bytes": 32078,
+      "sha256": "ce83acead59ec702980ce0c79911b34887770865af916565adfb08948222289f"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/ContrastTest/ContrastTest.ino",
+      "bytes": 32144,
+      "sha256": "6b32de268eeb08e93e624e36f90f09712f0424a0b8c7e2b40c3077efa5b7ad76"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/Devanagari/Devanagari.ino",
+      "bytes": 33711,
+      "sha256": "69474ed879a367a39162872d970b3ab0f27ad7e37ec249120177cb51f28d1ec6"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/DirectAccess/DirectAccess.ino",
+      "bytes": 33950,
+      "sha256": "f115d6ab22a939bb40d9cade0282143dc6a6c9ebabeca512331c53016417676e"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/DrawLog/DrawLog.ino",
+      "bytes": 32934,
+      "sha256": "d6eb02ec7a13f76219bf3bfb806458c49752eacebf19b81f78a7fc47a5124395"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/ExtUTF8/ExtUTF8.ino",
+      "bytes": 31976,
+      "sha256": "8b5b41fb81e50a1fcfda51b643f4d13675d328d8d0e497013d45a0d2092d8f8e"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/FPS/FPS.ino",
+      "bytes": 46240,
+      "sha256": "792ee1807eb6389b1be168620a9f624e7e0445ab1953ea29d67c913e3e9494a3"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/FlipMode/FlipMode.ino",
+      "bytes": 31787,
+      "sha256": "96b8d233ad8ac8479bfc4a4750c658103c7cb7c7f6493a6b12066cb15bc4d468"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/GraphicsTest/GraphicsTest.ino",
+      "bytes": 38464,
+      "sha256": "076e424542b9e5bd55e40534feed919f096fe31182c25a04bb7f33aae7bfeea8"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/HelloWorld/HelloWorld.ino",
+      "bytes": 32654,
+      "sha256": "b184361e518f2ed39d2bb61b1f735cac9ec3b32f9e70c901ba10bd454e83770f"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/IconMenu/IconMenu.ino",
+      "bytes": 36498,
+      "sha256": "708304390ed9c26b84f35907accd04bcf21b48f70ef14b9aae06393a06ccd246"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/Japanese/Japanese.ino",
+      "bytes": 31632,
+      "sha256": "c023d9c6e8d99d87534ffb8bc4b789df277291878fff84d1de58ae749a278ab8"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/Korean/Korean.ino",
+      "bytes": 31525,
+      "sha256": "3bb99a1cd460ed9f34400e480fed238567ddb5114352d4d95119745fc1a52acb"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/LoadFromSD/LoadFromSD.ino",
+      "bytes": 38859,
+      "sha256": "2f8b23f464ec6b5aff55071f98c2a87521144106582bcb63a83fd465eb51fa9f"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/PowerSaveTest/PowerSaveTest.ino",
+      "bytes": 31322,
+      "sha256": "c99aacebe13d7e2ebf7cbee2bfc1aecd01b18f7bdcbc7b02e26c806e74f7333f"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/PrintHelloWorld/PrintHelloWorld.ino",
+      "bytes": 31347,
+      "sha256": "05954b0ebe66e83010c7898400f360daa9e1cdf9d37b94b44952a31a16181903"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/PrintProgmem/PrintProgmem.ino",
+      "bytes": 31865,
+      "sha256": "ba14d3bdf3498a9503620189d183c043f493a42b3b0295d032dca23663dbce30"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/PrintUTF8/PrintUTF8.ino",
+      "bytes": 31796,
+      "sha256": "e537412e7e98a124fb81455f173bc006f3e6bc0bd314062ba3a5e32d3da291e7"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/ScrollingText/ScrollingText.ino",
+      "bytes": 33071,
+      "sha256": "76522658e102f1ad14d47bf912bcb37ac9382e0906324cd6def782bd3f827d31"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/SelectionList/SelectionList.ino",
+      "bytes": 32438,
+      "sha256": "8507e45e91c19084e601ee3021c5beeb2e2118c4348f5667f7d273bc2ffdcd7e"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/Serial/Serial.ino",
+      "bytes": 32580,
+      "sha256": "e175963a9aa68a462addc6c0678478e40c98e5dbca54d7be77ee40a83083f158"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/Shennong/Shennong.ino",
+      "bytes": 38131,
+      "sha256": "5f8f278db91c754b6e3b77f586490b2ecc0ed6d74f9f406c71fe00a2e5b047c0"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/StateBufferLoop/StateBufferLoop.ino",
+      "bytes": 32905,
+      "sha256": "e089b8248a41de24e26421b29782efe01245a7ab7d653f5a68425d91272e3a27"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/Terminal/Terminal.ino",
+      "bytes": 32644,
+      "sha256": "5fdc8a1ea67df4cd7dc57d8404a03addfcbdfb4480b5f532a40e92f7d33636fa"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/U8g2Logo/U8g2Logo.ino",
+      "bytes": 33221,
+      "sha256": "ab32bbca6771a5455a0c6aea2a57f24ef58a52c99a40c94183223b95ed8be692"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/UpdatePartly/UpdatePartly.ino",
+      "bytes": 33518,
+      "sha256": "460c13ad4d18a46b6482b2d81f1ecaa3096e63c3b8fd0965c432123a16a75c03"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/Weather/Weather.ino",
+      "bytes": 34702,
+      "sha256": "453fdb45eed684fbc455223b86500dacbd22ccd5ce36af364b569122393dffb3"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/XBM/XBM.ino",
+      "bytes": 36188,
+      "sha256": "0dd222f0bed65c844d75ee52b1aeb40a5bc6dd2003dc15d084897bda8ae9d564"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/page_buffer/XORTest/XORTest.ino",
+      "bytes": 32500,
+      "sha256": "5588ead8b94ea5a5ee71a4067a68627c8f76159971b64bb850861cb53c620882"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/u8x8/16x16Font/16x16Font.ino",
+      "bytes": 22386,
+      "sha256": "c9c1cf86c72d1c584aa4a0b8b754f4a00ae442f07604f532fcbbbec544f8a23b"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/u8x8/ArduboyTest/ArduboyTest.ino",
+      "bytes": 3981,
+      "sha256": "715651d971c5f9ff25a55d4cd836315db011117507b5c3f4a7cb1d4e51c6fbdc"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/u8x8/FlipMode/FlipMode.ino",
+      "bytes": 22425,
+      "sha256": "6be56e61f745ddf0f469a2539cf4014febfb27c65ae099309fc521bee9773862"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/u8x8/GraphicsTest/GraphicsTest.ino",
+      "bytes": 24860,
+      "sha256": "192f8ddc4948abac3192ef4e3969e6d335a3acc1c1482ebf08e243c7b26fe381"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/u8x8/HelloWorld/HelloWorld.ino",
+      "bytes": 22277,
+      "sha256": "9a39cf8a80ab6fcb4a36ca1f6d83c2cde53b844e5dcee6aa634d0a9a15573a9b"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/u8x8/MessageBox/MessageBox.ino",
+      "bytes": 23121,
+      "sha256": "0185df435203c7b332f9865e836b5344638f701497231992c8443d07a1aff88c"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/examples/u8x8/Terminal/Terminal.ino",
+      "bytes": 22853,
+      "sha256": "85187c2ea6dc6aedf8dd2794c8df46852c0913fea90e8048fd713102a0fd5c20"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/extras/ChangeLog",
+      "bytes": 13108,
+      "sha256": "036a35c6820e8e0d47688d7a6f9b0dc4249dcf15447b4ac0858e9764a669b85d"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/keywords.txt",
+      "bytes": 60636,
+      "sha256": "8bf1ad6f4af58fd78991d2d9e58a0d0eea7c07a8b52b3af3668ad1dec2a02f0a"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/library.properties",
+      "bytes": 1267,
+      "sha256": "2cf8cb7fcc2107e4146176205d2b027444dc02189ca62e8e4053aaebdd459971"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/U8g2lib.cpp",
+      "bytes": 2185,
+      "sha256": "bdb3bee80660b9e9d6ca6de1bdeba1b4fe533f4cfdf46e91990dd5da91ec4cf9"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/U8g2lib.h",
+      "bytes": 1251833,
+      "sha256": "b9e10ba8a0aa93e7e89de8d38949d96a125f83e0f0f13078190cee2382f26354"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/U8x8lib.cpp",
+      "bytes": 55483,
+      "sha256": "0f82d8d1991d5c7c88764a8c0932d94d681e2bd73e5def7abf02c0ca92131608"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/U8x8lib.h",
+      "bytes": 410132,
+      "sha256": "403980123896c4f86a1adebefedb940adcdc69ab76cf89eec6fdd723006a7d4e"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8g2.h",
+      "bytes": 281870,
+      "sha256": "0015502d024f52347db83814774270059b2f436bd08881c40306757d7d075242"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8g2_bitmap.c",
+      "bytes": 5324,
+      "sha256": "7f8a0ed2ceb6d89f3c5f745d3b86eda67b84a96cdb0fd0421b509ce9674d1d93"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8g2_box.c",
+      "bytes": 4632,
+      "sha256": "d329109913b00cfc42038cec55c07b0d8faf50e5995808fa0e0c132a5afd37c5"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8g2_buffer.c",
+      "bytes": 6830,
+      "sha256": "9ca065a47345bb6bba3f7a81cad60ad7a15c3f2ca926137ad20f1e0ef1df4609"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8g2_circle.c",
+      "bytes": 10504,
+      "sha256": "6fbcc0dea8c64389ae6537f3e97722edfb85730480fe39747cf4aa1ebd717148"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8g2_cleardisplay.c",
+      "bytes": 2197,
+      "sha256": "e1ca6ab2e977d9b1e6c72e020c80f6ea38dcab61eb9177e7b0b68ea5c6847c00"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8g2_d_memory.c",
+      "bytes": 25335,
+      "sha256": "49491ffe289761e147a9ad3f2b3a8c3a08487cef7c9f9ceb79321e69ee32196d"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8g2_d_setup.c",
+      "bytes": 280376,
+      "sha256": "0239a7b541ff6e5236200a1497805e4f0d1fa2c75dbb8d2747184c7b070a0239"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8g2_font.c",
+      "bytes": 33327,
+      "sha256": "80b4ae23ec4e4b1de642925f3358a25933fa3488de28de3e6c12beaf3b81a228"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8g2_fonts.c",
+      "bytes": 29971286,
+      "sha256": "e9125a7b64c40df0840103c1d7f0f9e7f7afb3d9a8fc53d72f0de2f5befb8fb8"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8g2_hvline.c",
+      "bytes": 7078,
+      "sha256": "e63dad17dfe6501fb4b8f47ea7daaaa75c720a88016cfa9af39cc17523fac808"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8g2_input_value.c",
+      "bytes": 4155,
+      "sha256": "fd6f4f7b2911bffa36677e6f3cceaa7f40dc0dd8ca589adeec2248354dc3c0bd"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8g2_intersection.c",
+      "bytes": 4246,
+      "sha256": "ed81a18801dfc27220f09162d8ec2a74cc76467bf672431dd6fac9bde66b46c4"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8g2_kerning.c",
+      "bytes": 2852,
+      "sha256": "c249d6394de157f6c2914bfafcca9bbcd09197fdac96c36a1d9877c8155e5ccc"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8g2_line.c",
+      "bytes": 2520,
+      "sha256": "fe11f6148c526997103b7d8e852a2df4c0c4daa129ce7f39ea8075ab2e821c85"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8g2_ll_hvline.c",
+      "bytes": 9135,
+      "sha256": "5cbb087c688c29b5704cbf4e2971711da2a945dc6c71d9bb5e868b434a2a97f0"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8g2_message.c",
+      "bytes": 5549,
+      "sha256": "c8b6e01ccb075e7addeeae9551ccd74f65c29d238890adae13399c8dd9e6335d"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8g2_polygon.c",
+      "bytes": 7350,
+      "sha256": "8b0d82ce250db635af327fc90f269557e2d329e6f5a8502577bbd879ed608d66"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8g2_selection_list.c",
+      "bytes": 7648,
+      "sha256": "e42b2b802dd0c1d547723a0669c95f886123db2b846bb1791c2defdabcf40564"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8g2_setup.c",
+      "bytes": 11257,
+      "sha256": "c14956e20fcd83b5dea793f347f727502e11cba057886dc85d711cb3760bf679"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8log.c",
+      "bytes": 6564,
+      "sha256": "0bfa9e69b8d60db7db4d2a56554f35df7fb2279389178dd3a1aafb9b9e144edf"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8log_u8g2.c",
+      "bytes": 3255,
+      "sha256": "c6bc655c973e30fa089df145d8ac9dcae64b8a91db0bd28fe12be18293e16bb0"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8log_u8x8.c",
+      "bytes": 2417,
+      "sha256": "e45ccc063f2b22a7037c8711fe19edc9ac443d0b501aa12668898f3600f556a2"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8.h",
+      "bytes": 62109,
+      "sha256": "69227ef8799eb7da240d0de01d06d603de04e8aac8b69d39438c1bb29afec9ef"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_8x8.c",
+      "bytes": 12091,
+      "sha256": "dc188d78d8bbb6880da35347d2959ae75cb7975fa1562d3e0777f4a7517c2f1f"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_byte.c",
+      "bytes": 17809,
+      "sha256": "7ddc7f9bf3225af6ec9cf9c9d82e6cccce71569e4fc41691ea244ec434193ff6"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_cad.c",
+      "bytes": 21347,
+      "sha256": "58115369d497e1160487f7481c4e5a2c76969d2ba66ebfaccdb63a543e681aff"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_capture.c",
+      "bytes": 6466,
+      "sha256": "36f3b20027f4dec2a48053e1f83034b559cd62723c74f3cabc956567de83d776"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_a2printer.c",
+      "bytes": 6480,
+      "sha256": "f52e5972522aec49867deffca322fa678f726145baf7db2deda2e2450eedf8ed"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_il3820_296x128.c",
+      "bytes": 17371,
+      "sha256": "ccb9471716557efb23a5b6594b082e7f99090051f68e095c247c6eaa1e407e3e"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_ist3020.c",
+      "bytes": 7493,
+      "sha256": "f8712b1404d0981ef7dac36d3cacfecc55ba69e994cc8edf4c67ba4ba3fc6429"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_ist7920.c",
+      "bytes": 7143,
+      "sha256": "264d2518dd18d11146743f70fc2c74fdf5b974ce484a628248d0324e7ecd4d60"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_ks0108.c",
+      "bytes": 11407,
+      "sha256": "f6468dd7f87ed0285408112f3bcfb9be8cf74189a78ac0e45f6b5a2caf189023"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_lc7981.c",
+      "bytes": 15980,
+      "sha256": "a2cbbe609382b16764ce7d8502f3ca1d8c7bb34d96f84ee5c30502d961757307"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_ld7032_60x32.c",
+      "bytes": 11697,
+      "sha256": "d879fbb9d9ea19055eb5a4baaaa54cb3177a3999c4b276ef9e6fa46d5d0b733c"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_ls013b7dh03.c",
+      "bytes": 8164,
+      "sha256": "6f6d255b14dcc9d76735631533befe6d327659c85e61315d1d6c78f419b03e79"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_max7219.c",
+      "bytes": 16541,
+      "sha256": "66104edc2d7b6187edc72679f66cc046b8a2ecb6a520682acf2aeb95e534b774"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_pcd8544_84x48.c",
+      "bytes": 6183,
+      "sha256": "a54d6b9a7fba331a26eeb3f6dae137c8e3065ad47dbcc9dd73a99f6a19a3f56b"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_pcf8812.c",
+      "bytes": 6631,
+      "sha256": "9d7946c06ce05938df0ed579811200e2b8bcf4c7e3e8ee1628e4f37e20f8e92c"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_pcf8814_hx1230.c",
+      "bytes": 6777,
+      "sha256": "95376a99dcb1778aa38d7b87596f54a08c009601c0d5937862bd63e9866cf9a0"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_s1d15e06.c",
+      "bytes": 9080,
+      "sha256": "504d8706e6a40716402b0b12c5966aa4aa8fa36c46b0ed42b91cd86548233cf2"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_sbn1661.c",
+      "bytes": 7044,
+      "sha256": "8a6e0da3d19a2ebd43cda6ea01a813a9e86d7785df9e899995c5cba6c33057fa"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_sed1330.c",
+      "bytes": 12967,
+      "sha256": "c035d4a55db2a4792e1a554a8e61b370e538931acade4c55d5db27bcdf29802f"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_sh1106_64x32.c",
+      "bytes": 8365,
+      "sha256": "14ba5dac9efaad4786738490c999fd2199385b665e488810182b41bea871ab03"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_sh1106_72x40.c",
+      "bytes": 8376,
+      "sha256": "839bd3c262489eea8e46d7d2efa318f6d9b0c6869f78e2a2ba9b3047cfdf6255"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_sh1107.c",
+      "bytes": 18310,
+      "sha256": "9eeb6fc0dd29ac47ccb874afe7c6bb90f2ea63b5661e1004223a8c60512a5679"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_sh1108.c",
+      "bytes": 8072,
+      "sha256": "a75b8846db189c7d63e941c2cde135cc4a88329e0a97bd83f2b1c2e61535017e"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_sh1122.c",
+      "bytes": 8879,
+      "sha256": "63ac0e2387cd792f296d9d17aaf90f02d8ff52258a12cf810b85cd3779e6d03c"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1305.c",
+      "bytes": 16059,
+      "sha256": "6512209283ee2ba5b47bf42a6bffed8e01a98dbcaef1c2bee86fefc5ba181cea"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1306_128x32.c",
+      "bytes": 11975,
+      "sha256": "83b967bee3f5b35ca1411d1ea7cc296ba7e3038b6cb014061ac9b5f38d082b61"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1306_128x64_noname.c",
+      "bytes": 18003,
+      "sha256": "f8ff25a0ce32a6ac661645148952e70ccfb92a6ece51b09c5291345413db9b0d"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1306_2040x16.c",
+      "bytes": 8065,
+      "sha256": "f8aef778d289e54a13c2d9a43c949d84bb9ebfbe76d291f31a2fd99b3b25d58f"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1306_48x64.c",
+      "bytes": 8087,
+      "sha256": "40a4762b6a94349510e9882bcfe75ce31b6b5585822f1bbfbf4e521baba37b30"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1306_64x32.c",
+      "bytes": 10031,
+      "sha256": "cb2dffa3e3e1aebb45f613d7bd13bbe4dbbe3ba6767d3dc63a6d76be5ff94816"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1306_64x48.c",
+      "bytes": 8180,
+      "sha256": "fa6d6e36fed7ac8c798311eb5d4b1293ac07b951c1eff4c1f78372aa6370e9d9"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1306_72x40.c",
+      "bytes": 9514,
+      "sha256": "b987528f4109559d74c5595b2723f9b6fef99de1e0a1a0eb98cab5bb65f15156"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1306_96x16.c",
+      "bytes": 8148,
+      "sha256": "6f0eefffa21c9099004b0cff7ef5c44132d66d933368d39b9d87cda8cbdead1a"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1309.c",
+      "bytes": 10033,
+      "sha256": "0a0223336abe6d9e5f4c8dc059c9880775ac282f04a19ca2d70acccf268f7b49"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1316.c",
+      "bytes": 8282,
+      "sha256": "5d5d221882ce1d60b9b3c77c8001ffca8b6268568cca7cd7e095738965679487"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1317.c",
+      "bytes": 8529,
+      "sha256": "dc13b4f565cfeccb7a35b7add5cf10c68fb382bec83f1e2d0be78c4849784d13"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1318.c",
+      "bytes": 11302,
+      "sha256": "345101bf5b675b6b319447de52a23fb6db2cc1d4956c9c5cb5994145579b758d"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1322.c",
+      "bytes": 17588,
+      "sha256": "d6e42e1ad7435860fdc404d564a8339d1f6b3d1f1ec221d69bb13b450a34a626"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1325.c",
+      "bytes": 16240,
+      "sha256": "d78781b8b045142661b8d4bae2869bed8e80be94b3e434bc7e09e22691ce157d"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1326.c",
+      "bytes": 9348,
+      "sha256": "3aa94e8cbc06a86aa44b2941bf787836306ac6bf20b402f0c73048d147ee0393"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1327.c",
+      "bytes": 34192,
+      "sha256": "1c667c7102c879c6ac091c74ed05e496ea2bcdfa5c3c481c3134b868ea064722"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1329.c",
+      "bytes": 9949,
+      "sha256": "c3eaf0d452447a2c57ff57f218cd0877dd2d6e66275da503db3f4705bb1b7c5d"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1606_172x72.c",
+      "bytes": 13200,
+      "sha256": "71f6bd4c44f3c5ca0078da7165d651a5f59538830e16a1a15af220e6d844bb82"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1607_200x200.c",
+      "bytes": 21908,
+      "sha256": "f12ec52035da9cd4d2dd97a0c58ec63adc7a177b5fe1a4021b3b49ebc9ddc5f0"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_st7511.c",
+      "bytes": 7450,
+      "sha256": "67b4ede5c0ba81686260e5404553434b500abef979db71849359a01d2e9994ac"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_st75256.c",
+      "bytes": 58834,
+      "sha256": "f0004defe540669e5e5bb5f6c502bde5dc52b71bc2f46ca469154d6a80183b31"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_st7528.c",
+      "bytes": 14581,
+      "sha256": "6d725bfb87129cc3ab934d5a707e538f83c34f419f9ae5b92ecbe48aa7a97335"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_st75320.c",
+      "bytes": 9342,
+      "sha256": "e9f08dc40e7ef0e8c365ca6b953b7812153aeee114edb757b94d44ee24db3466"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_st7565.c",
+      "bytes": 48470,
+      "sha256": "4bd696996429e7768699c2a0f53d1a99a08dd1b489baa8af8fedf04ca5a79c72"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_st7567.c",
+      "bytes": 33094,
+      "sha256": "ac1a08ce9b3944c6e4ac91b90a1370a4750d72aad38b2ee8e8f3db8b70e69751"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_st7571.c",
+      "bytes": 8271,
+      "sha256": "5149fcd4345077f62b8197bd630d6820b5dd7ca379a509a5e4671f38d19a5a3a"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_st7586s_erc240160.c",
+      "bytes": 8954,
+      "sha256": "9d94382b8f502cff0562c3a5a75114a882682d60c9ef550d9f0b0511b2f332b7"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_st7586s_s028hn118a.c",
+      "bytes": 8767,
+      "sha256": "c4a5a51e87f276b2d32469ab48a2ae7c25d16f466c747159eec160a69ed99836"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_st7586s_ymc240160.c",
+      "bytes": 8187,
+      "sha256": "26e69dbefd69aa60738d4089d2da780a26f02aabdef88f00f4b4c215a989666c"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_st7588.c",
+      "bytes": 8353,
+      "sha256": "b9d493ef68d0c3429f58b61d29bb486f7b6494003d5a38822f5d32debefed70e"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_st7920.c",
+      "bytes": 8665,
+      "sha256": "9dfcbd88e2a23c6aa9bf6bb5e65afd403d5b105c93e242267174c436ad15050a"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_t6963.c",
+      "bytes": 19766,
+      "sha256": "4bcf823d0a50205a48fbaff5423d36e3fbf25e30fdc308c3dd838135a14ed2b7"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_uc1601.c",
+      "bytes": 6909,
+      "sha256": "ba1d38247c56b64bc58b16aa7d8bb9eb3f7eb06b84d2fdb286a5c210226bed50"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_uc1604.c",
+      "bytes": 8224,
+      "sha256": "fcd4e4133c09770d9dcbc3e1f1e091a89e238a97806aab257b2bb032f643b0a9"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_uc1608.c",
+      "bytes": 19099,
+      "sha256": "f0595d5f61cd31c8b6e7444bb4d3fcca91e667b633a1866549e8bf4e331f2e45"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_uc1610.c",
+      "bytes": 8883,
+      "sha256": "5c29dc9eb1ec332f38f364b99a58fbb7c7fc34274ec481804909f649b7e68530"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_uc1611.c",
+      "bytes": 27062,
+      "sha256": "4a9f7144ad6e4eb0479b1174b280c7d9bddf2798fa7a4255dd5a34df97517b1c"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_uc1617.c",
+      "bytes": 9895,
+      "sha256": "2b60e80853caafcfd541230214688cc627bf654e0224f60cba7f5a6a2802f747"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_uc1638.c",
+      "bytes": 7563,
+      "sha256": "c9d6dbb97a250cf75226e4e908cb33cbfeb72f7c99a51b9cd8c59d9067c8ff4d"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_uc1701_dogs102.c",
+      "bytes": 7530,
+      "sha256": "df9773624f56db031211d65c785f3ab73197e607b0d01390ef6d884a6260ae80"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_d_uc1701_mini12864.c",
+      "bytes": 7506,
+      "sha256": "4ec3efe60057531853fd9d7f9c541bd5534f9496117fd53dd37945b076320b2e"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_debounce.c",
+      "bytes": 5614,
+      "sha256": "8f2f43481076bd0454c99127d133db24208f9bc92659332e0c2ff76ab7b7e85d"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_display.c",
+      "bytes": 5129,
+      "sha256": "12a2a0505103718a85fce8c4e4d618ee5f81f910031dcb3140fb6d03a9dc1d9b"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_fonts.c",
+      "bytes": 1600067,
+      "sha256": "f346388ab6d016cca1c5f9abcfcb0bae6c9fcc40dd32783e1cb5682110d300f3"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_gpio.c",
+      "bytes": 1718,
+      "sha256": "884bc9f983276256faced6767a942ca5e79a03568b284165c0d1c4f855b0d630"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_input_value.c",
+      "bytes": 3603,
+      "sha256": "4816e93ae16c41409497ea8b09facc05f4afc297a7868b2655aba12b755108ca"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_message.c",
+      "bytes": 4425,
+      "sha256": "d24fa19f1f37426b44138a4c22cb9d0342626d735faf2e0a104e9d7dbb95ef18"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_selection_list.c",
+      "bytes": 4941,
+      "sha256": "e1290066f6ac1a4b6b7d5c86b6082bb8186ba63685c173213f74811514f7231b"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_setup.c",
+      "bytes": 4874,
+      "sha256": "3f50da0b74fea01a3386a3192d412aceadc09cac3e5cbb0b879c1a7e80a38886"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_string.c",
+      "bytes": 3983,
+      "sha256": "20cfe514ca42bfa22fb5a52aaf9bac3ab8b1e69c994df3fdeb73e3353e9687cc"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_u16toa.c",
+      "bytes": 2080,
+      "sha256": "5a6877ecb5b0665a48f952588e5bdd173407cf4dac399bcfa75ba64dad412b42"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Library/U8g2/src/clib/u8x8_u8toa.c",
+      "bytes": 1997,
+      "sha256": "bcbaaf9c4d2f8d067f78d7e2826003282a7c467a4764a931d8f67fd28d384e21"
+    },
+    {
+      "path": "Drawbot_C/02 arduino code/Walldraw/Walldraw.ino",
+      "bytes": 16758,
+      "sha256": "aae7083fe130967f87f349e498b1957ffbe63d851a5668dc41b0ec67494eb29c"
+    },
+    {
+      "path": "Drawbot_C/03 Tools/1、G code generation tool/Instructions for use.pdf",
+      "bytes": 389400,
+      "sha256": "ebf7a7e2c3107c1e69b03817fbb72e92658e4fb41a51b90d3d8fd976d19af7de"
+    },
+    {
+      "path": "Drawbot_C/03 Tools/1、G code generation tool/Youzhihui NC/unicorn.inx",
+      "bytes": 2348,
+      "sha256": "e6092861edd8cf25f8320da25e1d442b6d2145e1fb67c6323724d1215cf3c090"
+    },
+    {
+      "path": "Drawbot_C/03 Tools/1、G code generation tool/Youzhihui NC/unicorn.py",
+      "bytes": 5283,
+      "sha256": "eb512935b7f539e75541479ad323f24457e868f851570ade858df29d0e488181"
+    },
+    {
+      "path": "Drawbot_C/03 Tools/1、G code generation tool/Youzhihui NC/unicorn/__init__.py",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "Drawbot_C/03 Tools/1、G code generation tool/Youzhihui NC/unicorn/__pycache__/__init__.cpython-38.pyc",
+      "bytes": 162,
+      "sha256": "c8321682fd2ab235737e2ba704f847e924fac6da6a491ba044d5030a512e0b0a"
+    },
+    {
+      "path": "Drawbot_C/03 Tools/1、G code generation tool/Youzhihui NC/unicorn/__pycache__/context.cpython-38.pyc",
+      "bytes": 2950,
+      "sha256": "85d4bf9904412b55268ca829faf59a99bc030874a00fe9f548ce4a100798e3ec"
+    },
+    {
+      "path": "Drawbot_C/03 Tools/1、G code generation tool/Youzhihui NC/unicorn/__pycache__/entities.cpython-38.pyc",
+      "bytes": 4162,
+      "sha256": "c1d6e42a778aea6bd94170a73e5e8e4adf1f17925d2e4251d4dd796273a60be7"
+    },
+    {
+      "path": "Drawbot_C/03 Tools/1、G code generation tool/Youzhihui NC/unicorn/__pycache__/svg_parser.cpython-38.pyc",
+      "bytes": 10485,
+      "sha256": "dd704e9d0a8d668b2b2bf41c20dd981d6dfce39d99a598dbfbd8b46cf80d85dd"
+    },
+    {
+      "path": "Drawbot_C/03 Tools/1、G code generation tool/Youzhihui NC/unicorn/context.py",
+      "bytes": 5542,
+      "sha256": "2c88d5f51e4057f8a0b5042ff75cdac1229541fd8fe7366e7b2d8e1604340443"
+    },
+    {
+      "path": "Drawbot_C/03 Tools/1、G code generation tool/Youzhihui NC/unicorn/entities.py",
+      "bytes": 2906,
+      "sha256": "678c80fae9d72c0ed7d45077293209e5a816e8732eb64f79f1c8a9ec8080b6d5"
+    },
+    {
+      "path": "Drawbot_C/03 Tools/1、G code generation tool/Youzhihui NC/unicorn/svg_parser.py",
+      "bytes": 13762,
+      "sha256": "406c448a762c37bf21832fe59749a27968e1747741307ed0e0815662418eab0f"
+    },
+    {
+      "path": "Drawbot_C/03 Tools/1、G code generation tool/inkscape-1.0-x64.exe",
+      "bytes": 92830805,
+      "sha256": "687eae5b0e36fa31bf0c2ddd47f543546db99a8b2756c38b0915c62c165fffca"
+    },
+    {
+      "path": "Drawbot_C/03 Tools/1、G code generation tool/inkscape-1.0-x86.exe",
+      "bytes": 92625269,
+      "sha256": "53158bed000cc22f1997d80b79537f0f4906253d481f2de788afc21f584176ee"
+    },
+    {
+      "path": "Drawbot_C/03 Tools/2、G code viewing tool/CIMCOEdit.exe",
+      "bytes": 261598272,
+      "sha256": "4388a24c72b6667fa5903c4d03f07f78c1bdde3e1b827da89c636fc5462facbc"
+    },
+    {
+      "path": "Drawbot_C/03 Tools/2、G code viewing tool/Instructions for use.pdf",
+      "bytes": 188128,
+      "sha256": "83adc16a7afdb11a9b5a7cd950a7eddabfacd240325016929e32431b66eb130c"
+    },
+    {
+      "path": "Drawbot_C/03 Tools/3、stick figure code generation tool/Crate GCode.exe",
+      "bytes": 745984,
+      "sha256": "f9ff6c79dda96242e5bf0ef1992d587f57455dc96b8f9e91b65e46ca16dc8395"
+    },
+    {
+      "path": "Drawbot_C/03 Tools/4、Art photo G Code processing tool/Drawbot_image_to_gcode_v2.rar",
+      "bytes": 25259181,
+      "sha256": "8c385dcf83c3c4f9979ef327be06aa72ee6476afcabdbcaadb46819300e88380"
+    },
+    {
+      "path": "Drawbot_C/03 Tools/4、Art photo G Code processing tool/Instructions for use.pdf",
+      "bytes": 27216,
+      "sha256": "049383a5413eca7809a89277b590eafe5942420c05bca548054724c2e7706a28"
+    },
+    {
+      "path": "Drawbot_C/03 Tools/4、Art photo G Code processing tool/processing-3.5.4.zip",
+      "bytes": 132952672,
+      "sha256": "e7a3f924bc265e926e63e1ea771d1379448b58c2d0671b0f8ddadef1aa6eda0e"
+    },
+    {
+      "path": "Drawbot_C/04 STL files/Kit.stl",
+      "bytes": 299384,
+      "sha256": "959e8fa26b87f7a6d68e756b2fdf7c170917c098955aa444cd9950da4bb83fe3"
+    },
+    {
+      "path": "SdCard/01 Test GCode/Bikini/Bikini.jpg",
+      "bytes": 82432,
+      "sha256": "172b5cee383e513bf960174448f55580fb6814a62918d2f5d85716e6bf189a48"
+    },
+    {
+      "path": "SdCard/01 Test GCode/Bikini/Bikini.svg",
+      "bytes": 23739,
+      "sha256": "bfa00daaddc5276a7c23cf7c14d8826d5f8e023054b1d14cf8648f85ca6870d4"
+    },
+    {
+      "path": "SdCard/01 Test GCode/Bikini/main.nc",
+      "bytes": 28165,
+      "sha256": "cc1748537f2b76cddc45d82ffcf3274b6706f6176a730a3bbd3f31f4726ff4aa"
+    },
+    {
+      "path": "SdCard/01 Test GCode/Crab/crab.jpg",
+      "bytes": 97825,
+      "sha256": "6aadb1fec5564349b84c743c9888b1f9dcf3d3622fc1065c6e5025b9ed569c78"
+    },
+    {
+      "path": "SdCard/01 Test GCode/Crab/crab.svg",
+      "bytes": 40766,
+      "sha256": "752443c4e17a08abaca41479816e8c63f5f059490bc38a8864e82d5496aef164"
+    },
+    {
+      "path": "SdCard/01 Test GCode/Crab/main.nc",
+      "bytes": 35319,
+      "sha256": "2550cc2aa3bc09b56adb5aa15494c4dd690a5a97945395dd1f4d72ef2f5c82fd"
+    },
+    {
+      "path": "SdCard/01 Test GCode/Girl/girl.jpg",
+      "bytes": 112646,
+      "sha256": "11ee36f8baa10263d351b6351f9fa047fd57bc21903822e052f6d06f0425ad96"
+    },
+    {
+      "path": "SdCard/01 Test GCode/Girl/girl.svg",
+      "bytes": 34753,
+      "sha256": "6377e336476cc981614f4297bc95c2f60e6c318f1b6958be9404dae8150b9fd3"
+    },
+    {
+      "path": "SdCard/01 Test GCode/Girl/main.nc",
+      "bytes": 35180,
+      "sha256": "cf1f2b81d735737d80af49487296b0bd88cd4fcdf3eb5852995b6efe7e317764"
+    },
+    {
+      "path": "SdCard/01 Test GCode/Girl1/Girl1.jpg",
+      "bytes": 138231,
+      "sha256": "ff911e0c885a5e45b1c1dcb1bc739e16beedd59c9b3f1d163c05a8757db1614d"
+    },
+    {
+      "path": "SdCard/01 Test GCode/Girl1/Girl1.svg",
+      "bytes": 23930,
+      "sha256": "612355b1081a53fedefe2b7d3193a5ab9ea678a06b3e48c5cdf105bac3c89667"
+    },
+    {
+      "path": "SdCard/01 Test GCode/Girl1/main.nc",
+      "bytes": 33530,
+      "sha256": "85a55d6e18f5e1b7ed8b3c3d6623c7843c260b332828f042e52b4cf91739eb06"
+    },
+    {
+      "path": "SdCard/01 Test GCode/Hamburger/Hamburger.jpg",
+      "bytes": 20398,
+      "sha256": "5ac530211da4fed14a65a46a763d6ccadc618df4e02b67e34d6b08561c6125fa"
+    },
+    {
+      "path": "SdCard/01 Test GCode/Hamburger/Hamburger.svg",
+      "bytes": 6516,
+      "sha256": "1fe24f9c98a6233cb1fb88cf6a208780f3281fca896917e9cd22be03a9a76275"
+    },
+    {
+      "path": "SdCard/01 Test GCode/Hamburger/main.nc",
+      "bytes": 5449,
+      "sha256": "fa663f4c657a6cb8c3fd4b25363de6359d09bcb4c8803d549600e8c9583db80c"
+    },
+    {
+      "path": "SdCard/01 Test GCode/TOM/main.nc",
+      "bytes": 60521,
+      "sha256": "38b0da90e846f212789c069b372abc2423faad07d4f4f667e507d1a02d680487"
+    },
+    {
+      "path": "SdCard/01 Test GCode/TOM/tom.jpg",
+      "bytes": 91248,
+      "sha256": "da9d6c7d355a47a0bc8fa7cad57a6f1afab8aaa8c2ec4848d59d34b163fe30aa"
+    },
+    {
+      "path": "SdCard/01 Test GCode/TOM/tom.svg",
+      "bytes": 35744,
+      "sha256": "684de9dac2a3e4ee402b59c19ae64d4da0ccf074af0170435185652b0cba4d4a"
+    },
+    {
+      "path": "SdCard/01 Test GCode/Washburn logo/Washburn logo.txt",
+      "bytes": 4328,
+      "sha256": "25b03d0716fb601e8390196cfc8180361221dd33455dbe4c3c604ffe719001b7"
+    },
+    {
+      "path": "SdCard/01 Test GCode/airliner/airliner.jpg",
+      "bytes": 45859,
+      "sha256": "872a7b6cbc583b48b6841cee42a00e207f3fee7f45812448f84c41f4d1fc0d87"
+    },
+    {
+      "path": "SdCard/01 Test GCode/airliner/airliner.svg",
+      "bytes": 11469,
+      "sha256": "afe4825e7e96c23a133369bf6c40e872ffcc11ce0474047d6cc3baad6ca74de3"
+    },
+    {
+      "path": "SdCard/01 Test GCode/airliner/main.nc",
+      "bytes": 9844,
+      "sha256": "d3fce3022eed9a29b4c37fb8bb7b33c33ceb52c81670679f2ff3454923145909"
+    },
+    {
+      "path": "SdCard/01 Test GCode/banana/banana.jpg",
+      "bytes": 229052,
+      "sha256": "a1a35a96e7ef19c1f856a17d8dc5964c5056cf799fcb8210b8aadd2ed1ac7841"
+    },
+    {
+      "path": "SdCard/01 Test GCode/banana/main.nc",
+      "bytes": 52425,
+      "sha256": "c08e096dce7f34d05325ecfd783c2e690bb7f8cfbdf03c7614f13d0be0581ea3"
+    },
+    {
+      "path": "SdCard/01 Test GCode/cat.nc",
+      "bytes": 8640,
+      "sha256": "1f85ce208aa5087ddc3eb7fddcee71edaeaa60d2b1e122ed1054db4d26d98c75"
+    },
+    {
+      "path": "SdCard/01 Test GCode/circle.nc",
+      "bytes": 2175,
+      "sha256": "ba573e26380830f0d5868383e132a5190ea60a0bdc73ce3f640ac300359f0747"
+    },
+    {
+      "path": "SdCard/01 Test GCode/mandala_11x14.gcode",
+      "bytes": 331164,
+      "sha256": "14e9aec7da4e889712e39f0b8eeca6b725410c2e2b2057ae19afe59f6e941c9a"
+    },
+    {
+      "path": "SdCard/01 Test GCode/receding figure/main.nc",
+      "bytes": 22405,
+      "sha256": "a60696fd52b1f0315fef89a7cea6e730bc794a90328bb9561b87b23f3f8f47ce"
+    },
+    {
+      "path": "SdCard/01 Test GCode/receding figure/receding figure.jpg",
+      "bytes": 49951,
+      "sha256": "c9a1118f311592d198fcea4c3ea0fc81aeb2c4312991528b7ac9c08d9ca22f1e"
+    },
+    {
+      "path": "SdCard/01 Test GCode/receding figure/receding figure.svg",
+      "bytes": 12688,
+      "sha256": "53751cd3793ad46b7ffeab52e43bab2ec970468b9337452040cac957bd8c1608"
+    },
+    {
+      "path": "SdCard/01 Test GCode/receding figure1/main.nc",
+      "bytes": 80897,
+      "sha256": "9ed3856caa4fec752a1e686354f384fad63d5af3ca7dc609b6408afbda06875b"
+    },
+    {
+      "path": "SdCard/01 Test GCode/receding figure1/receding figure1.jpg",
+      "bytes": 74917,
+      "sha256": "168f5184d9e3c0894d7001a4954453d2d0cff90846d3f8dafdee0f62ec2f0d20"
+    },
+    {
+      "path": "SdCard/01 Test GCode/receding figure1/receding figure1.svg",
+      "bytes": 37354,
+      "sha256": "29614654242942c17a78942e9c4773da2b7ef0787b87553659f0e61143228d89"
+    },
+    {
+      "path": "SdCard/01 Test GCode/skeleton.nc",
+      "bytes": 16858,
+      "sha256": "04da0509a90d0e7df285e67c9cdc3a74519cfa423364707b86e10b9557a3da9c"
+    },
+    {
+      "path": "SdCard/02 arduino code/Driver/CH340DS1.PDF",
+      "bytes": 141836,
+      "sha256": "8c572f94fbd780f9f4e694c67dc2768fc7994d62fe88e2cf1a24d00e40bd0713"
+    },
+    {
+      "path": "SdCard/02 arduino code/Driver/CH341SER.EXE",
+      "bytes": 233018,
+      "sha256": "5c79a8c123d3fa03274fdccc8fad722aaf3b703df35c39b4b42f0b5bfbb26dfd"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/Explanation.txt",
+      "bytes": 456,
+      "sha256": "c26a237a0124efba3d3ade2effbbd883cdcd72e342b2a0649a5c8b010e1f2309"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/Offline installation library.exe",
+      "bytes": 7903615,
+      "sha256": "ed734fe9065f8e19e617b2675ca1c47190a11154d0e555c8766bfb7958d4e235"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/SD/.travis.yml",
+      "bytes": 3468,
+      "sha256": "d9a5efc05277b40ba9a63dfe0e6fe986a6d4e74c04896e14a54dc5419230fa03"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/SD/README.adoc",
+      "bytes": 1029,
+      "sha256": "f9931d8a82e52c2b1f05f486deeb4dd1c170a17f75881f774391f94b562ab8cc"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/SD/examples/CardInfo/CardInfo.ino",
+      "bytes": 3566,
+      "sha256": "b2b60470b55dbe02992e45e41a10bc0c847240a9529618aba494488e7b9ec492"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/SD/examples/Datalogger/Datalogger.ino",
+      "bytes": 1795,
+      "sha256": "00148886ac68137ffb7a72adbed0c5b466438c87c8cfc1d7360de64d131f05b8"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/SD/examples/DumpFile/DumpFile.ino",
+      "bytes": 1422,
+      "sha256": "3945e4c07aa228f62074d26815ed91e4d74b6ee4bda6070a2708709722e88f6f"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/SD/examples/Files/Files.ino",
+      "bytes": 1586,
+      "sha256": "78789146a22df13ead09896d76b9c22bcfe6d46029d34a5c0e3498295c34c572"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/SD/examples/NonBlockingWrite/NonBlockingWrite.ino",
+      "bytes": 2268,
+      "sha256": "0e1a2f9df3aa0bacbbf260b9b5a5da059e9d9d9d1991045076497a3988797592"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/SD/examples/ReadWrite/ReadWrite.ino",
+      "bytes": 1760,
+      "sha256": "18372078a35081977e740ac1b4de5459900160c7d096fc8d1fd6ff7c445f4cb9"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/SD/examples/listfiles/listfiles.ino",
+      "bytes": 1512,
+      "sha256": "728e9332f8be84b600abbd6fa6852addd90e331778f799ed6e3add6d7c35d113"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/SD/extras/codespell-ignore-words-list.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/SD/keywords.txt",
+      "bytes": 673,
+      "sha256": "70bced56cddad05b014200210c7cd1a294ce760614b779e2d3fbe0410f350738"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/SD/library.properties",
+      "bytes": 413,
+      "sha256": "fee91e19c09d13c677a69c1b2e96c07a98769d4aa1c6d6ce57a4051102f54c03"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/SD/src/File.cpp",
+      "bytes": 2801,
+      "sha256": "99cf957d01ad7ddc8acee3ebe2c11cca0f8566103b05610c0c733efee640decb"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/SD/src/README.txt",
+      "bytes": 401,
+      "sha256": "ded87a64f07f65c8d508780fd7beded578ed6529695bba1f627a140e3e349ae0"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/SD/src/SD.cpp",
+      "bytes": 16278,
+      "sha256": "1ed895f215fcda362c817e17d7dceaaf219d65dec04accdbbca185e70548b204"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/SD/src/SD.h",
+      "bytes": 4160,
+      "sha256": "b402c80226fb07a98f03bc03a35b1eb1dd3dd44190716dfb7eee1118b56e9517"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/SD/src/utility/FatStructs.h",
+      "bytes": 15464,
+      "sha256": "a9c40dba025e31e4991cacec2a5278fa2fd8634b1df7027e5079d8860ba3915e"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/SD/src/utility/Sd2Card.cpp",
+      "bytes": 22384,
+      "sha256": "efc56f718e3c14a49888c8aebf6e1aca0d189eab8cd5edda6c729c0c92638f31"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/SD/src/utility/Sd2Card.h",
+      "bytes": 10394,
+      "sha256": "e4378efda4c4c20ce8834932b4a0da5831e4e1ca1fc37f86eb4f8a946069ab3d"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/SD/src/utility/Sd2PinMap.h",
+      "bytes": 18228,
+      "sha256": "ebc5234341fcad1d81f5fde230f6681c3c61d34a0e1cba9bca44431b41d10a5a"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/SD/src/utility/SdFat.h",
+      "bytes": 24297,
+      "sha256": "3e4073cf9a323f83fb139b9ededb9f3b4e37f3aa9419d9700cf36f40de1bfe0f"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/SD/src/utility/SdFatUtil.h",
+      "bytes": 2699,
+      "sha256": "285c1e5d3d63e4cfe806fb8081276a0bfba266bd47e3324447401affd75f9944"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/SD/src/utility/SdFatmainpage.h",
+      "bytes": 8429,
+      "sha256": "a78ff629d9214f0af0f8eeb629643b568b368380bf95b3b7ce96bb6c2ff66177"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/SD/src/utility/SdFile.cpp",
+      "bytes": 44920,
+      "sha256": "8637d0bfabf5e726b278dfa4bbd31ada26d76c2a8acb1dec401ff51178a9886a"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/SD/src/utility/SdInfo.h",
+      "bytes": 7258,
+      "sha256": "75d413603fad66d5ddb7176b575b74632c7d1bb5d112461f2982f265168ed107"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/SD/src/utility/SdVolume.cpp",
+      "bytes": 10469,
+      "sha256": "fe3eadb23c31bc18a0c7f3722d12d8d3ee49a69764fa38a24ea957f555bb147e"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/Servo/README.adoc",
+      "bytes": 1029,
+      "sha256": "f957002deb70887a8ffd680291c68935d995af8f29512d0910fffd082e3445d7"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/Servo/examples/Knob/Knob.ino",
+      "bytes": 923,
+      "sha256": "d4470296096bbc1f7cb6b29f59f437f2a85e90fb90fe47fbc1742abd44d504e9"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/Servo/examples/Sweep/Sweep.ino",
+      "bytes": 1020,
+      "sha256": "db5d5d7a5022ce48a0e0e4d6173675507065a36af01e7df9441fbf3e94b7d9d7"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/Servo/keywords.txt",
+      "bytes": 586,
+      "sha256": "59ae2d3c412f136b04c2cb00019dc9f93ba0d56b409c1c3241adb48413e17d2e"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/Servo/library.properties",
+      "bytes": 510,
+      "sha256": "bfa988c2ad8a4234684d8fe0ed02e41eae97b8f3f0f777b0cf90effa721409ef"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/Servo/src/Servo.h",
+      "bytes": 5253,
+      "sha256": "5358edbf688e3fe85165676107a53b543a1e513a6f551862a5f4ea987670718e"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/Servo/src/avr/Servo.cpp",
+      "bytes": 10905,
+      "sha256": "11e159345dd9e6875f3fe7f3619baebc268844814b9cf91b50e3055296a13a38"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/Servo/src/avr/ServoTimers.h",
+      "bytes": 2175,
+      "sha256": "32e5d2ca7ba83f3dc41a690e5361c9eccaf993191ec525697350d0d82b87b97c"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/Servo/src/mbed/Servo.cpp",
+      "bytes": 3296,
+      "sha256": "cf6811f3a369ac49e4f552c6b9aba566157c7f59164debf6107513476b9669a4"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/Servo/src/mbed/ServoTimers.h",
+      "bytes": 24,
+      "sha256": "4c1fecfb9cd267033ca8433165a749c3e017b7586baeaeadf9ab25696373ed84"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/Servo/src/megaavr/Servo.cpp",
+      "bytes": 7132,
+      "sha256": "81a0f98f219c76edab871546db002bbbf179afeea10f25ff472cb1eebeb67380"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/Servo/src/megaavr/ServoTimers.h",
+      "bytes": 1535,
+      "sha256": "a62bb3292892e49d1f6d2bb61039fd04d102ecd47c26880598ce9b3fc6d8aaee"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/Servo/src/nrf52/Servo.cpp",
+      "bytes": 4239,
+      "sha256": "d73e932a8ca708bc9ee47514f927abe5a617a702c15e8cfb78409c0e3518f485"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/Servo/src/nrf52/ServoTimers.h",
+      "bytes": 1214,
+      "sha256": "28f6f65d7ea8f4645f5140d1bc29f753ae4035263734220efefff1dd63d104d7"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/Servo/src/sam/Servo.cpp",
+      "bytes": 9920,
+      "sha256": "bb3d0a61319a8b5bc6b49887d64dce79430a1988d0a759f2522e2a77eb761a41"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/Servo/src/sam/ServoTimers.h",
+      "bytes": 2637,
+      "sha256": "bc2da5ea4b13d7b6a476459fb68bcb7af7881a61f98c23cd10c32c3837c8347a"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/Servo/src/samd/Servo.cpp",
+      "bytes": 10584,
+      "sha256": "af9179d872df558a9fc9b1fd2c10335f8d52e783bde4c3b9795d1b4586b46b22"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/Servo/src/samd/ServoTimers.h",
+      "bytes": 2415,
+      "sha256": "83d6496cb0e977a3f18f6bb3ad60ea39e210b7902feb5108a1e3cecaa290d418"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/Servo/src/stm32f4/Servo.cpp",
+      "bytes": 5861,
+      "sha256": "0da1dd34cf8da54a5f31f22e872437023b944567dfed931af6bdf15a6a77ab72"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/Servo/src/stm32f4/ServoTimers.h",
+      "bytes": 7179,
+      "sha256": "b60746097ce1857fb66dc8077520b488ebbf709327f2778d16ed34c7bf053bd1"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/TinyStepper_28BYJ_48/Documentation.md",
+      "bytes": 9739,
+      "sha256": "47b8b8ccbb005add163a0939b88309597580b8ad4793a5a0a4353cc7a7765db3"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/TinyStepper_28BYJ_48/Documentation.pdf",
+      "bytes": 73062,
+      "sha256": "0f8ed91bdfdea16413c2a4a137cd089b2d1d2cadbd4ae272dbe8c0728ccebc4c"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/TinyStepper_28BYJ_48/HookupGuide.pdf",
+      "bytes": 18379,
+      "sha256": "03bc6909297f230a8d70153e1a7edc54553f6f2730b5d9ce07713249bd89ef4b"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/TinyStepper_28BYJ_48/LICENSE.txt",
+      "bytes": 1100,
+      "sha256": "dfeb6e8dfa70b3cfdafb2f6f4a9272b69065e04785ac7451ec0070cd2b97b960"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/TinyStepper_28BYJ_48/README.md",
+      "bytes": 818,
+      "sha256": "ed23ab43953c3e205f8203c0fb27bacc79b8dccfed3538f69e6703ee408ab1f9"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/TinyStepper_28BYJ_48/examples/Example1_BasicStepper/Example1_BasicStepper.ino",
+      "bytes": 2653,
+      "sha256": "3cd4558e56b477e2199bbf8197cee7272b34df7ccbade5376c9acd9f89e06b1b"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/TinyStepper_28BYJ_48/examples/Example2_AbsoluteMoves/Example2_AbsoluteMoves.ino",
+      "bytes": 3477,
+      "sha256": "63a4f89f08dd761391e2f276541348475b83e4d474165cee85e1176446bfc2f6"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/TinyStepper_28BYJ_48/examples/Example3_MovingTwoMotorsAtOnce/Example3_MovingTwoMotorsAtOnce.ino",
+      "bytes": 5832,
+      "sha256": "8222790634cf663adbf8a5c83b6b4404662e5411d5bb0a5281ef83a754bc47e8"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/TinyStepper_28BYJ_48/examples/Example4_MovingWhileDoingOtherThingsToo/Example4_MovingWhileDoingOtherThingsToo.ino",
+      "bytes": 3510,
+      "sha256": "cfd5eee910cb1bf910fdc7ae182bb7243df4f7a985a976c037a147ffaf9dc2ac"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/TinyStepper_28BYJ_48/library.properties",
+      "bytes": 472,
+      "sha256": "8f1e86809d484c736219db8c3060ce53904b8775e8791b69c135e9f56d209fc9"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/TinyStepper_28BYJ_48/src/TinyStepper_28BYJ_48.cpp",
+      "bytes": 15443,
+      "sha256": "1445ab50813b292fc5d6a20e32db0e0c6c395c005b455462cec5362e7418b4bc"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/TinyStepper_28BYJ_48/src/TinyStepper_28BYJ_48.h",
+      "bytes": 2365,
+      "sha256": "e03ee9e226a9c11540e1011034672012891c795ab474bfeb222267a0d86cd8a1"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/LICENSE",
+      "bytes": 3999,
+      "sha256": "8036926d9114ede461a6e3b0f2a7174d36d29989fb0235bd4e17fe80f726538b"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/README.md",
+      "bytes": 459,
+      "sha256": "34e2945e739f688b8ab939ddad1a0471fa5af8800916c83d58a11d36baf84989"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/full_buffer/FPS/FPS.ino",
+      "bytes": 41746,
+      "sha256": "ce6d5b9e1d61be8eb91b453e10533476634183f1a3dc42cbbd061d17e6eb0a72"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/full_buffer/FontUsage/FontUsage.ino",
+      "bytes": 36755,
+      "sha256": "ceb78957fa5cc2d24ab5ed8aa1fed30c198da0193576f041e1189439a7ccadc6"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/full_buffer/GraphicsTest/GraphicsTest.ino",
+      "bytes": 37409,
+      "sha256": "ef7f765344e7237de1becc77e073aaf6b2d89ad9bf3e70f248c9a1969006ea28"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/full_buffer/HelloWorld/HelloWorld.ino",
+      "bytes": 31363,
+      "sha256": "174b4c19faf4c0b98a331c6ef80234243ee6efbaece7a1bdc48a27b50e1d348f"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/full_buffer/IconMenu/IconMenu.ino",
+      "bytes": 36246,
+      "sha256": "b705c14d5c4e9f3e04dd9218280203e84f4a9c9af32f06b8551e12d7fd7a7429"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/full_buffer/PrintUTF8/PrintUTF8.ino",
+      "bytes": 31565,
+      "sha256": "9d05fff89d95d958e274e542e284b0e3962ee8e6a2ea540baab0c33f41a7997f"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/full_buffer/ScreenShot/ScreenShot.ino",
+      "bytes": 31875,
+      "sha256": "f37f8f6885a78639a9f91c3648511b8cc0e5a92d2c42fe94fa6bc669f0064b80"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/full_buffer/SelectionList/SelectionList.ino",
+      "bytes": 32526,
+      "sha256": "a01bfe2947c88d91f8d8f2cf15be69f053e453c354f1860774cb47d170ad96d0"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/full_buffer/Shennong/Shennong.ino",
+      "bytes": 38248,
+      "sha256": "5b7cd388cd9299be048242fde775e28ddcf2ff7c7f045f9a0fc706f329746285"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/full_buffer/U8g2Logo/U8g2Logo.ino",
+      "bytes": 32656,
+      "sha256": "d4c09ff53bf16d9acf61ae60769757dcfb7bc6de793173b093031c7df00c07d0"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/full_buffer/UpdateArea/UpdateArea.ino",
+      "bytes": 33315,
+      "sha256": "95f9656fa06f67859b54986ac378b577c0b501afea376ae1652569020e8657c3"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/full_buffer/Weather/Weather.ino",
+      "bytes": 35129,
+      "sha256": "cf6273ce3429235446f0679737a8a02020d94c6d2150b825eb6e7cdefabf105f"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/games/LittleRookChess/LittleRookChess.ino",
+      "bytes": 65048,
+      "sha256": "bb92445e057f0624c9fc6f51c61defed92a4171be7d27c20efe9c122674cf263"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/games/SpaceTrash/SpaceTrash.ino",
+      "bytes": 66379,
+      "sha256": "9f369db200d0b0c9ab8ed8117a88765c1cf57e6015b4fc5e101c06994c3d2018"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/A2Printer/A2Printer.ino",
+      "bytes": 4624,
+      "sha256": "902d0f63541507ed409a1b939b1274a558e0ffcaf7dbe2423ee5eb7bad7ecb1b"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/Chinese/Chinese.ino",
+      "bytes": 31794,
+      "sha256": "6a661e2029752a1cb87e013cd90e305c2ca64a5bcfd65a552637c11d6206c7cc"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/ClipWindow/ClipWindow.ino",
+      "bytes": 32123,
+      "sha256": "9ac3d8df420213d3c89b9ea7e413b09c3b5264711317074a853d5bf093d6a078"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/Clock/Clock.ino",
+      "bytes": 32078,
+      "sha256": "ce83acead59ec702980ce0c79911b34887770865af916565adfb08948222289f"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/ContrastTest/ContrastTest.ino",
+      "bytes": 32144,
+      "sha256": "6b32de268eeb08e93e624e36f90f09712f0424a0b8c7e2b40c3077efa5b7ad76"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/Devanagari/Devanagari.ino",
+      "bytes": 33711,
+      "sha256": "69474ed879a367a39162872d970b3ab0f27ad7e37ec249120177cb51f28d1ec6"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/DirectAccess/DirectAccess.ino",
+      "bytes": 33950,
+      "sha256": "f115d6ab22a939bb40d9cade0282143dc6a6c9ebabeca512331c53016417676e"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/DrawLog/DrawLog.ino",
+      "bytes": 32934,
+      "sha256": "d6eb02ec7a13f76219bf3bfb806458c49752eacebf19b81f78a7fc47a5124395"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/ExtUTF8/ExtUTF8.ino",
+      "bytes": 31976,
+      "sha256": "8b5b41fb81e50a1fcfda51b643f4d13675d328d8d0e497013d45a0d2092d8f8e"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/FPS/FPS.ino",
+      "bytes": 46240,
+      "sha256": "792ee1807eb6389b1be168620a9f624e7e0445ab1953ea29d67c913e3e9494a3"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/FlipMode/FlipMode.ino",
+      "bytes": 31787,
+      "sha256": "96b8d233ad8ac8479bfc4a4750c658103c7cb7c7f6493a6b12066cb15bc4d468"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/GraphicsTest/GraphicsTest.ino",
+      "bytes": 38464,
+      "sha256": "076e424542b9e5bd55e40534feed919f096fe31182c25a04bb7f33aae7bfeea8"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/HelloWorld/HelloWorld.ino",
+      "bytes": 32654,
+      "sha256": "b184361e518f2ed39d2bb61b1f735cac9ec3b32f9e70c901ba10bd454e83770f"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/IconMenu/IconMenu.ino",
+      "bytes": 36498,
+      "sha256": "708304390ed9c26b84f35907accd04bcf21b48f70ef14b9aae06393a06ccd246"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/Japanese/Japanese.ino",
+      "bytes": 31632,
+      "sha256": "c023d9c6e8d99d87534ffb8bc4b789df277291878fff84d1de58ae749a278ab8"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/Korean/Korean.ino",
+      "bytes": 31525,
+      "sha256": "3bb99a1cd460ed9f34400e480fed238567ddb5114352d4d95119745fc1a52acb"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/LoadFromSD/LoadFromSD.ino",
+      "bytes": 38859,
+      "sha256": "2f8b23f464ec6b5aff55071f98c2a87521144106582bcb63a83fd465eb51fa9f"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/PowerSaveTest/PowerSaveTest.ino",
+      "bytes": 31322,
+      "sha256": "c99aacebe13d7e2ebf7cbee2bfc1aecd01b18f7bdcbc7b02e26c806e74f7333f"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/PrintHelloWorld/PrintHelloWorld.ino",
+      "bytes": 31347,
+      "sha256": "05954b0ebe66e83010c7898400f360daa9e1cdf9d37b94b44952a31a16181903"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/PrintProgmem/PrintProgmem.ino",
+      "bytes": 31865,
+      "sha256": "ba14d3bdf3498a9503620189d183c043f493a42b3b0295d032dca23663dbce30"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/PrintUTF8/PrintUTF8.ino",
+      "bytes": 31796,
+      "sha256": "e537412e7e98a124fb81455f173bc006f3e6bc0bd314062ba3a5e32d3da291e7"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/ScrollingText/ScrollingText.ino",
+      "bytes": 33071,
+      "sha256": "76522658e102f1ad14d47bf912bcb37ac9382e0906324cd6def782bd3f827d31"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/SelectionList/SelectionList.ino",
+      "bytes": 32438,
+      "sha256": "8507e45e91c19084e601ee3021c5beeb2e2118c4348f5667f7d273bc2ffdcd7e"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/Serial/Serial.ino",
+      "bytes": 32580,
+      "sha256": "e175963a9aa68a462addc6c0678478e40c98e5dbca54d7be77ee40a83083f158"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/Shennong/Shennong.ino",
+      "bytes": 38131,
+      "sha256": "5f8f278db91c754b6e3b77f586490b2ecc0ed6d74f9f406c71fe00a2e5b047c0"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/StateBufferLoop/StateBufferLoop.ino",
+      "bytes": 32905,
+      "sha256": "e089b8248a41de24e26421b29782efe01245a7ab7d653f5a68425d91272e3a27"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/Terminal/Terminal.ino",
+      "bytes": 32644,
+      "sha256": "5fdc8a1ea67df4cd7dc57d8404a03addfcbdfb4480b5f532a40e92f7d33636fa"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/U8g2Logo/U8g2Logo.ino",
+      "bytes": 33221,
+      "sha256": "ab32bbca6771a5455a0c6aea2a57f24ef58a52c99a40c94183223b95ed8be692"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/UpdatePartly/UpdatePartly.ino",
+      "bytes": 33518,
+      "sha256": "460c13ad4d18a46b6482b2d81f1ecaa3096e63c3b8fd0965c432123a16a75c03"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/Weather/Weather.ino",
+      "bytes": 34702,
+      "sha256": "453fdb45eed684fbc455223b86500dacbd22ccd5ce36af364b569122393dffb3"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/XBM/XBM.ino",
+      "bytes": 36188,
+      "sha256": "0dd222f0bed65c844d75ee52b1aeb40a5bc6dd2003dc15d084897bda8ae9d564"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/page_buffer/XORTest/XORTest.ino",
+      "bytes": 32500,
+      "sha256": "5588ead8b94ea5a5ee71a4067a68627c8f76159971b64bb850861cb53c620882"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/u8x8/16x16Font/16x16Font.ino",
+      "bytes": 22386,
+      "sha256": "c9c1cf86c72d1c584aa4a0b8b754f4a00ae442f07604f532fcbbbec544f8a23b"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/u8x8/ArduboyTest/ArduboyTest.ino",
+      "bytes": 3981,
+      "sha256": "715651d971c5f9ff25a55d4cd836315db011117507b5c3f4a7cb1d4e51c6fbdc"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/u8x8/FlipMode/FlipMode.ino",
+      "bytes": 22425,
+      "sha256": "6be56e61f745ddf0f469a2539cf4014febfb27c65ae099309fc521bee9773862"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/u8x8/GraphicsTest/GraphicsTest.ino",
+      "bytes": 24860,
+      "sha256": "192f8ddc4948abac3192ef4e3969e6d335a3acc1c1482ebf08e243c7b26fe381"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/u8x8/HelloWorld/HelloWorld.ino",
+      "bytes": 22277,
+      "sha256": "9a39cf8a80ab6fcb4a36ca1f6d83c2cde53b844e5dcee6aa634d0a9a15573a9b"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/u8x8/MessageBox/MessageBox.ino",
+      "bytes": 23121,
+      "sha256": "0185df435203c7b332f9865e836b5344638f701497231992c8443d07a1aff88c"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/examples/u8x8/Terminal/Terminal.ino",
+      "bytes": 22853,
+      "sha256": "85187c2ea6dc6aedf8dd2794c8df46852c0913fea90e8048fd713102a0fd5c20"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/extras/ChangeLog",
+      "bytes": 13108,
+      "sha256": "036a35c6820e8e0d47688d7a6f9b0dc4249dcf15447b4ac0858e9764a669b85d"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/keywords.txt",
+      "bytes": 60636,
+      "sha256": "8bf1ad6f4af58fd78991d2d9e58a0d0eea7c07a8b52b3af3668ad1dec2a02f0a"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/library.properties",
+      "bytes": 1267,
+      "sha256": "2cf8cb7fcc2107e4146176205d2b027444dc02189ca62e8e4053aaebdd459971"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/U8g2lib.cpp",
+      "bytes": 2185,
+      "sha256": "bdb3bee80660b9e9d6ca6de1bdeba1b4fe533f4cfdf46e91990dd5da91ec4cf9"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/U8g2lib.h",
+      "bytes": 1251833,
+      "sha256": "b9e10ba8a0aa93e7e89de8d38949d96a125f83e0f0f13078190cee2382f26354"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/U8x8lib.cpp",
+      "bytes": 55483,
+      "sha256": "0f82d8d1991d5c7c88764a8c0932d94d681e2bd73e5def7abf02c0ca92131608"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/U8x8lib.h",
+      "bytes": 410132,
+      "sha256": "403980123896c4f86a1adebefedb940adcdc69ab76cf89eec6fdd723006a7d4e"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8g2.h",
+      "bytes": 281870,
+      "sha256": "0015502d024f52347db83814774270059b2f436bd08881c40306757d7d075242"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8g2_bitmap.c",
+      "bytes": 5324,
+      "sha256": "7f8a0ed2ceb6d89f3c5f745d3b86eda67b84a96cdb0fd0421b509ce9674d1d93"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8g2_box.c",
+      "bytes": 4632,
+      "sha256": "d329109913b00cfc42038cec55c07b0d8faf50e5995808fa0e0c132a5afd37c5"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8g2_buffer.c",
+      "bytes": 6830,
+      "sha256": "9ca065a47345bb6bba3f7a81cad60ad7a15c3f2ca926137ad20f1e0ef1df4609"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8g2_circle.c",
+      "bytes": 10504,
+      "sha256": "6fbcc0dea8c64389ae6537f3e97722edfb85730480fe39747cf4aa1ebd717148"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8g2_cleardisplay.c",
+      "bytes": 2197,
+      "sha256": "e1ca6ab2e977d9b1e6c72e020c80f6ea38dcab61eb9177e7b0b68ea5c6847c00"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8g2_d_memory.c",
+      "bytes": 25335,
+      "sha256": "49491ffe289761e147a9ad3f2b3a8c3a08487cef7c9f9ceb79321e69ee32196d"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8g2_d_setup.c",
+      "bytes": 280376,
+      "sha256": "0239a7b541ff6e5236200a1497805e4f0d1fa2c75dbb8d2747184c7b070a0239"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8g2_font.c",
+      "bytes": 33327,
+      "sha256": "80b4ae23ec4e4b1de642925f3358a25933fa3488de28de3e6c12beaf3b81a228"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8g2_fonts.c",
+      "bytes": 29971286,
+      "sha256": "e9125a7b64c40df0840103c1d7f0f9e7f7afb3d9a8fc53d72f0de2f5befb8fb8"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8g2_hvline.c",
+      "bytes": 7078,
+      "sha256": "e63dad17dfe6501fb4b8f47ea7daaaa75c720a88016cfa9af39cc17523fac808"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8g2_input_value.c",
+      "bytes": 4155,
+      "sha256": "fd6f4f7b2911bffa36677e6f3cceaa7f40dc0dd8ca589adeec2248354dc3c0bd"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8g2_intersection.c",
+      "bytes": 4246,
+      "sha256": "ed81a18801dfc27220f09162d8ec2a74cc76467bf672431dd6fac9bde66b46c4"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8g2_kerning.c",
+      "bytes": 2852,
+      "sha256": "c249d6394de157f6c2914bfafcca9bbcd09197fdac96c36a1d9877c8155e5ccc"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8g2_line.c",
+      "bytes": 2520,
+      "sha256": "fe11f6148c526997103b7d8e852a2df4c0c4daa129ce7f39ea8075ab2e821c85"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8g2_ll_hvline.c",
+      "bytes": 9135,
+      "sha256": "5cbb087c688c29b5704cbf4e2971711da2a945dc6c71d9bb5e868b434a2a97f0"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8g2_message.c",
+      "bytes": 5549,
+      "sha256": "c8b6e01ccb075e7addeeae9551ccd74f65c29d238890adae13399c8dd9e6335d"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8g2_polygon.c",
+      "bytes": 7350,
+      "sha256": "8b0d82ce250db635af327fc90f269557e2d329e6f5a8502577bbd879ed608d66"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8g2_selection_list.c",
+      "bytes": 7648,
+      "sha256": "e42b2b802dd0c1d547723a0669c95f886123db2b846bb1791c2defdabcf40564"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8g2_setup.c",
+      "bytes": 11257,
+      "sha256": "c14956e20fcd83b5dea793f347f727502e11cba057886dc85d711cb3760bf679"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8log.c",
+      "bytes": 6564,
+      "sha256": "0bfa9e69b8d60db7db4d2a56554f35df7fb2279389178dd3a1aafb9b9e144edf"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8log_u8g2.c",
+      "bytes": 3255,
+      "sha256": "c6bc655c973e30fa089df145d8ac9dcae64b8a91db0bd28fe12be18293e16bb0"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8log_u8x8.c",
+      "bytes": 2417,
+      "sha256": "e45ccc063f2b22a7037c8711fe19edc9ac443d0b501aa12668898f3600f556a2"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8.h",
+      "bytes": 62109,
+      "sha256": "69227ef8799eb7da240d0de01d06d603de04e8aac8b69d39438c1bb29afec9ef"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_8x8.c",
+      "bytes": 12091,
+      "sha256": "dc188d78d8bbb6880da35347d2959ae75cb7975fa1562d3e0777f4a7517c2f1f"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_byte.c",
+      "bytes": 17809,
+      "sha256": "7ddc7f9bf3225af6ec9cf9c9d82e6cccce71569e4fc41691ea244ec434193ff6"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_cad.c",
+      "bytes": 21347,
+      "sha256": "58115369d497e1160487f7481c4e5a2c76969d2ba66ebfaccdb63a543e681aff"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_capture.c",
+      "bytes": 6466,
+      "sha256": "36f3b20027f4dec2a48053e1f83034b559cd62723c74f3cabc956567de83d776"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_a2printer.c",
+      "bytes": 6480,
+      "sha256": "f52e5972522aec49867deffca322fa678f726145baf7db2deda2e2450eedf8ed"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_il3820_296x128.c",
+      "bytes": 17371,
+      "sha256": "ccb9471716557efb23a5b6594b082e7f99090051f68e095c247c6eaa1e407e3e"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_ist3020.c",
+      "bytes": 7493,
+      "sha256": "f8712b1404d0981ef7dac36d3cacfecc55ba69e994cc8edf4c67ba4ba3fc6429"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_ist7920.c",
+      "bytes": 7143,
+      "sha256": "264d2518dd18d11146743f70fc2c74fdf5b974ce484a628248d0324e7ecd4d60"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_ks0108.c",
+      "bytes": 11407,
+      "sha256": "f6468dd7f87ed0285408112f3bcfb9be8cf74189a78ac0e45f6b5a2caf189023"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_lc7981.c",
+      "bytes": 15980,
+      "sha256": "a2cbbe609382b16764ce7d8502f3ca1d8c7bb34d96f84ee5c30502d961757307"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_ld7032_60x32.c",
+      "bytes": 11697,
+      "sha256": "d879fbb9d9ea19055eb5a4baaaa54cb3177a3999c4b276ef9e6fa46d5d0b733c"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_ls013b7dh03.c",
+      "bytes": 8164,
+      "sha256": "6f6d255b14dcc9d76735631533befe6d327659c85e61315d1d6c78f419b03e79"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_max7219.c",
+      "bytes": 16541,
+      "sha256": "66104edc2d7b6187edc72679f66cc046b8a2ecb6a520682acf2aeb95e534b774"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_pcd8544_84x48.c",
+      "bytes": 6183,
+      "sha256": "a54d6b9a7fba331a26eeb3f6dae137c8e3065ad47dbcc9dd73a99f6a19a3f56b"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_pcf8812.c",
+      "bytes": 6631,
+      "sha256": "9d7946c06ce05938df0ed579811200e2b8bcf4c7e3e8ee1628e4f37e20f8e92c"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_pcf8814_hx1230.c",
+      "bytes": 6777,
+      "sha256": "95376a99dcb1778aa38d7b87596f54a08c009601c0d5937862bd63e9866cf9a0"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_s1d15e06.c",
+      "bytes": 9080,
+      "sha256": "504d8706e6a40716402b0b12c5966aa4aa8fa36c46b0ed42b91cd86548233cf2"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_sbn1661.c",
+      "bytes": 7044,
+      "sha256": "8a6e0da3d19a2ebd43cda6ea01a813a9e86d7785df9e899995c5cba6c33057fa"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_sed1330.c",
+      "bytes": 12967,
+      "sha256": "c035d4a55db2a4792e1a554a8e61b370e538931acade4c55d5db27bcdf29802f"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_sh1106_64x32.c",
+      "bytes": 8365,
+      "sha256": "14ba5dac9efaad4786738490c999fd2199385b665e488810182b41bea871ab03"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_sh1106_72x40.c",
+      "bytes": 8376,
+      "sha256": "839bd3c262489eea8e46d7d2efa318f6d9b0c6869f78e2a2ba9b3047cfdf6255"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_sh1107.c",
+      "bytes": 18310,
+      "sha256": "9eeb6fc0dd29ac47ccb874afe7c6bb90f2ea63b5661e1004223a8c60512a5679"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_sh1108.c",
+      "bytes": 8072,
+      "sha256": "a75b8846db189c7d63e941c2cde135cc4a88329e0a97bd83f2b1c2e61535017e"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_sh1122.c",
+      "bytes": 8879,
+      "sha256": "63ac0e2387cd792f296d9d17aaf90f02d8ff52258a12cf810b85cd3779e6d03c"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1305.c",
+      "bytes": 16059,
+      "sha256": "6512209283ee2ba5b47bf42a6bffed8e01a98dbcaef1c2bee86fefc5ba181cea"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1306_128x32.c",
+      "bytes": 11975,
+      "sha256": "83b967bee3f5b35ca1411d1ea7cc296ba7e3038b6cb014061ac9b5f38d082b61"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1306_128x64_noname.c",
+      "bytes": 18003,
+      "sha256": "f8ff25a0ce32a6ac661645148952e70ccfb92a6ece51b09c5291345413db9b0d"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1306_2040x16.c",
+      "bytes": 8065,
+      "sha256": "f8aef778d289e54a13c2d9a43c949d84bb9ebfbe76d291f31a2fd99b3b25d58f"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1306_48x64.c",
+      "bytes": 8087,
+      "sha256": "40a4762b6a94349510e9882bcfe75ce31b6b5585822f1bbfbf4e521baba37b30"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1306_64x32.c",
+      "bytes": 10031,
+      "sha256": "cb2dffa3e3e1aebb45f613d7bd13bbe4dbbe3ba6767d3dc63a6d76be5ff94816"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1306_64x48.c",
+      "bytes": 8180,
+      "sha256": "fa6d6e36fed7ac8c798311eb5d4b1293ac07b951c1eff4c1f78372aa6370e9d9"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1306_72x40.c",
+      "bytes": 9514,
+      "sha256": "b987528f4109559d74c5595b2723f9b6fef99de1e0a1a0eb98cab5bb65f15156"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1306_96x16.c",
+      "bytes": 8148,
+      "sha256": "6f0eefffa21c9099004b0cff7ef5c44132d66d933368d39b9d87cda8cbdead1a"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1309.c",
+      "bytes": 10033,
+      "sha256": "0a0223336abe6d9e5f4c8dc059c9880775ac282f04a19ca2d70acccf268f7b49"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1316.c",
+      "bytes": 8282,
+      "sha256": "5d5d221882ce1d60b9b3c77c8001ffca8b6268568cca7cd7e095738965679487"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1317.c",
+      "bytes": 8529,
+      "sha256": "dc13b4f565cfeccb7a35b7add5cf10c68fb382bec83f1e2d0be78c4849784d13"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1318.c",
+      "bytes": 11302,
+      "sha256": "345101bf5b675b6b319447de52a23fb6db2cc1d4956c9c5cb5994145579b758d"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1322.c",
+      "bytes": 17588,
+      "sha256": "d6e42e1ad7435860fdc404d564a8339d1f6b3d1f1ec221d69bb13b450a34a626"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1325.c",
+      "bytes": 16240,
+      "sha256": "d78781b8b045142661b8d4bae2869bed8e80be94b3e434bc7e09e22691ce157d"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1326.c",
+      "bytes": 9348,
+      "sha256": "3aa94e8cbc06a86aa44b2941bf787836306ac6bf20b402f0c73048d147ee0393"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1327.c",
+      "bytes": 34192,
+      "sha256": "1c667c7102c879c6ac091c74ed05e496ea2bcdfa5c3c481c3134b868ea064722"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1329.c",
+      "bytes": 9949,
+      "sha256": "c3eaf0d452447a2c57ff57f218cd0877dd2d6e66275da503db3f4705bb1b7c5d"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1606_172x72.c",
+      "bytes": 13200,
+      "sha256": "71f6bd4c44f3c5ca0078da7165d651a5f59538830e16a1a15af220e6d844bb82"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_ssd1607_200x200.c",
+      "bytes": 21908,
+      "sha256": "f12ec52035da9cd4d2dd97a0c58ec63adc7a177b5fe1a4021b3b49ebc9ddc5f0"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_st7511.c",
+      "bytes": 7450,
+      "sha256": "67b4ede5c0ba81686260e5404553434b500abef979db71849359a01d2e9994ac"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_st75256.c",
+      "bytes": 58834,
+      "sha256": "f0004defe540669e5e5bb5f6c502bde5dc52b71bc2f46ca469154d6a80183b31"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_st7528.c",
+      "bytes": 14581,
+      "sha256": "6d725bfb87129cc3ab934d5a707e538f83c34f419f9ae5b92ecbe48aa7a97335"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_st75320.c",
+      "bytes": 9342,
+      "sha256": "e9f08dc40e7ef0e8c365ca6b953b7812153aeee114edb757b94d44ee24db3466"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_st7565.c",
+      "bytes": 48470,
+      "sha256": "4bd696996429e7768699c2a0f53d1a99a08dd1b489baa8af8fedf04ca5a79c72"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_st7567.c",
+      "bytes": 33094,
+      "sha256": "ac1a08ce9b3944c6e4ac91b90a1370a4750d72aad38b2ee8e8f3db8b70e69751"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_st7571.c",
+      "bytes": 8271,
+      "sha256": "5149fcd4345077f62b8197bd630d6820b5dd7ca379a509a5e4671f38d19a5a3a"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_st7586s_erc240160.c",
+      "bytes": 8954,
+      "sha256": "9d94382b8f502cff0562c3a5a75114a882682d60c9ef550d9f0b0511b2f332b7"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_st7586s_s028hn118a.c",
+      "bytes": 8767,
+      "sha256": "c4a5a51e87f276b2d32469ab48a2ae7c25d16f466c747159eec160a69ed99836"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_st7586s_ymc240160.c",
+      "bytes": 8187,
+      "sha256": "26e69dbefd69aa60738d4089d2da780a26f02aabdef88f00f4b4c215a989666c"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_st7588.c",
+      "bytes": 8353,
+      "sha256": "b9d493ef68d0c3429f58b61d29bb486f7b6494003d5a38822f5d32debefed70e"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_st7920.c",
+      "bytes": 8665,
+      "sha256": "9dfcbd88e2a23c6aa9bf6bb5e65afd403d5b105c93e242267174c436ad15050a"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_t6963.c",
+      "bytes": 19766,
+      "sha256": "4bcf823d0a50205a48fbaff5423d36e3fbf25e30fdc308c3dd838135a14ed2b7"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_uc1601.c",
+      "bytes": 6909,
+      "sha256": "ba1d38247c56b64bc58b16aa7d8bb9eb3f7eb06b84d2fdb286a5c210226bed50"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_uc1604.c",
+      "bytes": 8224,
+      "sha256": "fcd4e4133c09770d9dcbc3e1f1e091a89e238a97806aab257b2bb032f643b0a9"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_uc1608.c",
+      "bytes": 19099,
+      "sha256": "f0595d5f61cd31c8b6e7444bb4d3fcca91e667b633a1866549e8bf4e331f2e45"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_uc1610.c",
+      "bytes": 8883,
+      "sha256": "5c29dc9eb1ec332f38f364b99a58fbb7c7fc34274ec481804909f649b7e68530"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_uc1611.c",
+      "bytes": 27062,
+      "sha256": "4a9f7144ad6e4eb0479b1174b280c7d9bddf2798fa7a4255dd5a34df97517b1c"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_uc1617.c",
+      "bytes": 9895,
+      "sha256": "2b60e80853caafcfd541230214688cc627bf654e0224f60cba7f5a6a2802f747"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_uc1638.c",
+      "bytes": 7563,
+      "sha256": "c9d6dbb97a250cf75226e4e908cb33cbfeb72f7c99a51b9cd8c59d9067c8ff4d"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_uc1701_dogs102.c",
+      "bytes": 7530,
+      "sha256": "df9773624f56db031211d65c785f3ab73197e607b0d01390ef6d884a6260ae80"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_d_uc1701_mini12864.c",
+      "bytes": 7506,
+      "sha256": "4ec3efe60057531853fd9d7f9c541bd5534f9496117fd53dd37945b076320b2e"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_debounce.c",
+      "bytes": 5614,
+      "sha256": "8f2f43481076bd0454c99127d133db24208f9bc92659332e0c2ff76ab7b7e85d"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_display.c",
+      "bytes": 5129,
+      "sha256": "12a2a0505103718a85fce8c4e4d618ee5f81f910031dcb3140fb6d03a9dc1d9b"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_fonts.c",
+      "bytes": 1600067,
+      "sha256": "f346388ab6d016cca1c5f9abcfcb0bae6c9fcc40dd32783e1cb5682110d300f3"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_gpio.c",
+      "bytes": 1718,
+      "sha256": "884bc9f983276256faced6767a942ca5e79a03568b284165c0d1c4f855b0d630"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_input_value.c",
+      "bytes": 3603,
+      "sha256": "4816e93ae16c41409497ea8b09facc05f4afc297a7868b2655aba12b755108ca"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_message.c",
+      "bytes": 4425,
+      "sha256": "d24fa19f1f37426b44138a4c22cb9d0342626d735faf2e0a104e9d7dbb95ef18"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_selection_list.c",
+      "bytes": 4941,
+      "sha256": "e1290066f6ac1a4b6b7d5c86b6082bb8186ba63685c173213f74811514f7231b"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_setup.c",
+      "bytes": 4874,
+      "sha256": "3f50da0b74fea01a3386a3192d412aceadc09cac3e5cbb0b879c1a7e80a38886"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_string.c",
+      "bytes": 3983,
+      "sha256": "20cfe514ca42bfa22fb5a52aaf9bac3ab8b1e69c994df3fdeb73e3353e9687cc"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_u16toa.c",
+      "bytes": 2080,
+      "sha256": "5a6877ecb5b0665a48f952588e5bdd173407cf4dac399bcfa75ba64dad412b42"
+    },
+    {
+      "path": "SdCard/02 arduino code/Library/U8g2/src/clib/u8x8_u8toa.c",
+      "bytes": 1997,
+      "sha256": "bcbaaf9c4d2f8d067f78d7e2826003282a7c467a4764a931d8f67fd28d384e21"
+    },
+    {
+      "path": "SdCard/02 arduino code/Walldraw/Walldraw.ino",
+      "bytes": 17154,
+      "sha256": "303dd6154c65ba8042470fd4e51bf139d8a63fb1a9d4ff61bd5f557870e04ace"
+    },
+    {
+      "path": "SdCard/03 Tools/1、2、4 G code tool.txt",
+      "bytes": 195,
+      "sha256": "099cc15dc99035ca0ee5d91cd0bb9e66a3b55b82ffbf52835cf51707831a40d6"
+    },
+    {
+      "path": "SdCard/03 Tools/3、stick figure code generation tool/Crate GCode.exe",
+      "bytes": 745984,
+      "sha256": "f9ff6c79dda96242e5bf0ef1992d587f57455dc96b8f9e91b65e46ca16dc8395"
+    },
+    {
+      "path": "SdCard/04 STL files/Kit.stl",
+      "bytes": 299384,
+      "sha256": "959e8fa26b87f7a6d68e756b2fdf7c170917c098955aa444cd9950da4bb83fe3"
+    },
+    {
+      "path": "SdCard/All information links.txt",
+      "bytes": 186,
+      "sha256": "61a082403403cd9ccef3070d7fd42d312ed993de52547a94b0eaacb326f81367"
+    },
+    {
+      "path": "SdCard/System Volume Information/IndexerVolumeGuid",
+      "bytes": 76,
+      "sha256": "078b7302dbd6f695e98449caab19098d8c5a74134b1696ad9377ccf90b7803e0"
+    },
+    {
+      "path": "SdCard/System Volume Information/WPSettings.dat",
+      "bytes": 12,
+      "sha256": "564fae698fc11c2fd721f00ac74e1296fbd06aff4a46b5f70a2e8b37c0a39245"
+    },
+    {
+      "path": "SdCard/main.nc",
+      "bytes": 71716,
+      "sha256": "0169c1cd0f93bd39c765ab6e06f915e027f6ed0d543eb4b97688ff7612c00499"
+    },
+    {
+      "path": "WallDrawingMachine.ino",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ]
+}
