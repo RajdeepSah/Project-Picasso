@@ -1,3 +1,19 @@
 
 *.exe
 *.zip
+
+# Application dependencies and generated build/runtime files
+.venv/
+.cache/
+node_modules/
+frontend/dist/
+*.tsbuildinfo
+__pycache__/
+*.py[cod]
+.pytest_cache/
+data/
+.env
+.env.*
+!.env.example
+frontend/test-results/
+frontend/playwright-report/

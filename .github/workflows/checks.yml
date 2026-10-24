@@ -1,0 +1,37 @@
+name: Application checks
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  studio:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: Install locked dependencies and build
+        run: python scripts/setup.py
+      - name: Reject committed contract drift
+        run: git diff --exit-code -- frontend/schema/contracts.json frontend/src/api/contracts.ts
+      - name: Backend and launcher tests
+        run: .venv/bin/python -m pytest -q
+      - name: Frontend contracts and component tests
+        working-directory: frontend
+        run: |
+          npm run contracts:check
+          npm test
+      - name: Install test browser
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+      - name: Browser journeys
+        working-directory: frontend
+        run: npm run test:e2e

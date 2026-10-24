@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "id": "reference-400",
+  "revision": "source-reference-v1",
+  "label": "SD reference · 400 mm",
+  "source_path": "SdCard/02 arduino code/Walldraw/Walldraw.ino",
+  "verified": false,
+  "board": null,
+  "allowed_region": null,
+  "separation_mm": 400,
+  "anchor_y_mm": 250,
+  "spool_diameter_mm": 35,
+  "steps_per_turn": 2048,
+  "pen_up_degrees": 85,
+  "pen_down_degrees": 70,
+  "dialect": "picasso-legacy-v1",
+  "notes": "Alternative source values only. Do not select this calibration for the physical machine without measurement. No physical workspace has been approved."
+}

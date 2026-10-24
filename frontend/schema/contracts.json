@@ -1,0 +1,692 @@
+{
+  "$defs": {
+    "ApiError": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "title": "Code",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "phase": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Phase"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "code",
+        "message"
+      ],
+      "title": "ApiError",
+      "type": "object"
+    },
+    "CapabilitiesResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "ai": {
+          "$ref": "#/$defs/Capability"
+        },
+        "dashboard": {
+          "$ref": "#/$defs/Capability"
+        },
+        "gcode_export": {
+          "$ref": "#/$defs/Capability"
+        },
+        "generation": {
+          "$ref": "#/$defs/Capability"
+        },
+        "history": {
+          "$ref": "#/$defs/Capability"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "sd_export": {
+          "$ref": "#/$defs/Capability"
+        },
+        "serial_control": {
+          "$ref": "#/$defs/Capability"
+        },
+        "voice": {
+          "$ref": "#/$defs/Capability"
+        }
+      },
+      "required": [
+        "dashboard",
+        "generation",
+        "history",
+        "gcode_export",
+        "sd_export",
+        "serial_control",
+        "ai",
+        "voice"
+      ],
+      "title": "CapabilitiesResponse",
+      "type": "object"
+    },
+    "Capability": {
+      "additionalProperties": false,
+      "properties": {
+        "available": {
+          "title": "Available",
+          "type": "boolean"
+        },
+        "phase": {
+          "title": "Phase",
+          "type": "integer"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "available",
+        "phase",
+        "reason"
+      ],
+      "title": "Capability",
+      "type": "object"
+    },
+    "Dimensions": {
+      "additionalProperties": false,
+      "properties": {
+        "height_mm": {
+          "exclusiveMinimum": 0,
+          "maximum": 2000,
+          "title": "Height Mm",
+          "type": "number"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "width_mm": {
+          "exclusiveMinimum": 0,
+          "maximum": 2000,
+          "title": "Width Mm",
+          "type": "number"
+        }
+      },
+      "required": [
+        "width_mm",
+        "height_mm"
+      ],
+      "title": "Dimensions",
+      "type": "object"
+    },
+    "DrawingSpec": {
+      "additionalProperties": false,
+      "properties": {
+        "detail": {
+          "default": "standard",
+          "enum": [
+            "sparse",
+            "standard",
+            "dense"
+          ],
+          "title": "Detail",
+          "type": "string"
+        },
+        "dimensions": {
+          "$ref": "#/$defs/Dimensions"
+        },
+        "generator": {
+          "enum": [
+            "circle",
+            "rectangle",
+            "spiral",
+            "butterfly",
+            "mandala",
+            "pattern"
+          ],
+          "title": "Generator",
+          "type": "string"
+        },
+        "generator_version": {
+          "default": "1",
+          "maxLength": 40,
+          "minLength": 1,
+          "title": "Generator Version",
+          "type": "string"
+        },
+        "parameters": {
+          "$ref": "#/$defs/GeneratorParameters"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "seed": {
+          "default": 0,
+          "maximum": 4294967295,
+          "minimum": 0,
+          "title": "Seed",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "generator",
+        "dimensions"
+      ],
+      "title": "DrawingSpec",
+      "type": "object"
+    },
+    "GenerateRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "prompt": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Prompt",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "prompt"
+      ],
+      "title": "GenerateRequest",
+      "type": "object"
+    },
+    "GeneratorParameters": {
+      "additionalProperties": false,
+      "properties": {
+        "petals": {
+          "anyOf": [
+            {
+              "maximum": 64,
+              "minimum": 3,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Petals"
+        },
+        "radius_mm": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 2000,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Radius Mm"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "symmetry": {
+          "anyOf": [
+            {
+              "maximum": 64,
+              "minimum": 2,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Symmetry"
+        },
+        "turns": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 100,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Turns"
+        }
+      },
+      "title": "GeneratorParameters",
+      "type": "object"
+    },
+    "HealthResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "application": {
+          "const": "project-picasso",
+          "default": "project-picasso",
+          "title": "Application",
+          "type": "string"
+        },
+        "frontend_ready": {
+          "title": "Frontend Ready",
+          "type": "boolean"
+        },
+        "instance_id": {
+          "title": "Instance Id",
+          "type": "string"
+        },
+        "phase": {
+          "const": 2,
+          "default": 2,
+          "title": "Phase",
+          "type": "integer"
+        },
+        "python_version": {
+          "title": "Python Version",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "status": {
+          "const": "ready",
+          "default": "ready",
+          "title": "Status",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "version",
+        "instance_id",
+        "frontend_ready",
+        "python_version"
+      ],
+      "title": "HealthResponse",
+      "type": "object"
+    },
+    "MachineProfile": {
+      "additionalProperties": false,
+      "properties": {
+        "allowed_region": {
+          "default": null,
+          "title": "Allowed Region",
+          "type": "null"
+        },
+        "anchor_y_mm": {
+          "title": "Anchor Y Mm",
+          "type": "number"
+        },
+        "board": {
+          "default": null,
+          "title": "Board",
+          "type": "null"
+        },
+        "dialect": {
+          "const": "picasso-legacy-v1",
+          "default": "picasso-legacy-v1",
+          "title": "Dialect",
+          "type": "string"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "notes": {
+          "title": "Notes",
+          "type": "string"
+        },
+        "pen_down_degrees": {
+          "maximum": 180,
+          "minimum": 0,
+          "title": "Pen Down Degrees",
+          "type": "integer"
+        },
+        "pen_up_degrees": {
+          "maximum": 180,
+          "minimum": 0,
+          "title": "Pen Up Degrees",
+          "type": "integer"
+        },
+        "revision": {
+          "title": "Revision",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "separation_mm": {
+          "exclusiveMinimum": 0,
+          "maximum": 2000,
+          "title": "Separation Mm",
+          "type": "number"
+        },
+        "source_path": {
+          "title": "Source Path",
+          "type": "string"
+        },
+        "spool_diameter_mm": {
+          "exclusiveMinimum": 0,
+          "maximum": 2000,
+          "title": "Spool Diameter Mm",
+          "type": "number"
+        },
+        "steps_per_turn": {
+          "exclusiveMinimum": 0,
+          "title": "Steps Per Turn",
+          "type": "integer"
+        },
+        "verified": {
+          "const": false,
+          "default": false,
+          "title": "Verified",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "revision",
+        "label",
+        "source_path",
+        "separation_mm",
+        "anchor_y_mm",
+        "spool_diameter_mm",
+        "steps_per_turn",
+        "pen_up_degrees",
+        "pen_down_degrees",
+        "notes"
+      ],
+      "title": "MachineProfile",
+      "type": "object"
+    },
+    "MachineStatus": {
+      "additionalProperties": false,
+      "properties": {
+        "discovery_performed": {
+          "const": false,
+          "default": false,
+          "title": "Discovery Performed",
+          "type": "boolean"
+        },
+        "position_known": {
+          "const": false,
+          "default": false,
+          "title": "Position Known",
+          "type": "boolean"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "state": {
+          "const": "unavailable",
+          "default": "unavailable",
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "reason"
+      ],
+      "title": "MachineStatus",
+      "type": "object"
+    },
+    "PolylineDrawing": {
+      "additionalProperties": false,
+      "properties": {
+        "coordinate_system": {
+          "const": "centered_cartesian_y_up",
+          "default": "centered_cartesian_y_up",
+          "title": "Coordinate System",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "source": {
+          "$ref": "#/$defs/DrawingSpec"
+        },
+        "strokes": {
+          "items": {
+            "$ref": "#/$defs/Stroke"
+          },
+          "maxItems": 10000,
+          "minItems": 1,
+          "title": "Strokes",
+          "type": "array"
+        },
+        "units": {
+          "const": "mm",
+          "default": "mm",
+          "title": "Units",
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "strokes"
+      ],
+      "title": "PolylineDrawing",
+      "type": "object"
+    },
+    "ProfilesResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "active_profile_id": {
+          "default": null,
+          "title": "Active Profile Id",
+          "type": "null"
+        },
+        "profiles": {
+          "items": {
+            "$ref": "#/$defs/MachineProfile"
+          },
+          "title": "Profiles",
+          "type": "array"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "profiles"
+      ],
+      "title": "ProfilesResponse",
+      "type": "object"
+    },
+    "StorageStatus": {
+      "additionalProperties": false,
+      "properties": {
+        "discovery_performed": {
+          "const": false,
+          "default": false,
+          "title": "Discovery Performed",
+          "type": "boolean"
+        },
+        "local_mirror": {
+          "const": "SdCard",
+          "default": "SdCard",
+          "title": "Local Mirror",
+          "type": "string"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "state": {
+          "const": "not_configured",
+          "default": "not_configured",
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "reason"
+      ],
+      "title": "StorageStatus",
+      "type": "object"
+    },
+    "Stroke": {
+      "additionalProperties": false,
+      "properties": {
+        "closed": {
+          "default": false,
+          "title": "Closed",
+          "type": "boolean"
+        },
+        "points": {
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "type": "array"
+          },
+          "maxItems": 100000,
+          "minItems": 2,
+          "title": "Points",
+          "type": "array"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "points"
+      ],
+      "title": "Stroke",
+      "type": "object"
+    },
+    "StudioStatus": {
+      "additionalProperties": false,
+      "properties": {
+        "credentials_required": {
+          "const": false,
+          "default": false,
+          "title": "Credentials Required",
+          "type": "boolean"
+        },
+        "machine": {
+          "$ref": "#/$defs/MachineStatus"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "storage": {
+          "$ref": "#/$defs/StorageStatus"
+        }
+      },
+      "required": [
+        "machine",
+        "storage"
+      ],
+      "title": "StudioStatus",
+      "type": "object"
+    }
+  },
+  "anyOf": [
+    {
+      "$ref": "#/$defs/DrawingSpec"
+    },
+    {
+      "$ref": "#/$defs/PolylineDrawing"
+    },
+    {
+      "$ref": "#/$defs/ProfilesResponse"
+    },
+    {
+      "$ref": "#/$defs/CapabilitiesResponse"
+    },
+    {
+      "$ref": "#/$defs/HealthResponse"
+    },
+    {
+      "$ref": "#/$defs/StudioStatus"
+    },
+    {
+      "$ref": "#/$defs/ApiError"
+    },
+    {
+      "$ref": "#/$defs/GenerateRequest"
+    }
+  ],
+  "title": "PicassoContracts"
+}

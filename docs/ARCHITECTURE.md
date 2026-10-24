@@ -1,6 +1,6 @@
 # Project Picasso architecture
 
-Status: accepted design for future implementation, based on the Phase 1 source audit of 2026-10-24. Except for the inventory tool and documentation, components below do not yet exist.
+Status: accepted architecture based on the Phase 1 source audit of 2026-10-24. Phase 2 implements the local service, dashboard, read-only reference profiles, shared schemas, installer and launcher. Geometry, persistence, physical transfers, firmware changes, AI and voice remain future implementation. See [PHASE_2_REPORT.md](PHASE_2_REPORT.md) for the implemented boundary.
 
 ## Product behavior
 
@@ -55,8 +55,8 @@ README.md
 docs/                           # Phase 1 evidence, contracts, roadmap, reports
 scripts/
   audit_project.py              # Exists now
-  setup.py                     # Phase 2: install locked local dependencies/build
-  picasso.py                   # Phase 2: launch app, open browser, clean shutdown
+  setup.py                     # Implemented: install locked dependencies/build
+  picasso.py                   # Implemented: launch app, browser, clean shutdown
 frontend/
   src/components/              # command, preview, inspector, history, status
   src/api/                     # generated/shared API types and API client
@@ -121,6 +121,7 @@ Paths below are planned contracts; add endpoints only in their assigned phase.
 
 - `GET /api/health`: application version, service readiness, implemented capabilities.
 - `GET /api/capabilities`: generator, export, microphone, SD, and serial availability with reasons.
+- `GET /api/status`: implemented Phase 2 read-only combined machine/storage status; both explicitly uninspected/unavailable. No hardware connection occurs.
 - `POST /api/drawings/generate`: prompt/spec/seed → validated draft + preview/metrics; no hardware access.
 - `POST /api/drawings/{id}/revisions`: edits/regeneration → a new revision.
 - `GET /api/drawings`, `GET /api/drawings/{id}`: paginated local history and revision details.
@@ -136,6 +137,8 @@ Paths below are planned contracts; add endpoints only in their assigned phase.
 - `GET /api/events`: server-sent events for generation, transfer, and observed machine state; bounded polling is an acceptable first implementation if state semantics remain identical.
 
 Use stable error codes (`PROFILE_UNVERIFIED`, `PATH_OUT_OF_BOUNDS`, `UNSUPPORTED_COMMAND`, `TARGET_REMOVED`, `PROTOCOL_MISMATCH`, `ORIGIN_UNKNOWN`) and human-readable explanations. Hardware endpoints have no operational stubs that report success. Before implementation they are absent or explicitly unavailable.
+
+Phase 2 implements the health/capability/status/profile reads and a `POST /api/drawings/generate` that validates the command but returns HTTP 501 `GENERATION_UNAVAILABLE`. It performs no generation or writes. All physical endpoints above remain future contracts; the per-launch write token is required when file/serial write APIs are introduced, rather than implied to exist now.
 
 ## Machine state and execution
 
