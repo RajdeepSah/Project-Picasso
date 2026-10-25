@@ -1,6 +1,6 @@
 # Project Picasso development plan
 
-Baseline: 2026-10-24. **Phases 1 and 2 are complete. Phases 3–8 are planned and have not been implemented.** This plan is the implementation handoff for Codex. Read the architecture, G-code contract, and relevant audit before changing the associated subsystem.
+Baseline: 2026-10-24. **Phases 1–3 are complete. Phases 4–8 are planned and have not been implemented.** This plan is the implementation handoff for Codex. Read the architecture, G-code contract, and relevant audit before changing the associated subsystem.
 
 ## Outcome and sequencing
 
@@ -11,7 +11,7 @@ The target is a real local drawing studio: launch once, type a drawing command, 
         |
 2 runnable local application [complete]
         |
-3 offline drawing engine + preview + G-code
+3 offline drawing engine + preview + G-code [complete]
         |
 4 history/import + verified SD export
         |
@@ -85,6 +85,8 @@ Exit: a fresh setup and one-command launcher work; dashboard is connected to the
 Implementation prompt: “Implement Phase 2 exactly from this plan. Deliver a runnable local app and setup/launcher, test it, preserve the original assets, and write the phase report.”
 
 ## Phase 3 — offline commands, geometry, adjustments, G-code, and live preview
+
+**Status: complete.** Implementation, checks and limits are recorded in [PHASE_3_REPORT.md](PHASE_3_REPORT.md). The tasks below retain the agreed scope as a reference.
 
 **Goal:** type a supported drawing command and immediately see a usable, editable drawing and its exported path without AI or hardware.
 

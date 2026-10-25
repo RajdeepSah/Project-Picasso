@@ -1,6 +1,6 @@
 # Project Picasso architecture
 
-Status: accepted architecture based on the Phase 1 source audit of 2026-10-24. Phase 2 implements the local service, dashboard, read-only reference profiles, shared schemas, installer and launcher. Geometry, persistence, physical transfers, firmware changes, AI and voice remain future implementation. See [PHASE_2_REPORT.md](PHASE_2_REPORT.md) for the implemented boundary.
+Status: accepted architecture based on the Phase 1 source audit of 2026-10-24. Phases 2–3 implement the local service, dashboard, shared schemas, offline geometry, immutable in-memory drafts, strict G-code export and round-trip preview/downloads. Persistence, physical preparation/transfers, firmware changes, AI and voice remain future implementation. See [PHASE_3_REPORT.md](PHASE_3_REPORT.md) for the current boundary.
 
 ## Product behavior
 
@@ -138,7 +138,9 @@ Paths below are planned contracts; add endpoints only in their assigned phase.
 
 Use stable error codes (`PROFILE_UNVERIFIED`, `PATH_OUT_OF_BOUNDS`, `UNSUPPORTED_COMMAND`, `TARGET_REMOVED`, `PROTOCOL_MISMATCH`, `ORIGIN_UNKNOWN`) and human-readable explanations. Hardware endpoints have no operational stubs that report success. Before implementation they are absent or explicitly unavailable.
 
-Phase 2 implements the health/capability/status/profile reads and a `POST /api/drawings/generate` that validates the command but returns HTTP 501 `GENERATION_UNAVAILABLE`. It performs no generation or writes. All physical endpoints above remain future contracts; the per-launch write token is required when file/serial write APIs are introduced, rather than implied to exist now.
+Phase 3 implements generation, revision creation and retrieval, and `GET /api/drawings/{revision_id}/export?format=json|svg|gcode`. These are bounded in-memory unverified drafts, not prepared jobs. The generation endpoint now returns a real draft, replacing Phase 2's HTTP 501 response. Health/capability/status/profile reads remain available. All physical endpoints above remain future contracts; the per-launch write token is required when file/serial write APIs are introduced, rather than implied to exist now.
+
+The implemented pure engine lives in `backend/app/drawing/`: command resolver, analytic-circle/cubic geometry, strict dialect codec and bounded draft service. `models.py` contains the shared contracts. Drafts retain the spec, transform, flattened rounded geometry, execution preview and exact G-code hash. Serialized snapshots prevent callers from mutating earlier revisions; LRU limits are 16 drafts and 32 MB. The UI retains eight revisions in its current window. Each operation has a three-second cooperative deadline and a disconnect cancellation event; two workers can build at once. No database or app-owned disk storage is introduced in Phase 3.
 
 ## Machine state and execution
 

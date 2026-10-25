@@ -6,7 +6,7 @@ import socket
 import subprocess
 import sys
 import time
-from urllib.error import HTTPError, URLError
+from urllib.error import URLError
 from urllib.request import ProxyHandler, Request, build_opener
 
 import pytest
@@ -52,10 +52,11 @@ def test_launcher_real_http_and_clean_shutdown(development):
         assert ("@vite/client" in html) is development
         request = Request(url + "/api/drawings/generate", data=json.dumps({"prompt": "Draw a circle"}).encode(),
                           headers={"Content-Type": "application/json", "Origin": url}, method="POST")
-        with pytest.raises(HTTPError) as error:
-            opener.open(request, timeout=2)
-        assert error.value.code == 501
-        assert json.load(error.value)["code"] == "GENERATION_UNAVAILABLE"
+        with opener.open(request, timeout=3) as response:
+            draft = json.load(response)
+        assert draft["execution_ready"] is False
+        assert draft["title"] == "Circle"
+        assert draft["preview"]["bounds"]["width_mm"] == 120
     finally:
         process.terminate()
         try:

@@ -1,6 +1,6 @@
 # Picasso legacy G-code contract
 
-Status: normative target for the Phase 3 exporter, derived from the two bundled `Walldraw.ino` files. No exporter is implemented in Phase 1. Installed machine firmware is unknown.
+Status: implemented in Phase 3 by `backend/app/drawing/gcode.py`, derived from the two bundled `Walldraw.ino` files. Exports are unverified drafts until physical preparation is implemented. Installed machine firmware remains unknown.
 
 ## Actual interpreter behavior
 

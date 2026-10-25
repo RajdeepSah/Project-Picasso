@@ -1,0 +1,1142 @@
+{
+  "schema_version": 1,
+  "drawing_id": "test-drawing",
+  "revision_id": "test-r1",
+  "parent_revision_id": null,
+  "revision": 1,
+  "title": "Circle",
+  "prompt": "Draw a circle",
+  "spec": {
+    "schema_version": 1,
+    "generator": "circle",
+    "generator_version": "1",
+    "dimensions": {
+      "schema_version": 1,
+      "width_mm": 120.0,
+      "height_mm": 120.0
+    },
+    "parameters": {
+      "schema_version": 1,
+      "radius_mm": null,
+      "petals": null,
+      "turns": null,
+      "symmetry": null
+    },
+    "seed": 0,
+    "detail": "standard"
+  },
+  "transform": {
+    "schema_version": 1,
+    "rotation_degrees": 0.0,
+    "offset_x_mm": 0.0,
+    "offset_y_mm": 0.0,
+    "preserve_aspect": false
+  },
+  "geometry": {
+    "schema_version": 1,
+    "units": "mm",
+    "coordinate_system": "centered_cartesian_y_up",
+    "source": {
+      "schema_version": 1,
+      "generator": "circle",
+      "generator_version": "1",
+      "dimensions": {
+        "schema_version": 1,
+        "width_mm": 120.0,
+        "height_mm": 120.0
+      },
+      "parameters": {
+        "schema_version": 1,
+        "radius_mm": null,
+        "petals": null,
+        "turns": null,
+        "symmetry": null
+      },
+      "seed": 0,
+      "detail": "standard"
+    },
+    "strokes": [
+      {
+        "schema_version": 1,
+        "points": [
+          [
+            60.0,
+            0.0
+          ],
+          [
+            59.711,
+            5.881
+          ],
+          [
+            58.847,
+            11.705
+          ],
+          [
+            57.416,
+            17.417
+          ],
+          [
+            55.433,
+            22.961
+          ],
+          [
+            52.915,
+            28.284
+          ],
+          [
+            49.888,
+            33.334
+          ],
+          [
+            46.381,
+            38.064
+          ],
+          [
+            42.426,
+            42.426
+          ],
+          [
+            38.064,
+            46.381
+          ],
+          [
+            33.334,
+            49.888
+          ],
+          [
+            28.284,
+            52.915
+          ],
+          [
+            22.961,
+            55.433
+          ],
+          [
+            17.417,
+            57.416
+          ],
+          [
+            11.705,
+            58.847
+          ],
+          [
+            5.881,
+            59.711
+          ],
+          [
+            0.0,
+            60.0
+          ],
+          [
+            -5.881,
+            59.711
+          ],
+          [
+            -11.705,
+            58.847
+          ],
+          [
+            -17.417,
+            57.416
+          ],
+          [
+            -22.961,
+            55.433
+          ],
+          [
+            -28.284,
+            52.915
+          ],
+          [
+            -33.334,
+            49.888
+          ],
+          [
+            -38.064,
+            46.381
+          ],
+          [
+            -42.426,
+            42.426
+          ],
+          [
+            -46.381,
+            38.064
+          ],
+          [
+            -49.888,
+            33.334
+          ],
+          [
+            -52.915,
+            28.284
+          ],
+          [
+            -55.433,
+            22.961
+          ],
+          [
+            -57.416,
+            17.417
+          ],
+          [
+            -58.847,
+            11.705
+          ],
+          [
+            -59.711,
+            5.881
+          ],
+          [
+            -60.0,
+            0.0
+          ],
+          [
+            -59.711,
+            -5.881
+          ],
+          [
+            -58.847,
+            -11.705
+          ],
+          [
+            -57.416,
+            -17.417
+          ],
+          [
+            -55.433,
+            -22.961
+          ],
+          [
+            -52.915,
+            -28.284
+          ],
+          [
+            -49.888,
+            -33.334
+          ],
+          [
+            -46.381,
+            -38.064
+          ],
+          [
+            -42.426,
+            -42.426
+          ],
+          [
+            -38.064,
+            -46.381
+          ],
+          [
+            -33.334,
+            -49.888
+          ],
+          [
+            -28.284,
+            -52.915
+          ],
+          [
+            -22.961,
+            -55.433
+          ],
+          [
+            -17.417,
+            -57.416
+          ],
+          [
+            -11.705,
+            -58.847
+          ],
+          [
+            -5.881,
+            -59.711
+          ],
+          [
+            0.0,
+            -60.0
+          ],
+          [
+            5.881,
+            -59.711
+          ],
+          [
+            11.705,
+            -58.847
+          ],
+          [
+            17.417,
+            -57.416
+          ],
+          [
+            22.961,
+            -55.433
+          ],
+          [
+            28.284,
+            -52.915
+          ],
+          [
+            33.334,
+            -49.888
+          ],
+          [
+            38.064,
+            -46.381
+          ],
+          [
+            42.426,
+            -42.426
+          ],
+          [
+            46.381,
+            -38.064
+          ],
+          [
+            49.888,
+            -33.334
+          ],
+          [
+            52.915,
+            -28.284
+          ],
+          [
+            55.433,
+            -22.961
+          ],
+          [
+            57.416,
+            -17.417
+          ],
+          [
+            58.847,
+            -11.705
+          ],
+          [
+            59.711,
+            -5.881
+          ],
+          [
+            60.0,
+            0.0
+          ]
+        ],
+        "closed": true
+      }
+    ]
+  },
+  "preview": {
+    "schema_version": 1,
+    "expected_start_mm": [
+      0.0,
+      0.0
+    ],
+    "segments": [
+      {
+        "schema_version": 1,
+        "start": [
+          0.0,
+          0.0
+        ],
+        "end": [
+          60.0,
+          0.0
+        ],
+        "pen_down": false
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          60.0,
+          0.0
+        ],
+        "end": [
+          59.711,
+          5.881
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          59.711,
+          5.881
+        ],
+        "end": [
+          58.847,
+          11.705
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          58.847,
+          11.705
+        ],
+        "end": [
+          57.416,
+          17.417
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          57.416,
+          17.417
+        ],
+        "end": [
+          55.433,
+          22.961
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          55.433,
+          22.961
+        ],
+        "end": [
+          52.915,
+          28.284
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          52.915,
+          28.284
+        ],
+        "end": [
+          49.888,
+          33.334
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          49.888,
+          33.334
+        ],
+        "end": [
+          46.381,
+          38.064
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          46.381,
+          38.064
+        ],
+        "end": [
+          42.426,
+          42.426
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          42.426,
+          42.426
+        ],
+        "end": [
+          38.064,
+          46.381
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          38.064,
+          46.381
+        ],
+        "end": [
+          33.334,
+          49.888
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          33.334,
+          49.888
+        ],
+        "end": [
+          28.284,
+          52.915
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          28.284,
+          52.915
+        ],
+        "end": [
+          22.961,
+          55.433
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          22.961,
+          55.433
+        ],
+        "end": [
+          17.417,
+          57.416
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          17.417,
+          57.416
+        ],
+        "end": [
+          11.705,
+          58.847
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          11.705,
+          58.847
+        ],
+        "end": [
+          5.881,
+          59.711
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          5.881,
+          59.711
+        ],
+        "end": [
+          0.0,
+          60.0
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          0.0,
+          60.0
+        ],
+        "end": [
+          -5.881,
+          59.711
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          -5.881,
+          59.711
+        ],
+        "end": [
+          -11.705,
+          58.847
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          -11.705,
+          58.847
+        ],
+        "end": [
+          -17.417,
+          57.416
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          -17.417,
+          57.416
+        ],
+        "end": [
+          -22.961,
+          55.433
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          -22.961,
+          55.433
+        ],
+        "end": [
+          -28.284,
+          52.915
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          -28.284,
+          52.915
+        ],
+        "end": [
+          -33.334,
+          49.888
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          -33.334,
+          49.888
+        ],
+        "end": [
+          -38.064,
+          46.381
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          -38.064,
+          46.381
+        ],
+        "end": [
+          -42.426,
+          42.426
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          -42.426,
+          42.426
+        ],
+        "end": [
+          -46.381,
+          38.064
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          -46.381,
+          38.064
+        ],
+        "end": [
+          -49.888,
+          33.334
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          -49.888,
+          33.334
+        ],
+        "end": [
+          -52.915,
+          28.284
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          -52.915,
+          28.284
+        ],
+        "end": [
+          -55.433,
+          22.961
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          -55.433,
+          22.961
+        ],
+        "end": [
+          -57.416,
+          17.417
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          -57.416,
+          17.417
+        ],
+        "end": [
+          -58.847,
+          11.705
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          -58.847,
+          11.705
+        ],
+        "end": [
+          -59.711,
+          5.881
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          -59.711,
+          5.881
+        ],
+        "end": [
+          -60.0,
+          0.0
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          -60.0,
+          0.0
+        ],
+        "end": [
+          -59.711,
+          -5.881
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          -59.711,
+          -5.881
+        ],
+        "end": [
+          -58.847,
+          -11.705
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          -58.847,
+          -11.705
+        ],
+        "end": [
+          -57.416,
+          -17.417
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          -57.416,
+          -17.417
+        ],
+        "end": [
+          -55.433,
+          -22.961
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          -55.433,
+          -22.961
+        ],
+        "end": [
+          -52.915,
+          -28.284
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          -52.915,
+          -28.284
+        ],
+        "end": [
+          -49.888,
+          -33.334
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          -49.888,
+          -33.334
+        ],
+        "end": [
+          -46.381,
+          -38.064
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          -46.381,
+          -38.064
+        ],
+        "end": [
+          -42.426,
+          -42.426
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          -42.426,
+          -42.426
+        ],
+        "end": [
+          -38.064,
+          -46.381
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          -38.064,
+          -46.381
+        ],
+        "end": [
+          -33.334,
+          -49.888
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          -33.334,
+          -49.888
+        ],
+        "end": [
+          -28.284,
+          -52.915
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          -28.284,
+          -52.915
+        ],
+        "end": [
+          -22.961,
+          -55.433
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          -22.961,
+          -55.433
+        ],
+        "end": [
+          -17.417,
+          -57.416
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          -17.417,
+          -57.416
+        ],
+        "end": [
+          -11.705,
+          -58.847
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          -11.705,
+          -58.847
+        ],
+        "end": [
+          -5.881,
+          -59.711
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          -5.881,
+          -59.711
+        ],
+        "end": [
+          0.0,
+          -60.0
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          0.0,
+          -60.0
+        ],
+        "end": [
+          5.881,
+          -59.711
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          5.881,
+          -59.711
+        ],
+        "end": [
+          11.705,
+          -58.847
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          11.705,
+          -58.847
+        ],
+        "end": [
+          17.417,
+          -57.416
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          17.417,
+          -57.416
+        ],
+        "end": [
+          22.961,
+          -55.433
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          22.961,
+          -55.433
+        ],
+        "end": [
+          28.284,
+          -52.915
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          28.284,
+          -52.915
+        ],
+        "end": [
+          33.334,
+          -49.888
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          33.334,
+          -49.888
+        ],
+        "end": [
+          38.064,
+          -46.381
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          38.064,
+          -46.381
+        ],
+        "end": [
+          42.426,
+          -42.426
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          42.426,
+          -42.426
+        ],
+        "end": [
+          46.381,
+          -38.064
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          46.381,
+          -38.064
+        ],
+        "end": [
+          49.888,
+          -33.334
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          49.888,
+          -33.334
+        ],
+        "end": [
+          52.915,
+          -28.284
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          52.915,
+          -28.284
+        ],
+        "end": [
+          55.433,
+          -22.961
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          55.433,
+          -22.961
+        ],
+        "end": [
+          57.416,
+          -17.417
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          57.416,
+          -17.417
+        ],
+        "end": [
+          58.847,
+          -11.705
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          58.847,
+          -11.705
+        ],
+        "end": [
+          59.711,
+          -5.881
+        ],
+        "pen_down": true
+      },
+      {
+        "schema_version": 1,
+        "start": [
+          59.711,
+          -5.881
+        ],
+        "end": [
+          60.0,
+          0.0
+        ],
+        "pen_down": true
+      }
+    ],
+    "bounds": {
+      "schema_version": 1,
+      "min_x_mm": -60.0,
+      "min_y_mm": -60.0,
+      "max_x_mm": 60.0,
+      "max_y_mm": 60.0,
+      "width_mm": 120.0,
+      "height_mm": 120.0
+    },
+    "drawing_distance_mm": 376.83922229228386,
+    "travel_distance_mm": 60.0,
+    "strokes": 1,
+    "pen_lifts": 1
+  },
+  "gcode": "G0 Z5\nG0 X60.000 Y0.000 Z5\nG1 X59.711 Y5.881 Z0\nG1 X58.847 Y11.705 Z0\nG1 X57.416 Y17.417 Z0\nG1 X55.433 Y22.961 Z0\nG1 X52.915 Y28.284 Z0\nG1 X49.888 Y33.334 Z0\nG1 X46.381 Y38.064 Z0\nG1 X42.426 Y42.426 Z0\nG1 X38.064 Y46.381 Z0\nG1 X33.334 Y49.888 Z0\nG1 X28.284 Y52.915 Z0\nG1 X22.961 Y55.433 Z0\nG1 X17.417 Y57.416 Z0\nG1 X11.705 Y58.847 Z0\nG1 X5.881 Y59.711 Z0\nG1 X0.000 Y60.000 Z0\nG1 X-5.881 Y59.711 Z0\nG1 X-11.705 Y58.847 Z0\nG1 X-17.417 Y57.416 Z0\nG1 X-22.961 Y55.433 Z0\nG1 X-28.284 Y52.915 Z0\nG1 X-33.334 Y49.888 Z0\nG1 X-38.064 Y46.381 Z0\nG1 X-42.426 Y42.426 Z0\nG1 X-46.381 Y38.064 Z0\nG1 X-49.888 Y33.334 Z0\nG1 X-52.915 Y28.284 Z0\nG1 X-55.433 Y22.961 Z0\nG1 X-57.416 Y17.417 Z0\nG1 X-58.847 Y11.705 Z0\nG1 X-59.711 Y5.881 Z0\nG1 X-60.000 Y0.000 Z0\nG1 X-59.711 Y-5.881 Z0\nG1 X-58.847 Y-11.705 Z0\nG1 X-57.416 Y-17.417 Z0\nG1 X-55.433 Y-22.961 Z0\nG1 X-52.915 Y-28.284 Z0\nG1 X-49.888 Y-33.334 Z0\nG1 X-46.381 Y-38.064 Z0\nG1 X-42.426 Y-42.426 Z0\nG1 X-38.064 Y-46.381 Z0\nG1 X-33.334 Y-49.888 Z0\nG1 X-28.284 Y-52.915 Z0\nG1 X-22.961 Y-55.433 Z0\nG1 X-17.417 Y-57.416 Z0\nG1 X-11.705 Y-58.847 Z0\nG1 X-5.881 Y-59.711 Z0\nG1 X0.000 Y-60.000 Z0\nG1 X5.881 Y-59.711 Z0\nG1 X11.705 Y-58.847 Z0\nG1 X17.417 Y-57.416 Z0\nG1 X22.961 Y-55.433 Z0\nG1 X28.284 Y-52.915 Z0\nG1 X33.334 Y-49.888 Z0\nG1 X38.064 Y-46.381 Z0\nG1 X42.426 Y-42.426 Z0\nG1 X46.381 Y-38.064 Z0\nG1 X49.888 Y-33.334 Z0\nG1 X52.915 Y-28.284 Z0\nG1 X55.433 Y-22.961 Z0\nG1 X57.416 Y-17.417 Z0\nG1 X58.847 Y-11.705 Z0\nG1 X59.711 Y-5.881 Z0\nG1 X60.000 Y0.000 Z0\nG0 Z5\n",
+  "gcode_sha256": "082575910f9e616983be645498601041288dd989014c0af4073bf93c6eaa2f3f",
+  "exporter_version": "picasso-legacy-v1.0",
+  "chord_tolerance_mm": 0.08,
+  "rounding_tolerance_mm": 0.000708,
+  "execution_ready": false,
+  "simulation_profile": "unverified-preview-v1",
+  "warnings": [
+    "Simulation only. No physical machine profile or workspace is verified.",
+    "Initial travel assumes a starting position of (0, 0) mm; this is not a hardware position reading.",
+    "Draft downloads are unverified, not prepared jobs. Do not execute them until calibration and pen settling are verified.",
+    "Draft revisions live in memory and are lost on restart. Download JSON to retain a copy; durable history arrives in Phase 4."
+  ]
+}

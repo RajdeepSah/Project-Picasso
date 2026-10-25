@@ -2,7 +2,7 @@
 
 A local application being developed to turn drawing commands into previewed, machine-compatible paths for an Arduino wall drawing machine.
 
-**Current milestone: Phase 2 complete — a runnable local studio, backend APIs, shared typed contracts, installer and single-command launcher. Drawing generation, G-code export, durable history, SD synchronization, AI and USB control remain scheduled for later phases.**
+**Current milestone: Phase 3 complete — offline drawing commands, deterministic geometry, live adjustments, exported-path previews, playback and unverified JSON/SVG/G-code draft downloads. Durable history, physical preparation, SD synchronization, AI and USB control remain scheduled for later phases.**
 
 ## Install and launch
 
@@ -43,15 +43,22 @@ python3 scripts/setup.py --skip-install
 ## What works now
 
 - Responsive drawing studio, command composer and example command shortcuts.
-- Blank A4 preview workspace with functional grid/zoom controls; it is not a calibrated machine envelope.
+- Offline circles/ellipses, rectangles, spirals, butterflies, mandalas and geometric patterns, generated without an API key.
+- Live size/aspect lock, rotation, placement, detail, seed and generator-specific controls; seed locking and regeneration.
+- SVG preview derived from the exact exported G-code, with zoom/grid, travel toggle, simulation playback, actual bounds, path distances and pen lifts.
+- Immutable revisions kept in memory, a session-draft view, and JSON/SVG/restricted G-code downloads.
 - Read-only inspection of both source calibration references, with no active or verified machine profile.
 - Live local-service health, separate unavailable machine/card states, offline error handling and reconnect without losing the command.
 - Getting-started and studio-information dialogs, keyboard submission, and an application error boundary.
-- Disabled microphone, drawing adjustments and export controls with their future phase identified.
+- Disabled microphone and physical preparation controls with their future phase identified.
 
-Submitting a command currently returns **HTTP 501 / `GENERATION_UNAVAILABLE`** and an explanation. It does not generate a drawing, save history, write a card or move hardware. Phase 3 implements offline shapes/mandalas, adjustment and compatible G-code.
+Try **“Draw a beautiful mandala”**, **“Draw a butterfly”**, or **“Draw a circle diameter 100”**. You can also specify `120 mm wide`, `100 x 60 mm`, `12 petals`, `5 turns`, `symmetry 8`, `seed 7`, and `simple`/`standard`/`intricate`, where applicable. Unsupported or ambiguous commands explain the supported grammar. See [offline commands and draft workflow](docs/OFFLINE_DRAWING_COMMANDS.md).
 
-![Phase 2 drawing studio](docs/screenshots/phase-2-studio.png)
+**This is still a simulation with an unverified machine profile.** The initial travel assumes `(0,0)`; no physical position is measured. Downloads are labeled `UNVERIFIED` and do not authorize execution. No card is written and no hardware moves.
+
+The service retains up to 16 revisions / 32 MB; the browser shows its last eight revisions. These disappear on restart or eviction. Download JSON to keep a copy. Reimport and durable history arrive in Phase 4.
+
+![Phase 3 drawing studio](docs/screenshots/phase-3-studio.png)
 
 ## Start here
 
@@ -62,6 +69,7 @@ Submitting a command currently returns **HTTP 501 / `GENERATION_UNAVAILABLE`** a
 - [G-code contract](docs/GCODE_CONTRACT.md): the restricted export format required by the existing firmware.
 - [Phase 1 report](docs/PHASE_1_REPORT.md): completed work, verification results, and outstanding hardware checks.
 - [Phase 2 report](docs/PHASE_2_REPORT.md): implemented application features, test results, and current limits.
+- [Phase 3 report](docs/PHASE_3_REPORT.md): drawing engine, export, preview and validation results.
 - [Third-party notices](docs/THIRD_PARTY_NOTICES.md): bundled font and package provenance.
 
 ## Development checks
@@ -101,7 +109,14 @@ Read-only foundation endpoints:
 - `GET /api/status`: independent machine/card state; no device discovery is performed yet.
 - `GET /api/profiles`: the two unverified references, with `active_profile_id: null`.
 
-`POST /api/drawings/generate` validates the command and returns explicit unavailability in this phase. Interactive API documentation is at **http://127.0.0.1:8000/docs** while the service runs. The backend rejects unexpected hosts/origins. There are no file-write, serial-connect or motion endpoints yet.
+Drawing endpoints:
+
+- `POST /api/drawings/generate`: `{ "prompt": "Draw a mandala with 12 petals, seed 7" }` → a complete unverified draft, including paths, exact G-code and checksum.
+- `POST /api/drawings/{revision_id}/revisions`: validated spec/transform edits or `{ "regenerate": true, "seed_locked": false }` → a new immutable revision.
+- `GET /api/drawings/{revision_id}`: retrieve an in-memory draft.
+- `GET /api/drawings/{revision_id}/export?format=json|svg|gcode`: download that exact revision without regenerating it.
+
+Interactive API documentation is at **http://127.0.0.1:8000/docs** while the service runs. The backend rejects unexpected hosts/origins. Generation has a three-second cooperative budget, cancellation, complexity limits and two concurrent workers. There are no filesystem-write, serial-connect, physical preparation or motion endpoints yet.
 
 ## Run the Phase 1 audit
 
@@ -146,6 +161,6 @@ Neither version has been established as the firmware installed on the machine. B
 
 ## Next phases
 
-The implemented stack is React + TypeScript + Vite with Python + FastAPI/Pydantic. SQLite persistence is planned for Phase 4 and pySerial for Phase 6; neither is used by the current dashboard. Arduino CLI is not installed. Current Vite runtime requirements are described in the [official Vite guide](https://vite.dev/guide/).
+The implemented stack is React + TypeScript + Vite with Python + FastAPI/Pydantic and a standard-library geometry/export engine. SQLite persistence is planned for Phase 4 and pySerial for Phase 6; neither is used by the current dashboard. Arduino CLI is not installed. Current Vite runtime requirements are described in the [official Vite guide](https://vite.dev/guide/).
 
-Next: implement Phase 3 from `docs/DEVELOPMENT_PLAN.md`, adding deterministic offline drawing commands and the restricted exporter. No paid AI service will be required for the supported shapes and mandalas. Hardware calibration and firmware changes remain separate milestones.
+Next: implement Phase 4 from `docs/DEVELOPMENT_PLAN.md`: durable history, import/normalization, measured-profile preparation and verified mounted-card export. Hardware calibration and firmware changes remain explicit milestones.

@@ -23,7 +23,9 @@ def test_real_capabilities_and_independent_uninspected_hardware_states(client):
     assert health.headers["cache-control"] == "no-store"
     caps = client.get("/api/capabilities").json()
     assert caps["dashboard"]["available"] is True
-    for name in ("generation", "history", "gcode_export", "sd_export", "serial_control", "ai", "voice"):
+    assert caps["generation"]["available"] is True
+    assert caps["gcode_export"]["available"] is True
+    for name in ("history", "sd_export", "serial_control", "ai", "voice"):
         assert caps[name]["available"] is False
         assert caps[name]["reason"]
     status = client.get("/api/status").json()
@@ -45,12 +47,12 @@ def test_profiles_cannot_authorize_motion(client):
             MachineProfile.model_validate({**profile, "verified": True})
 
 
-def test_generation_returns_explicit_unavailable_and_checks_input(client):
+def test_generation_returns_real_draft_and_checks_input(client):
     response = client.post("/api/drawings/generate", json={"prompt": "Draw a circle"})
-    assert response.status_code == 501
-    assert response.json()["code"] == "GENERATION_UNAVAILABLE"
-    assert response.json()["phase"] == 3
-    for payload in ({"prompt": ""}, {"prompt": "x" * 2001}, {"prompt": "ok", "execute": True}):
+    assert response.status_code == 200
+    assert response.json()["title"] == "Circle"
+    assert response.json()["execution_ready"] is False
+    for payload in ({"prompt": ""}, {"prompt": " "}, {"prompt": "x" * 2001}, {"prompt": "ok", "execute": True}):
         assert client.post("/api/drawings/generate", json=payload).status_code == 422
     assert client.post("/api/machine/start").status_code == 404
 
@@ -58,7 +60,7 @@ def test_generation_returns_explicit_unavailable_and_checks_input(client):
 def test_local_origin_host_and_file_boundaries(client):
     assert client.get("/api/health", headers={"Host": "untrusted.example"}).status_code == 400
     assert client.post("/api/drawings/generate", headers={"Origin": "https://untrusted.example"}, json={"prompt": "circle"}).status_code == 403
-    assert client.post("/api/drawings/generate", headers={"Origin": "http://127.0.0.1"}, json={"prompt": "circle"}).status_code == 501
+    assert client.post("/api/drawings/generate", headers={"Origin": "http://127.0.0.1"}, json={"prompt": "circle"}).status_code == 200
     assert client.get("/SdCard/main.nc").status_code == 404
     assert client.get("/backend/requirements.lock").status_code == 404
     assert client.get("/").status_code == 503

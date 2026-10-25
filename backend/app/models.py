@@ -2,7 +2,7 @@
 
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
 
 Finite = Annotated[float, Field(allow_inf_nan=False)]
@@ -30,7 +30,7 @@ class GeneratorParameters(Contract):
 
 class DrawingSpec(Contract):
     generator: GeneratorName
-    generator_version: str = Field(default="1", min_length=1, max_length=40)
+    generator_version: Literal["1"] = "1"
     dimensions: Dimensions
     parameters: GeneratorParameters = Field(default_factory=GeneratorParameters)
     seed: int = Field(default=0, ge=0, le=4294967295)
@@ -44,6 +44,10 @@ class DrawingSpec(Contract):
                    if key != "schema_version" and value is not None}
         if present - allowed[self.generator]:
             raise ValueError("Parameters do not apply to this generator")
+        if self.parameters.radius_mm is not None and any(abs(value - 2 * self.parameters.radius_mm) > 1e-9 for value in (self.dimensions.width_mm, self.dimensions.height_mm)):
+            raise ValueError("Radius must agree with both circle dimensions")
+        if self.parameters.petals is not None and self.parameters.symmetry is not None and self.parameters.petals != self.parameters.symmetry:
+            raise ValueError("Mandala petals and symmetry must agree when both are specified")
         return self
 
 
@@ -102,7 +106,7 @@ class CapabilitiesResponse(Contract):
 class HealthResponse(Contract):
     application: Literal["project-picasso"] = "project-picasso"
     version: str
-    phase: Literal[2] = 2
+    phase: Literal[3] = 3
     status: Literal["ready"] = "ready"
     instance_id: str
     frontend_ready: bool
@@ -136,8 +140,68 @@ class ApiError(Contract):
 
 
 class GenerateRequest(Contract):
-    prompt: str = Field(min_length=1, max_length=2000)
+    prompt: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)]
+
+
+class DrawingTransform(Contract):
+    rotation_degrees: Finite = Field(default=0, ge=-360, le=360)
+    offset_x_mm: Finite = Field(default=0, ge=-2000, le=2000)
+    offset_y_mm: Finite = Field(default=0, ge=-2000, le=2000)
+    preserve_aspect: bool = False
+
+
+class RevisionRequest(Contract):
+    spec: DrawingSpec | None = None
+    transform: DrawingTransform | None = None
+    regenerate: bool = False
+    seed_locked: bool = False
+
+
+class DrawingBounds(Contract):
+    min_x_mm: Finite
+    min_y_mm: Finite
+    max_x_mm: Finite
+    max_y_mm: Finite
+    width_mm: Finite
+    height_mm: Finite
+
+
+class ExecutionSegment(Contract):
+    start: Point2
+    end: Point2
+    pen_down: bool
+
+
+class ExecutionPreview(Contract):
+    expected_start_mm: Point2 = (0, 0)
+    segments: list[ExecutionSegment]
+    bounds: DrawingBounds
+    drawing_distance_mm: Finite
+    travel_distance_mm: Finite
+    strokes: int
+    pen_lifts: int
+
+
+class DrawingDraft(Contract):
+    drawing_id: str
+    revision_id: str
+    parent_revision_id: str | None
+    revision: int = Field(ge=1)
+    title: str
+    prompt: str
+    spec: DrawingSpec
+    transform: DrawingTransform
+    geometry: PolylineDrawing
+    preview: ExecutionPreview
+    gcode: str
+    gcode_sha256: str
+    exporter_version: Literal["picasso-legacy-v1.0"] = "picasso-legacy-v1.0"
+    chord_tolerance_mm: Finite
+    rounding_tolerance_mm: Finite = 0.000708
+    execution_ready: Literal[False] = False
+    simulation_profile: Literal["unverified-preview-v1"] = "unverified-preview-v1"
+    warnings: list[str]
 
 
 ALL_CONTRACTS = (DrawingSpec | PolylineDrawing | ProfilesResponse | CapabilitiesResponse
-                 | HealthResponse | StudioStatus | ApiError | GenerateRequest)
+                 | HealthResponse | StudioStatus | ApiError | GenerateRequest | DrawingDraft | RevisionRequest)

@@ -8,13 +8,15 @@ export type PicassoContracts =
   | HealthResponse
   | StudioStatus
   | ApiError
-  | GenerateRequest;
+  | GenerateRequest
+  | DrawingDraft
+  | RevisionRequest;
 export type Detail = "sparse" | "standard" | "dense";
 export type HeightMm = number;
 export type SchemaVersion = 1;
 export type WidthMm = number;
 export type Generator = "circle" | "rectangle" | "spiral" | "butterfly" | "mandala" | "pattern";
-export type GeneratorVersion = string;
+export type GeneratorVersion = "1";
 export type Petals = number | null;
 export type RadiusMm = number | null;
 export type SchemaVersion1 = 1;
@@ -64,7 +66,7 @@ export type SchemaVersion8 = 1;
 export type Application = "project-picasso";
 export type FrontendReady = boolean;
 export type InstanceId = string;
-export type Phase1 = 2;
+export type Phase1 = 3;
 export type PythonVersion = string;
 export type SchemaVersion9 = 1;
 export type Status = "ready";
@@ -87,6 +89,59 @@ export type Phase2 = number | null;
 export type SchemaVersion13 = 1;
 export type Prompt = string;
 export type SchemaVersion14 = 1;
+export type ChordToleranceMm = number;
+export type DrawingId = string;
+export type ExecutionReady = false;
+export type ExporterVersion = "picasso-legacy-v1.0";
+export type Gcode = string;
+export type GcodeSha256 = string;
+export type ParentRevisionId = string | null;
+export type HeightMm1 = number;
+export type MaxXMm = number;
+export type MaxYMm = number;
+export type MinXMm = number;
+export type MinYMm = number;
+export type SchemaVersion15 = 1;
+export type WidthMm1 = number;
+export type DrawingDistanceMm = number;
+/**
+ * @minItems 2
+ * @maxItems 2
+ */
+export type ExpectedStartMm = [number, number];
+export type PenLifts = number;
+export type SchemaVersion16 = 1;
+/**
+ * @minItems 2
+ * @maxItems 2
+ */
+export type End = [number, number];
+export type PenDown = boolean;
+export type SchemaVersion17 = 1;
+/**
+ * @minItems 2
+ * @maxItems 2
+ */
+export type Start = [number, number];
+export type Segments = ExecutionSegment[];
+export type Strokes1 = number;
+export type TravelDistanceMm = number;
+export type Prompt1 = string;
+export type Revision1 = number;
+export type RevisionId = string;
+export type RoundingToleranceMm = number;
+export type SchemaVersion18 = 1;
+export type SimulationProfile = "unverified-preview-v1";
+export type Title = string;
+export type OffsetXMm = number;
+export type OffsetYMm = number;
+export type PreserveAspect = boolean;
+export type RotationDegrees = number;
+export type SchemaVersion19 = 1;
+export type Warnings = string[];
+export type Regenerate = boolean;
+export type SchemaVersion20 = 1;
+export type SeedLocked = boolean;
 
 export interface DrawingSpec {
   detail?: Detail;
@@ -200,4 +255,64 @@ export interface ApiError {
 export interface GenerateRequest {
   prompt: Prompt;
   schema_version?: SchemaVersion14;
+}
+export interface DrawingDraft {
+  chord_tolerance_mm: ChordToleranceMm;
+  drawing_id: DrawingId;
+  execution_ready?: ExecutionReady;
+  exporter_version?: ExporterVersion;
+  gcode: Gcode;
+  gcode_sha256: GcodeSha256;
+  geometry: PolylineDrawing;
+  parent_revision_id: ParentRevisionId;
+  preview: ExecutionPreview;
+  prompt: Prompt1;
+  revision: Revision1;
+  revision_id: RevisionId;
+  rounding_tolerance_mm?: RoundingToleranceMm;
+  schema_version?: SchemaVersion18;
+  simulation_profile?: SimulationProfile;
+  spec: DrawingSpec;
+  title: Title;
+  transform: DrawingTransform;
+  warnings: Warnings;
+}
+export interface ExecutionPreview {
+  bounds: DrawingBounds;
+  drawing_distance_mm: DrawingDistanceMm;
+  expected_start_mm?: ExpectedStartMm;
+  pen_lifts: PenLifts;
+  schema_version?: SchemaVersion16;
+  segments: Segments;
+  strokes: Strokes1;
+  travel_distance_mm: TravelDistanceMm;
+}
+export interface DrawingBounds {
+  height_mm: HeightMm1;
+  max_x_mm: MaxXMm;
+  max_y_mm: MaxYMm;
+  min_x_mm: MinXMm;
+  min_y_mm: MinYMm;
+  schema_version?: SchemaVersion15;
+  width_mm: WidthMm1;
+}
+export interface ExecutionSegment {
+  end: End;
+  pen_down: PenDown;
+  schema_version?: SchemaVersion17;
+  start: Start;
+}
+export interface DrawingTransform {
+  offset_x_mm?: OffsetXMm;
+  offset_y_mm?: OffsetYMm;
+  preserve_aspect?: PreserveAspect;
+  rotation_degrees?: RotationDegrees;
+  schema_version?: SchemaVersion19;
+}
+export interface RevisionRequest {
+  regenerate?: Regenerate;
+  schema_version?: SchemaVersion20;
+  seed_locked?: SeedLocked;
+  spec?: DrawingSpec | null;
+  transform?: DrawingTransform | null;
 }

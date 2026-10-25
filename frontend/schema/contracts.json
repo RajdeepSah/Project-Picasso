@@ -143,6 +143,166 @@
       "title": "Dimensions",
       "type": "object"
     },
+    "DrawingBounds": {
+      "additionalProperties": false,
+      "properties": {
+        "height_mm": {
+          "title": "Height Mm",
+          "type": "number"
+        },
+        "max_x_mm": {
+          "title": "Max X Mm",
+          "type": "number"
+        },
+        "max_y_mm": {
+          "title": "Max Y Mm",
+          "type": "number"
+        },
+        "min_x_mm": {
+          "title": "Min X Mm",
+          "type": "number"
+        },
+        "min_y_mm": {
+          "title": "Min Y Mm",
+          "type": "number"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "width_mm": {
+          "title": "Width Mm",
+          "type": "number"
+        }
+      },
+      "required": [
+        "min_x_mm",
+        "min_y_mm",
+        "max_x_mm",
+        "max_y_mm",
+        "width_mm",
+        "height_mm"
+      ],
+      "title": "DrawingBounds",
+      "type": "object"
+    },
+    "DrawingDraft": {
+      "additionalProperties": false,
+      "properties": {
+        "chord_tolerance_mm": {
+          "title": "Chord Tolerance Mm",
+          "type": "number"
+        },
+        "drawing_id": {
+          "title": "Drawing Id",
+          "type": "string"
+        },
+        "execution_ready": {
+          "const": false,
+          "default": false,
+          "title": "Execution Ready",
+          "type": "boolean"
+        },
+        "exporter_version": {
+          "const": "picasso-legacy-v1.0",
+          "default": "picasso-legacy-v1.0",
+          "title": "Exporter Version",
+          "type": "string"
+        },
+        "gcode": {
+          "title": "Gcode",
+          "type": "string"
+        },
+        "gcode_sha256": {
+          "title": "Gcode Sha256",
+          "type": "string"
+        },
+        "geometry": {
+          "$ref": "#/$defs/PolylineDrawing"
+        },
+        "parent_revision_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Parent Revision Id"
+        },
+        "preview": {
+          "$ref": "#/$defs/ExecutionPreview"
+        },
+        "prompt": {
+          "title": "Prompt",
+          "type": "string"
+        },
+        "revision": {
+          "minimum": 1,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "revision_id": {
+          "title": "Revision Id",
+          "type": "string"
+        },
+        "rounding_tolerance_mm": {
+          "default": 0.000708,
+          "title": "Rounding Tolerance Mm",
+          "type": "number"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "simulation_profile": {
+          "const": "unverified-preview-v1",
+          "default": "unverified-preview-v1",
+          "title": "Simulation Profile",
+          "type": "string"
+        },
+        "spec": {
+          "$ref": "#/$defs/DrawingSpec"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "transform": {
+          "$ref": "#/$defs/DrawingTransform"
+        },
+        "warnings": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Warnings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "drawing_id",
+        "revision_id",
+        "parent_revision_id",
+        "revision",
+        "title",
+        "prompt",
+        "spec",
+        "transform",
+        "geometry",
+        "preview",
+        "gcode",
+        "gcode_sha256",
+        "chord_tolerance_mm",
+        "warnings"
+      ],
+      "title": "DrawingDraft",
+      "type": "object"
+    },
     "DrawingSpec": {
       "additionalProperties": false,
       "properties": {
@@ -172,9 +332,8 @@
           "type": "string"
         },
         "generator_version": {
+          "const": "1",
           "default": "1",
-          "maxLength": 40,
-          "minLength": 1,
           "title": "Generator Version",
           "type": "string"
         },
@@ -200,6 +359,160 @@
         "dimensions"
       ],
       "title": "DrawingSpec",
+      "type": "object"
+    },
+    "DrawingTransform": {
+      "additionalProperties": false,
+      "properties": {
+        "offset_x_mm": {
+          "default": 0,
+          "maximum": 2000,
+          "minimum": -2000,
+          "title": "Offset X Mm",
+          "type": "number"
+        },
+        "offset_y_mm": {
+          "default": 0,
+          "maximum": 2000,
+          "minimum": -2000,
+          "title": "Offset Y Mm",
+          "type": "number"
+        },
+        "preserve_aspect": {
+          "default": false,
+          "title": "Preserve Aspect",
+          "type": "boolean"
+        },
+        "rotation_degrees": {
+          "default": 0,
+          "maximum": 360,
+          "minimum": -360,
+          "title": "Rotation Degrees",
+          "type": "number"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        }
+      },
+      "title": "DrawingTransform",
+      "type": "object"
+    },
+    "ExecutionPreview": {
+      "additionalProperties": false,
+      "properties": {
+        "bounds": {
+          "$ref": "#/$defs/DrawingBounds"
+        },
+        "drawing_distance_mm": {
+          "title": "Drawing Distance Mm",
+          "type": "number"
+        },
+        "expected_start_mm": {
+          "default": [
+            0,
+            0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Expected Start Mm",
+          "type": "array"
+        },
+        "pen_lifts": {
+          "title": "Pen Lifts",
+          "type": "integer"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "segments": {
+          "items": {
+            "$ref": "#/$defs/ExecutionSegment"
+          },
+          "title": "Segments",
+          "type": "array"
+        },
+        "strokes": {
+          "title": "Strokes",
+          "type": "integer"
+        },
+        "travel_distance_mm": {
+          "title": "Travel Distance Mm",
+          "type": "number"
+        }
+      },
+      "required": [
+        "segments",
+        "bounds",
+        "drawing_distance_mm",
+        "travel_distance_mm",
+        "strokes",
+        "pen_lifts"
+      ],
+      "title": "ExecutionPreview",
+      "type": "object"
+    },
+    "ExecutionSegment": {
+      "additionalProperties": false,
+      "properties": {
+        "end": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "End",
+          "type": "array"
+        },
+        "pen_down": {
+          "title": "Pen Down",
+          "type": "boolean"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "start": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Start",
+          "type": "array"
+        }
+      },
+      "required": [
+        "start",
+        "end",
+        "pen_down"
+      ],
+      "title": "ExecutionSegment",
       "type": "object"
     },
     "GenerateRequest": {
@@ -311,8 +624,8 @@
           "type": "string"
         },
         "phase": {
-          "const": 2,
-          "default": 2,
+          "const": 3,
+          "default": 3,
           "title": "Phase",
           "type": "integer"
         },
@@ -554,6 +867,51 @@
       "title": "ProfilesResponse",
       "type": "object"
     },
+    "RevisionRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "regenerate": {
+          "default": false,
+          "title": "Regenerate",
+          "type": "boolean"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "seed_locked": {
+          "default": false,
+          "title": "Seed Locked",
+          "type": "boolean"
+        },
+        "spec": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DrawingSpec"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "transform": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DrawingTransform"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "RevisionRequest",
+      "type": "object"
+    },
     "StorageStatus": {
       "additionalProperties": false,
       "properties": {
@@ -686,6 +1044,12 @@
     },
     {
       "$ref": "#/$defs/GenerateRequest"
+    },
+    {
+      "$ref": "#/$defs/DrawingDraft"
+    },
+    {
+      "$ref": "#/$defs/RevisionRequest"
     }
   ],
   "title": "PicassoContracts"
