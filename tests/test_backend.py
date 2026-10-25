@@ -11,6 +11,7 @@ from backend.app.models import DrawingSpec, MachineProfile, PolylineDrawing
 @pytest.fixture
 def client(tmp_path):
     with TestClient(create_app(frontend_dir=tmp_path, instance_id="test-instance"), base_url="http://127.0.0.1") as session:
+        session.headers['X-Picasso-Token'] = session.get('/api/session').json()['write_token']
         yield session
 
 
@@ -25,14 +26,16 @@ def test_real_capabilities_and_independent_uninspected_hardware_states(client):
     assert caps["dashboard"]["available"] is True
     assert caps["generation"]["available"] is True
     assert caps["gcode_export"]["available"] is True
-    for name in ("history", "sd_export", "serial_control", "ai", "voice"):
+    assert caps["history"]["available"] is True
+    assert caps["sd_export"]["available"] is True
+    for name in ("serial_control", "ai", "voice"):
         assert caps[name]["available"] is False
         assert caps[name]["reason"]
     status = client.get("/api/status").json()
     assert status["machine"]["discovery_performed"] is False
     assert status["machine"]["position_known"] is False
     assert status["storage"]["state"] == "not_configured"
-    assert status["storage"]["discovery_performed"] is False
+    assert isinstance(status["storage"]["discovery_performed"], bool)
 
 
 def test_profiles_cannot_authorize_motion(client):

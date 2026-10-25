@@ -1,6 +1,6 @@
 # Project Picasso development plan
 
-Baseline: 2026-10-24. **Phases 1–3 are complete. Phases 4–8 are planned and have not been implemented.** This plan is the implementation handoff for Codex. Read the architecture, G-code contract, and relevant audit before changing the associated subsystem.
+Baseline: 2026-10-24. **Phases 1–3 and Phase 4 software are complete. Phase 4 real-card verification remains pending. Phases 5–8 are planned.** This plan is the implementation handoff for Codex. Read the architecture, G-code contract, and relevant audit before changing the associated subsystem.
 
 ## Outcome and sequencing
 
@@ -13,7 +13,7 @@ The target is a real local drawing studio: launch once, type a drawing command, 
         |
 3 offline drawing engine + preview + G-code [complete]
         |
-4 history/import + verified SD export
+4 history/import + verified SD export [software complete; real card pending]
         |
 5 firmware hardening + hardware commissioning
         |
@@ -34,7 +34,7 @@ AI work can proceed after Phase 3 if hardware access delays Phase 5, but must us
 4. Update README installation/run instructions and `docs/PHASE_<n>_REPORT.md` with completed features, commands, tests, hardware dependencies and next steps. Update the milestone status here.
 5. Keep hardware-independent functionality available when a device/card/AI credential is absent. Clearly distinguish draft, prepared, export verified, running, and completed.
 
-The existing SHA-256 baseline can verify preservation during early phases. Phase 4 intentionally changes managed `SdCard/main.nc`; preserve the original first and record that transition instead of pretending the entire original manifest remains unchanged afterward.
+The existing SHA-256 baseline can verify preservation during early phases. A deliberate Phase 4 managed export can change `SdCard/main.nc`; preserve the original first and record that transition instead of claiming the original manifest still matches afterward. Implementation tests use temporary mirrors; all 543 original files remain unchanged at delivery.
 
 ## Phase 1 — inventory, machine contract, and roadmap
 
@@ -113,6 +113,8 @@ Checks:
 Exit: the offline creative workflow works in the running app. Physical execution remains unavailable when profile/origin/transport requirements are unmet.
 
 ## Phase 4 — durable history, import, preparation, and mounted SD export
+
+**Status: software complete; physical-card verification pending.** See [PHASE_4_REPORT.md](PHASE_4_REPORT.md) and [STORAGE_AND_COMMISSIONING.md](STORAGE_AND_COMMISSIONING.md).
 
 **Goal:** save/reopen drawings, prepare verified jobs, and automatically copy the selected artifact when an approved physical card is mounted.
 

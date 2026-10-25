@@ -30,11 +30,12 @@ export function revisionPayload(draft: DrawingDraft, fields: Edits): RevisionReq
 }
 
 export function DrawingInspector({ draft, fields, change, busy, available, dirty, aspectLocked, setAspectLocked,
-  seedLocked, setSeedLocked, regenerate, download }: {
+  seedLocked, setSeedLocked, regenerate, download, prepare, testExport, physicalReady }: {
   draft: DrawingDraft | null; fields: Edits; change: (key: keyof Edits, value: string) => void;
   busy: boolean; available: boolean; dirty: boolean; aspectLocked: boolean; setAspectLocked: (value: boolean) => void;
   seedLocked: boolean; setSeedLocked: (value: boolean) => void; regenerate: () => void;
   download: (format: 'json' | 'svg' | 'gcode') => void;
+  prepare: () => void; testExport: () => void; physicalReady: boolean;
 }) {
   return <div className="inspector-body drawing-controls">
     <div className="section-heading"><h3>Make it your own</h3><span className="small-tag">{draft ? `REV ${draft.revision}` : 'OFFLINE'}</span></div>
@@ -43,12 +44,12 @@ export function DrawingInspector({ draft, fields, change, busy, available, dirty
       <div className="dimension-fields"><label>W<input type="number" min="0.1" max="2000" step="0.1" value={fields.width} onChange={e => change('width', e.target.value)} aria-label="Drawing width in millimetres" /></label><span>×</span><label>H<input type="number" min="0.1" max="2000" step="0.1" value={fields.height} onChange={e => change('height', e.target.value)} aria-label="Drawing height in millimetres" /></label></div>
       <label className="checkbox-control"><input type="checkbox" checked={aspectLocked} onChange={e => setAspectLocked(e.target.checked)} /><LockKeyhole size={12} /> Lock aspect ratio</label>
       <div className="transform-fields"><label>Rotation °<input type="number" min="-360" max="360" value={fields.rotation} onChange={e => change('rotation', e.target.value)} aria-label="Drawing rotation in degrees" /></label><label>Center X mm<input type="number" min="-2000" max="2000" value={fields.x} onChange={e => change('x', e.target.value)} aria-label="Drawing center X" /></label><label>Center Y mm<input type="number" min="-2000" max="2000" value={fields.y} onChange={e => change('y', e.target.value)} aria-label="Drawing center Y" /></label></div>
-      <label className="control-label">Detail level<select aria-label="Drawing detail level" value={fields.detail} onChange={e => change('detail', e.target.value)}><option value="sparse">Simple</option><option value="standard">Standard</option><option value="dense">Intricate</option></select></label>
+      <label className="control-label">Detail level<select disabled={draft?.spec.generator === 'imported'} aria-label="Drawing detail level" value={fields.detail} onChange={e => change('detail', e.target.value)}><option value="sparse">Simple</option><option value="standard">Standard</option><option value="dense">Intricate</option></select></label>
       {draft?.spec.generator === 'mandala' && <label className="control-label seed-field">Petals<input type="number" min="3" max="64" value={fields.petals} onChange={e => change('petals', e.target.value)} aria-label="Mandala petals" /></label>}
       {draft?.spec.generator === 'spiral' && <label className="control-label seed-field">Turns<input type="number" min="0.1" max="100" step="0.1" value={fields.turns} onChange={e => change('turns', e.target.value)} aria-label="Spiral turns" /></label>}
       {draft?.spec.generator === 'pattern' && <label className="control-label seed-field">Symmetry<input type="number" min="2" max="64" value={fields.symmetry} onChange={e => change('symmetry', e.target.value)} aria-label="Pattern symmetry" /></label>}
-      <label className="control-label seed-field">Variation seed<input type="number" min="0" max="4294967295" value={fields.seed} onChange={e => change('seed', e.target.value)} aria-label="Drawing variation seed" /></label>
-      <label className="checkbox-control"><input type="checkbox" checked={seedLocked} onChange={e => setSeedLocked(e.target.checked)} />Keep seed when regenerating</label>
+      <label className="control-label seed-field">Variation seed<input disabled={draft?.spec.generator === 'imported'} type="number" min="0" max="4294967295" value={fields.seed} onChange={e => change('seed', e.target.value)} aria-label="Drawing variation seed" /></label>
+      <label className="checkbox-control"><input disabled={draft?.spec.generator === 'imported'} type="checkbox" checked={seedLocked} onChange={e => setSeedLocked(e.target.checked)} />Keep seed when regenerating</label>
     </fieldset>
     <div className="inspector-rule" /><h3>Exported path insights</h3>
     <dl className="path-insights"><div><dt>Actual bounds</dt><dd data-testid="actual-bounds">{draft ? `${draft.preview.bounds.width_mm.toFixed(2)} × ${draft.preview.bounds.height_mm.toFixed(2)} mm` : '—'}</dd></div>
@@ -56,9 +57,11 @@ export function DrawingInspector({ draft, fields, change, busy, available, dirty
       <div><dt>Travel distance</dt><dd>{draft ? `${draft.preview.travel_distance_mm.toFixed(1)} mm` : '—'}</dd></div>
       <div><dt>Strokes / pen lifts</dt><dd>{draft ? `${draft.preview.strokes} / ${draft.preview.pen_lifts}` : '—'}</dd></div></dl>
     <p className="insight-caption">{draft ? `SHA-256 ${draft.gcode_sha256.slice(0, 12)} · curve tolerance ${draft.chord_tolerance_mm} mm` : 'Metrics and preview come from the final G-code.'}</p>
-    <div className="inspector-rule" /><button className="outline-button" disabled={!draft || busy || !available || dirty} onClick={regenerate}><RotateCcw size={15} /> Regenerate drawing</button>
+    {draft?.import_source && <details className="import-provenance"><summary>Imported source: {draft.import_source.filename}</summary><p>Original bounds: {draft.import_source.original_bounds.width_mm.toFixed(2)} × {draft.import_source.original_bounds.height_mm.toFixed(2)} mm.</p>{draft.import_source.notes.map(note => <p key={note}>{note}</p>)}</details>}
+    <div className="inspector-rule" /><button className="outline-button" disabled={!draft || busy || !available || dirty || draft.spec.generator === 'imported'} onClick={regenerate}><RotateCcw size={15} /> Regenerate drawing</button>
     <div className="download-options"><button disabled={!draft || busy || !available || dirty} onClick={() => download('json')}><ArrowDownToLine size={14} /> Draft JSON</button><button disabled={!draft || busy || !available || dirty} onClick={() => download('svg')}>SVG</button><button disabled={!draft || busy || !available || dirty} onClick={() => download('gcode')}>G-code</button></div>
-    <button className="prepare-button" disabled title="Physical preparation requires a measured machine profile and arrives in Phase 4">Prepare for drawing <ArrowRight size={15} /></button>
-    <p className="inspector-footnote"><ShieldCheck size={13} /> Downloads are unverified drafts. No hardware motion.</p>
+    <button className="outline-button" disabled={!draft || busy || !available || dirty} onClick={testExport}>Test export without hardware</button>
+    <button className="prepare-button" disabled={!draft || busy || !available || dirty || !physicalReady} onClick={prepare} title={physicalReady ? 'Prepare against the selected measured profile' : 'Record and verify a measured profile in the Machine tab first'}>Prepare for drawing <ArrowRight size={15} /></button>
+    <p className="inspector-footnote"><ShieldCheck size={13} /> Saved automatically. No machine starts here.</p>
   </div>;
 }

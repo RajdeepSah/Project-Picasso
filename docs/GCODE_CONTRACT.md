@@ -71,7 +71,7 @@ There is no approved physical workspace in Phase 1. `±175` or `±200` X limits 
 
 ## Imported files and sample reuse
 
-The first importer should accept this strict subset only. A later standards-aware importer can handle supported absolute-mm linear G-code, modal axes and explicit pen mappings, while rejecting arcs/relative units until correctly implemented. Display original bounds and the chosen fit transform before preparing an imported drawing.
+Phase 4 accepts this strict subset and a separately declared absolute-mm linear dialect. The latter resolves modal axes, strips balanced comments, maps Z≤0 to pen down and Z>0 to pen up, accepts G17/G21/G90 and standalone M2/M30, and rejects arcs, relative/inch coordinates, offsets and unknown semantics. Feed is explicitly ignored because legacy firmware cannot honor it. Source pen-up detours are regenerated between strokes; source motions are not copied verbatim. The exact known vendor branding banner is recognized only before commands. Original bounds and chosen explicit center/fit are retained. See [STORAGE_AND_COMMISSIONING.md](STORAGE_AND_COMMISSIONING.md).
 
 The current mandala file includes standard setup/end commands and positive paper coordinates. Other samples contain exporter headers/comments and varying Z patterns. Preserve originals, import into canonical paths, transform and validate, then regenerate restricted output. Copying a sample as `main.nc` without that process is not a compatibility strategy.
 

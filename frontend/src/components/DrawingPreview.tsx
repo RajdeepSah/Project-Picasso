@@ -50,7 +50,7 @@ export function DrawingPreview({ draft, busy, grid, setGrid, zoom, setZoom }: {
       <div className={`paper ${draft ? 'has-drawing' : ''}`} style={{ transform: `scale(${zoom / 100})` }}>
         <span className="paper-corner top-left" /><span className="paper-corner bottom-right" />
         {draft && paths ? <svg role="img" aria-label={`${draft.title} drawing path preview, simulation only`} viewBox={paths.viewBox} data-gcode-sha256={draft.gcode_sha256}>
-          <title>{draft.title} · exported path · unverified machine profile</title>
+          <title>{draft.title} · exported path · machine position unmeasured</title>
           <g className="preview-axes"><path d={`M${paths.left},0H${paths.right}M0,${-paths.top}V${-paths.bottom}`} /></g>
           {showTravel && <path data-testid="travel-path" className="travel-path" d={paths.travel} />}
           <path data-testid="drawing-path" className="drawing-path" d={paths.drawing} />
@@ -60,7 +60,7 @@ export function DrawingPreview({ draft, busy, grid, setGrid, zoom, setZoom }: {
       </div>
       <div className="canvas-footer"><span>{draft ? `${draft.preview.bounds.width_mm.toFixed(2)} × ${draft.preview.bounds.height_mm.toFixed(2)} mm · fit to path` : 'Blank A4 page · 210 × 297 mm'}</span><div className="zoom-controls"><button aria-label="Zoom out" disabled={zoom <= 75} onClick={() => setZoom(Math.max(75, zoom - 25))}><Minus size={14} /></button><output aria-label="Preview zoom">{zoom}%</output><button aria-label="Zoom in" disabled={zoom >= 150} onClick={() => setZoom(Math.min(150, zoom + 25))}><Plus size={14} /></button></div></div>
     </div>
-    <div className="preview-bottom"><span><ShieldCheck size={14} /> Unverified profile · assumed start (0, 0)</span><button className="playback-button" disabled={!draft || busy} onClick={() => { if (progress >= 1) setProgress(0); setPlaying(!playing); }} aria-label={playing ? 'Pause simulation' : 'Play simulation'}>{playing ? <Pause size={14} /> : <Play size={14} />} Simulation</button></div>
+    <div className="preview-bottom"><span><ShieldCheck size={14} /> Draft preview · assumed start (0, 0)</span><button className="playback-button" disabled={!draft || busy} onClick={() => { if (progress >= 1) setProgress(0); setPlaying(!playing); }} aria-label={playing ? 'Pause simulation' : 'Play simulation'}>{playing ? <Pause size={14} /> : <Play size={14} />} Simulation</button></div>
     {draft && <div className="playback-controls"><input aria-label="Simulation progress" type="range" min="0" max="100" value={Math.round(progress * 100)} onChange={event => { setPlaying(false); setProgress(Number(event.target.value) / 100); }} /><span>{Math.round(progress * 100)}% · visual playback, not machine timing</span></div>}
   </section>;
 }

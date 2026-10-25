@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_vali
 Finite = Annotated[float, Field(allow_inf_nan=False)]
 PositiveMm = Annotated[float, Field(gt=0, le=2000, allow_inf_nan=False)]
 Point2 = tuple[Finite, Finite]
-GeneratorName = Literal["circle", "rectangle", "spiral", "butterfly", "mandala", "pattern"]
+GeneratorName = Literal["circle", "rectangle", "spiral", "butterfly", "mandala", "pattern", "imported"]
 
 
 class Contract(BaseModel):
@@ -39,7 +39,7 @@ class DrawingSpec(Contract):
     @model_validator(mode="after")
     def applicable_parameters(self):
         allowed = {"circle": {"radius_mm"}, "rectangle": set(), "spiral": {"turns"},
-                   "butterfly": set(), "mandala": {"petals", "symmetry"}, "pattern": {"symmetry"}}
+                   "butterfly": set(), "mandala": {"petals", "symmetry"}, "pattern": {"symmetry"}, "imported": set()}
         present = {key for key, value in self.parameters.model_dump().items()
                    if key != "schema_version" and value is not None}
         if present - allowed[self.generator]:
@@ -83,7 +83,8 @@ class MachineProfile(Contract):
 
 class ProfilesResponse(Contract):
     profiles: list[MachineProfile]
-    active_profile_id: None = None
+    measured_profiles: list["CalibrationProfile"] = Field(default_factory=list)
+    active_profile_id: str | None = None
 
 
 class Capability(Contract):
@@ -106,7 +107,7 @@ class CapabilitiesResponse(Contract):
 class HealthResponse(Contract):
     application: Literal["project-picasso"] = "project-picasso"
     version: str
-    phase: Literal[3] = 3
+    phase: Literal[4] = 4
     status: Literal["ready"] = "ready"
     instance_id: str
     frontend_ready: bool
@@ -121,9 +122,9 @@ class MachineStatus(Contract):
 
 
 class StorageStatus(Contract):
-    state: Literal["not_configured"] = "not_configured"
+    state: Literal["not_configured", "unmounted", "ready", "test_directory"] = "not_configured"
     local_mirror: Literal["SdCard"] = "SdCard"
-    discovery_performed: Literal[False] = False
+    discovery_performed: bool = False
     reason: str
 
 
@@ -201,7 +202,221 @@ class DrawingDraft(Contract):
     execution_ready: Literal[False] = False
     simulation_profile: Literal["unverified-preview-v1"] = "unverified-preview-v1"
     warnings: list[str]
+    import_source: "ImportedSource | None" = None
+
+
+class ImportedSource(Contract):
+    filename: str
+    content_sha256: str
+    dialect: Literal["picasso", "linear-mm", "picasso-json"]
+    original_bounds: DrawingBounds
+    input_strokes: list[Stroke]
+    notes: list[str]
+
+
+class ImportRequest(Contract):
+    filename: str = Field(min_length=1, max_length=120)
+    content: str = Field(min_length=1, max_length=8_000_000)
+    dialect: Literal["picasso", "linear-mm", "picasso-json"] = "linear-mm"
+    center_on_origin: bool = False
+    fit_width_mm: PositiveMm | None = None
+    fit_height_mm: PositiveMm | None = None
+
+
+class HistoryEntry(Contract):
+    revision_id: str
+    drawing_id: str
+    title: str
+    revision: int
+    prompt: str
+    generator: str
+    created_at: str
+    integrity: Literal["ok", "damaged"]
+    integrity_message: str | None = None
+
+
+class HistoryResponse(Contract):
+    items: list[HistoryEntry]
+    total: int
+    offset: int
+    limit: int
+    recovery_notices: list[str] = Field(default_factory=list)
+
+
+class WorkRegion(Contract):
+    min_x_mm: Finite = Field(ge=-2000, le=2000)
+    max_x_mm: Finite = Field(ge=-2000, le=2000)
+    min_y_mm: Finite = Field(ge=-2000, le=2000)
+    max_y_mm: Finite = Field(ge=-2000, le=2000)
+    margin_mm: Finite = Field(default=5, ge=1, le=100)
+
+    @model_validator(mode="after")
+    def nonempty(self):
+        if self.min_x_mm + 2 * self.margin_mm >= self.max_x_mm or self.min_y_mm + 2 * self.margin_mm >= self.max_y_mm:
+            raise ValueError("Region must contain a nonempty interior after margins")
+        return self
+
+
+class CalibrationInput(Contract):
+    label: str = Field(min_length=1, max_length=100)
+    base_reference_id: Literal["reference-350", "reference-400"]
+    board: str = Field(min_length=1, max_length=120)
+    separation_mm: PositiveMm
+    anchor_y_mm: Finite = Field(gt=0, le=2000)
+    spool_diameter_mm: PositiveMm
+    steps_per_turn: int = Field(gt=0, le=100000)
+    pen_up_degrees: int = Field(ge=0, le=180)
+    pen_down_degrees: int = Field(ge=0, le=180)
+    allowed_region: WorkRegion
+    rope_min_mm: Finite = Field(gt=0, le=10000)
+    rope_max_mm: Finite = Field(gt=0, le=10000)
+    measured_by: str = Field(min_length=1, max_length=100)
+    measurement_notes: str = Field(min_length=10, max_length=3000)
+    origin_procedure: str = Field(min_length=10, max_length=3000)
+    firmware_matches_measurements: bool = False
+    pen_lift_and_holding_tested: bool = False
+    workspace_tested: bool = False
+    verified: bool = False
+
+    @model_validator(mode="after")
+    def measured_region(self):
+        if self.rope_min_mm >= self.rope_max_mm:
+            raise ValueError("Minimum rope length must be below maximum")
+        region = self.allowed_region
+        if region.max_y_mm >= self.anchor_y_mm or region.min_x_mm <= -self.separation_mm / 2 or region.max_x_mm >= self.separation_mm / 2:
+            raise ValueError("Workspace must lie below and strictly between the motor anchors")
+        if self.verified and not (self.firmware_matches_measurements and self.pen_lift_and_holding_tested and self.workspace_tested):
+            raise ValueError("Verification requires recorded firmware, pen/holding and workspace checks")
+        return self
+
+
+class CalibrationSaveRequest(Contract):
+    calibration: CalibrationInput
+    expected_revision: str | None = None
+    select_for_preparation: bool = False
+
+
+class CalibrationProfile(CalibrationInput):
+    id: str
+    revision: str
+    version: int
+    recorded_at: str
+    verification_method: Literal["operator_recorded"] = "operator_recorded"
+
+
+class PreparationRequest(Contract):
+    revision_id: str
+    mode: Literal["physical", "simulation"] = "physical"
+    profile_id: str | None = None
+    profile_revision: str | None = None
+
+
+class PreparedJob(Contract):
+    id: str
+    revision_id: str
+    drawing_id: str
+    title: str
+    mode: Literal["physical", "simulation"]
+    profile: CalibrationProfile | None
+    gcode: str
+    gcode_sha256: str
+    preview: ExecutionPreview
+    created_at: str
+    expected_start_mm: Point2 = (0, 0)
+    manual_origin_required: Literal[True] = True
+    hardware_execution_verified: Literal[False] = False
+    state: Literal["prepared_locally"] = "prepared_locally"
+    warnings: list[str]
+
+
+class StorageTarget(Contract):
+    id: str
+    label: str
+    path: str
+    kind: Literal["physical_card", "test_directory"]
+    filesystem: str
+    volume_uuid: str
+    instance: str
+    available: bool
+    writable: bool
+    reason: str
+    current_main_sha256: str | None = None
+
+
+class TargetsResponse(Contract):
+    targets: list[StorageTarget]
+    selected_target_id: str | None
+    discovery_supported: bool
+    discovery_error: str | None = None
+    local_mirror_sha256: str | None = None
+    auto_sync: "AutoSyncState"
+
+
+class TargetSelectionRequest(Contract):
+    target_id: str
+
+
+class ProfileSelectionRequest(Contract):
+    profile_id: str
+    expected_revision: str
+
+
+class ExportRequest(Contract):
+    target_id: str
+    expected_job_sha256: str
+    expected_existing_sha256: str | None = None
+    acknowledge_replace: bool = False
+    computer_owns_card: bool = False
+    manual_start_understood: bool = False
+    stage_local_mirror: bool = False
+    expected_local_mirror_sha256: str | None = None
+
+
+class StageRequest(Contract):
+    expected_existing_sha256: str | None = None
+    acknowledge_replace: bool = False
+
+
+class TransferRecord(Contract):
+    id: str
+    job_id: str
+    target_id: str
+    target_kind: Literal["physical_card", "test_directory", "local_mirror"]
+    status: Literal["copying", "verified", "failed", "interrupted"]
+    gcode_sha256: str
+    previous_sha256: str | None
+    backup: str | None
+    bytes_verified: int = 0
+    message: str
+    created_at: str
+    local_mirror_updated: bool = False
+
+
+class AutoSyncState(Contract):
+    enabled: bool = False
+    job_id: str | None = None
+    target_id: str | None = None
+    status: str = "disabled"
+    message: str = "Automatic export is disabled."
+    last_transfer_id: str | None = None
+
+
+class AutoSyncRequest(Contract):
+    enabled: bool
+    job_id: str | None = None
+    export: ExportRequest | None = None
+
+
+class SessionResponse(Contract):
+    write_token: str
 
 
 ALL_CONTRACTS = (DrawingSpec | PolylineDrawing | ProfilesResponse | CapabilitiesResponse
-                 | HealthResponse | StudioStatus | ApiError | GenerateRequest | DrawingDraft | RevisionRequest)
+                 | HealthResponse | StudioStatus | ApiError | GenerateRequest | DrawingDraft | RevisionRequest
+                 | ImportRequest | HistoryResponse | CalibrationSaveRequest | CalibrationProfile
+                 | PreparationRequest | PreparedJob | TargetsResponse | TargetSelectionRequest
+                 | ExportRequest | StageRequest | TransferRecord | AutoSyncRequest | AutoSyncState | SessionResponse | ProfileSelectionRequest)
+
+ProfilesResponse.model_rebuild()
+DrawingDraft.model_rebuild()
+TargetsResponse.model_rebuild()

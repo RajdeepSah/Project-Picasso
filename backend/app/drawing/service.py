@@ -1,4 +1,4 @@
-"""Immutable, bounded in-memory draft revisions. No persistence or hardware."""
+"""Immutable drawing revisions with optional durable storage and a bounded cache."""
 
 from collections import OrderedDict
 from dataclasses import dataclass
@@ -7,11 +7,12 @@ import json
 import threading
 import uuid
 
-from ..models import DrawingDraft, DrawingTransform, GenerateRequest, RevisionRequest
+from ..models import Dimensions, DrawingDraft, DrawingSpec, DrawingTransform, GenerateRequest, ImportRequest, RevisionRequest
 from .commands import resolve_command
 from .errors import DrawingError
 from .gcode import encode, parse, verify_roundtrip
 from .geometry import Budget, TOLERANCE, generate_geometry
+from .importer import import_source as normalize_import
 
 WARNINGS = [
     "Simulation only. No physical machine profile or workspace is verified.",
@@ -48,18 +49,23 @@ def svg_bytes(draft: DrawingDraft) -> bytes:
 
 
 class DraftService:
-    def __init__(self, *, max_drafts=16, max_bytes=32_000_000):
+    def __init__(self, *, max_drafts=16, max_bytes=32_000_000, repository=None):
         self._items: OrderedDict[str, StoredDraft] = OrderedDict()
         self._lock = threading.Lock()
         self._workers = threading.BoundedSemaphore(2)
         self.max_drafts = max_drafts
         self.max_bytes = max_bytes
+        self.repository = repository
 
     def get(self, revision_id: str) -> DrawingDraft:
         return DrawingDraft.model_validate_json(self.export(revision_id).json_bytes)
 
     def export(self, revision_id: str) -> StoredDraft:
         with self._lock:
+            if self.repository is not None:
+                files = self.repository.load(revision_id, "revision")
+                draft = DrawingDraft.model_validate_json(files["draft.json"])
+                return StoredDraft(files["draft.json"], files["drawing.nc"], files["preview.svg"], f"picasso-{draft.spec.generator}-{draft.revision_id[:8]}-UNVERIFIED")
             if revision_id not in self._items:
                 raise DrawingError("DRAFT_NOT_FOUND", "Draft not found. It may have expired or the service restarted. Generate a new drawing.", 404)
             self._items.move_to_end(revision_id)
@@ -71,17 +77,38 @@ class DraftService:
 
     def revise(self, revision_id: str, request: RevisionRequest, cancel: threading.Event) -> DrawingDraft:
         parent = self.get(revision_id)
+        if parent.spec.generator == 'imported' and request.regenerate:
+            raise DrawingError("UNSUPPORTED_REGENERATION", "Imported paths can be resized or transformed; regeneration applies to generated drawings only.")
         spec = (request.spec or parent.spec).model_copy(deep=True)
         if request.regenerate and not request.seed_locked:
             spec.seed = (spec.seed + 1) % 4294967296
-        return self._build(spec, request.transform or parent.transform, parent.prompt, cancel, parent)
+        if spec.generator != parent.spec.generator:
+            raise DrawingError("INVALID_REVISION", "Use a new command to change drawing generators.")
+        return self._build(spec, request.transform or parent.transform, parent.prompt, cancel, parent, parent.import_source)
 
-    def _build(self, spec, transform, prompt, cancel, parent=None) -> DrawingDraft:
+    def import_drawing(self, request: ImportRequest, cancel: threading.Event) -> DrawingDraft:
+        source = normalize_import(request)
+        box = source.original_bounds
+        width, height = max(box.width_mm, .001), max(box.height_mm, .001)
+        if request.fit_width_mm is not None:
+            height *= request.fit_width_mm / width; width = request.fit_width_mm
+        if request.fit_height_mm is not None:
+            if request.fit_width_mm is None:
+                width *= request.fit_height_mm / height
+            height = request.fit_height_mm
+        if max(width, height) > 2000:
+            raise DrawingError("IMPORT_TOO_LARGE", "Fit the imported drawing to dimensions no larger than 2000 mm.")
+        spec = DrawingSpec(generator="imported", dimensions=Dimensions(width_mm=width, height_mm=height))
+        transform = DrawingTransform(offset_x_mm=0 if request.center_on_origin else (box.min_x_mm+box.max_x_mm)/2,
+                                     offset_y_mm=0 if request.center_on_origin else (box.min_y_mm+box.max_y_mm)/2)
+        return self._build(spec, transform, f"Imported {source.filename}", cancel, import_source=source)
+
+    def _build(self, spec, transform, prompt, cancel, parent=None, import_source=None) -> DrawingDraft:
         if not self._workers.acquire(blocking=False):
             raise DrawingError("GENERATION_BUSY", "Two drawings are already being generated. Try again shortly.", 429)
         try:
             budget = Budget(cancel)
-            geometry = generate_geometry(spec, transform, budget)
+            geometry = generate_geometry(spec, transform, budget, import_source.input_strokes if import_source else None)
             code = encode(geometry)
             preview = parse(code, budget=budget)
             verify_roundtrip(geometry, preview)
@@ -94,13 +121,18 @@ class DraftService:
                 revision=parent.revision + 1 if parent else 1, title=title, prompt=prompt,
                 spec=spec, transform=transform, geometry=geometry, preview=preview,
                 gcode=code, gcode_sha256=hashlib.sha256(code.encode("ascii")).hexdigest(),
-                chord_tolerance_mm=TOLERANCE[spec.detail], warnings=WARNINGS,
+                chord_tolerance_mm=TOLERANCE[spec.detail], warnings=([*WARNINGS[:3], "Saved automatically in local history."] if self.repository else WARNINGS),
+                import_source=import_source,
             )
             item = StoredDraft(draft.model_dump_json().encode(), code.encode("ascii"), svg_bytes(draft),
                                f"picasso-{spec.generator}-{draft.revision_id[:8]}-UNVERIFIED")
             if item.size > self.max_bytes:
                 raise DrawingError("DRAWING_TOO_COMPLEX", "Draft exceeds the session memory limit. Reduce detail.")
             budget.check()
+            if self.repository is not None:
+                self.repository.save(draft.revision_id, "revision", {"draft.json": item.json_bytes, "drawing.nc": item.gcode_bytes, "preview.svg": item.svg_bytes},
+                                     {"drawing_id": draft.drawing_id, "parent_id": draft.parent_revision_id, "ordinal": draft.revision,
+                                      "title": draft.title, "prompt": draft.prompt, "generator": draft.spec.generator})
             with self._lock:
                 self._items[draft.revision_id] = item
                 while len(self._items) > self.max_drafts or sum(value.size for value in self._items.values()) > self.max_bytes:

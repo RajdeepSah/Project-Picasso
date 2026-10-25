@@ -2,7 +2,7 @@
 
 A local application being developed to turn drawing commands into previewed, machine-compatible paths for an Arduino wall drawing machine.
 
-**Current milestone: Phase 3 complete — offline drawing commands, deterministic geometry, live adjustments, exported-path previews, playback and unverified JSON/SVG/G-code draft downloads. Durable history, physical preparation, SD synchronization, AI and USB control remain scheduled for later phases.**
+**Current milestone: Phase 4 software complete — persistent history, drawing import, measured profiles, immutable preparation, and verified one-way SD export. Real-card and machine commissioning checks remain pending; firmware hardening, USB control, AI and voice are later phases.**
 
 ## Install and launch
 
@@ -46,19 +46,25 @@ python3 scripts/setup.py --skip-install
 - Offline circles/ellipses, rectangles, spirals, butterflies, mandalas and geometric patterns, generated without an API key.
 - Live size/aspect lock, rotation, placement, detail, seed and generator-specific controls; seed locking and regeneration.
 - SVG preview derived from the exact exported G-code, with zoom/grid, travel toggle, simulation playback, actual bounds, path distances and pen lifts.
-- Immutable revisions kept in memory, a session-draft view, and JSON/SVG/restricted G-code downloads.
-- Read-only inspection of both source calibration references, with no active or verified machine profile.
+- Durable immutable revisions, searchable history with thumbnails, integrity checks/repair, and JSON/SVG/restricted G-code downloads.
+- Import existing absolute-mm linear G-code or Picasso JSON, with explicit centering/fitting and original-bounds provenance.
+- Inspect both source references and record/edit actual machine measurements; no physical profile is selected or verified automatically.
+- Freeze a drawing into a prepared job; validate its full path and initial travel against the verified measured profile.
+- Back up and stage local `SdCard/main.nc`, or copy to an explicitly selected mounted FAT card with checksum readback.
+- Test the same publication pipeline in an isolated app-owned directory without hardware; opt into syncing one exact prepared job when its approved target is available.
 - Live local-service health, separate unavailable machine/card states, offline error handling and reconnect without losing the command.
 - Getting-started and studio-information dialogs, keyboard submission, and an application error boundary.
-- Disabled microphone and physical preparation controls with their future phase identified.
+- Physical preparation stays disabled until the selected measured profile is verified. Microphone input remains planned for Phase 8.
 
 Try **“Draw a beautiful mandala”**, **“Draw a butterfly”**, or **“Draw a circle diameter 100”**. You can also specify `120 mm wide`, `100 x 60 mm`, `12 petals`, `5 turns`, `symmetry 8`, `seed 7`, and `simple`/`standard`/`intricate`, where applicable. Unsupported or ambiguous commands explain the supported grammar. See [offline commands and draft workflow](docs/OFFLINE_DRAWING_COMMANDS.md).
 
-**This is still a simulation with an unverified machine profile.** The initial travel assumes `(0,0)`; no physical position is measured. Downloads are labeled `UNVERIFIED` and do not authorize execution. No card is written and no hardware moves.
+Draft previews and downloads remain **unverified for execution**. Physical preparation requires operator-recorded calibration, workspace/rope limits and pen/holding checks matching a bundled firmware reference. The app checks geometry and file bytes; it does not measure carriage position or certify physical safety. Every SD job requires the recorded manual `(0,0)` origin procedure before starting it from the machine's menu. No application action starts the machine.
 
-The service retains up to 16 revisions / 32 MB; the browser shows its last eight revisions. These disappear on restart or eviction. Download JSON to keep a copy. Reimport and durable history arrive in Phase 4.
+To try Phase 4 without hardware: generate a drawing → **Test export without hardware** → prepare a simulation job → create the test directory → review replacement → export. The destination is `data/test-card/main.nc`, clearly labeled as a test. Physical-card discovery/export currently supports Linux/POSIX; the card must be mounted in the computer. Arduino USB does not expose its SPI card. See the [storage and commissioning guide](docs/STORAGE_AND_COMMISSIONING.md) for the physical workflow, backups and automatic-sync limits.
 
-![Phase 3 drawing studio](docs/screenshots/phase-3-studio.png)
+History lives under `data/` and survives restarts. Its SQLite database and checksummed artifacts are local to this computer; stop the app before backing up the entire directory. The browser's eight recently viewed entries are shortcuts, not the history retention limit.
+
+![Phase 4 drawing studio](docs/screenshots/phase-4-studio.png)
 
 ## Start here
 
@@ -70,6 +76,8 @@ The service retains up to 16 revisions / 32 MB; the browser shows its last eight
 - [Phase 1 report](docs/PHASE_1_REPORT.md): completed work, verification results, and outstanding hardware checks.
 - [Phase 2 report](docs/PHASE_2_REPORT.md): implemented application features, test results, and current limits.
 - [Phase 3 report](docs/PHASE_3_REPORT.md): drawing engine, export, preview and validation results.
+- [Phase 4 report](docs/PHASE_4_REPORT.md): durable storage, import, preparation, transfer tests and remaining hardware checks.
+- [Storage and commissioning guide](docs/STORAGE_AND_COMMISSIONING.md): test exports, profiles, mounted cards, backups and recovery.
 - [Third-party notices](docs/THIRD_PARTY_NOTICES.md): bundled font and package provenance.
 
 ## Development checks
@@ -98,25 +106,26 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Browser installation is only needed for the tests. To use an existing compatible Chromium installation, set `PICASSO_BROWSER_PATH` to its executable path. Browser tests start and stop their own app on port 8765 and save desktop/mobile screenshots under `docs/screenshots/`. They need loopback access and permission to launch a headless browser. The original audit command below remains dependency-free.
+Browser installation is only needed for the tests. To use an existing compatible Chromium installation, set `PICASSO_BROWSER_PATH` to its executable path. Rebuild before browser tests (`npm run build`). Browser tests start and stop their own app on port 8765 using isolated temporary data/mirror directories and save desktop/mobile screenshots under `docs/screenshots/`. They need loopback access and permission to launch a headless browser. The original audit command below remains dependency-free.
 
 ## Local API
 
-Read-only foundation endpoints:
+The running application exposes its full schema at **http://127.0.0.1:8000/docs**. Main endpoints:
 
-- `GET /api/health`: service version, instance, Python version and frontend-build presence.
-- `GET /api/capabilities`: available features and reasons/phases for unavailable ones.
-- `GET /api/status`: independent machine/card state; no device discovery is performed yet.
-- `GET /api/profiles`: the two unverified references, with `active_profile_id: null`.
+- `GET /api/health`, `/api/capabilities`, `/api/status`: independent application, machine and storage state.
+- `GET /api/profiles`: source references, saved measured profiles and active selection.
+- `GET /api/drawings?query=mandala&offset=0&limit=20`: searchable persistent history.
+- `POST /api/drawings/generate`, `POST /api/drawings/import`: generate/import and save a draft.
+- `POST /api/drawings/{revision_id}/revisions`: save an immutable adjustment/regeneration.
+- `GET /api/drawings/{revision_id}` and `/export?format=json|svg|gcode`: retrieve exact saved artifacts.
+- `POST /api/profiles`, `PUT /api/profiles/{id}`, `POST /api/profiles/select`: measured calibration with revision checking.
+- `POST /api/jobs/prepare`, `GET /api/jobs/{id}`: freeze/restore a validated job.
+- `GET /api/storage/targets`, `POST /api/storage/select`, `POST /api/storage/test-target`: explicit destination discovery/selection.
+- `POST /api/jobs/{id}/stage`, `POST /api/jobs/{id}/sd-export`: reviewed local-mirror staging or verified selected-target export.
+- `POST /api/storage/auto-sync`, `GET /api/storage/transfers`: exact-job automatic export and durable transfer records.
+- `POST /api/artifacts/{id}/repair`: restore a damaged artifact from its checksummed database recovery copy.
 
-Drawing endpoints:
-
-- `POST /api/drawings/generate`: `{ "prompt": "Draw a mandala with 12 petals, seed 7" }` → a complete unverified draft, including paths, exact G-code and checksum.
-- `POST /api/drawings/{revision_id}/revisions`: validated spec/transform edits or `{ "regenerate": true, "seed_locked": false }` → a new immutable revision.
-- `GET /api/drawings/{revision_id}`: retrieve an in-memory draft.
-- `GET /api/drawings/{revision_id}/export?format=json|svg|gcode`: download that exact revision without regenerating it.
-
-Interactive API documentation is at **http://127.0.0.1:8000/docs** while the service runs. The backend rejects unexpected hosts/origins. Generation has a three-second cooperative budget, cancellation, complexity limits and two concurrent workers. There are no filesystem-write, serial-connect, physical preparation or motion endpoints yet.
+All mutations require `X-Picasso-Token`, obtained from `GET /api/session`; it changes on service restart. The browser handles this automatically. API clients must fetch the token and include the header; `/docs` shows the request schemas but does not attach it automatically. Unexpected hosts/origins are rejected. There are no serial-connect or motion endpoints. Generation retains cooperative cancellation, complexity limits and two concurrent workers.
 
 ## Run the Phase 1 audit
 
@@ -128,7 +137,7 @@ python3 -B scripts/audit_project.py
 
 No packages, API keys, network access, Arduino, or SD reader are required. This command reads the original project files and prints their inventory. It does not generate a drawing or communicate with hardware.
 
-Verify that all original files still match the Phase 1 baseline:
+Verify that all original files still match the Phase 1 baseline (a later deliberate managed `SdCard/main.nc` export will change that one file):
 
 ```bash
 python3 -B scripts/audit_project.py --verify docs/project-inventory.json
@@ -161,6 +170,6 @@ Neither version has been established as the firmware installed on the machine. B
 
 ## Next phases
 
-The implemented stack is React + TypeScript + Vite with Python + FastAPI/Pydantic and a standard-library geometry/export engine. SQLite persistence is planned for Phase 4 and pySerial for Phase 6; neither is used by the current dashboard. Arduino CLI is not installed. Current Vite runtime requirements are described in the [official Vite guide](https://vite.dev/guide/).
+The implemented stack is React + TypeScript + Vite with Python + FastAPI/Pydantic, standard-library geometry/export, and SQLite plus immutable files. pySerial belongs to Phase 6; no USB protocol is present yet. Arduino CLI is not installed.
 
-Next: implement Phase 4 from `docs/DEVELOPMENT_PLAN.md`: durable history, import/normalization, measured-profile preparation and verified mounted-card export. Hardware calibration and firmware changes remain explicit milestones.
+Next: Phase 5 from [the roadmap](docs/DEVELOPMENT_PLAN.md), establishing canonical firmware, hardening its parser/motion handling, and commissioning the actual machine. Real-card readback remains a pending Phase 4 hardware acceptance check. AI interpretation and voice remain Phases 7 and 8.

@@ -1,6 +1,6 @@
 # Project Picasso architecture
 
-Status: accepted architecture based on the Phase 1 source audit of 2026-10-24. Phases 2–3 implement the local service, dashboard, shared schemas, offline geometry, immutable in-memory drafts, strict G-code export and round-trip preview/downloads. Persistence, physical preparation/transfers, firmware changes, AI and voice remain future implementation. See [PHASE_3_REPORT.md](PHASE_3_REPORT.md) for the current boundary.
+Status: accepted architecture based on the Phase 1 source audit of 2026-10-24. Phases 2–4 implement the local studio, offline engine, durable history/import, operator-recorded profiles, immutable preparation and verified managed SD export. Real-card commissioning remains pending. Serial control, firmware changes, AI and voice are future work. See [PHASE_4_REPORT.md](PHASE_4_REPORT.md).
 
 ## Product behavior
 
@@ -16,7 +16,7 @@ A supported offline command such as “Draw a mandala with 12 petals, 120 mm wid
 - **SQLite plus ordinary files:** transactional drawing metadata/history with inspectable JSON, SVG, and `.nc` artifacts on disk. No cloud database, container runtime, broker, or account is needed.
 - **Tests:** pytest for backend geometry, API, filesystem, and protocol behavior; a small number of Vitest component tests; Playwright for the actual command-to-preview-to-export journey. Arduino CLI compile checks and host-side parser tests are added with firmware work.
 
-Use Python 3.12+ and Node 22.12+ as the planned supported baseline; Phase 2 must test installed versions and lock exact working dependencies. Avoid silently installing the old bundled Windows executables. The [Vite guide](https://vite.dev/guide/) describes its Node requirements; [FastAPI static files](https://fastapi.tiangolo.com/tutorial/static-files/) support serving built assets without a separate production frontend server. Dependency selection is a project design decision, not evidence that those packages are installed today.
+Use Python 3.12+ and Node 22.12+; the installed Python 3.14.4/Node 22.22.1 combination passes current checks and dependency versions are locked. Avoid silently installing the old bundled Windows executables. The [Vite guide](https://vite.dev/guide/) describes its Node requirements; [FastAPI static files](https://fastapi.tiangolo.com/tutorial/static-files/) support serving built assets without a separate production frontend server. pySerial remains a planned Phase 6 dependency; current storage uses the Python standard library.
 
 ## Component boundaries
 
@@ -138,9 +138,13 @@ Paths below are planned contracts; add endpoints only in their assigned phase.
 
 Use stable error codes (`PROFILE_UNVERIFIED`, `PATH_OUT_OF_BOUNDS`, `UNSUPPORTED_COMMAND`, `TARGET_REMOVED`, `PROTOCOL_MISMATCH`, `ORIGIN_UNKNOWN`) and human-readable explanations. Hardware endpoints have no operational stubs that report success. Before implementation they are absent or explicitly unavailable.
 
-Phase 3 implements generation, revision creation and retrieval, and `GET /api/drawings/{revision_id}/export?format=json|svg|gcode`. These are bounded in-memory unverified drafts, not prepared jobs. The generation endpoint now returns a real draft, replacing Phase 2's HTTP 501 response. Health/capability/status/profile reads remain available. All physical endpoints above remain future contracts; the per-launch write token is required when file/serial write APIs are introduced, rather than implied to exist now.
+The implemented engine lives in `backend/app/drawing/`: command resolver, analytic-circle/cubic geometry, strict dialect codec, declared linear importer and draft service. `models.py` supplies shared contracts. `backend/app/storage/` separates SQLite/artifact recovery, measured-profile/preparation validation, mount discovery, and managed publication/automatic export.
 
-The implemented pure engine lives in `backend/app/drawing/`: command resolver, analytic-circle/cubic geometry, strict dialect codec and bounded draft service. `models.py` contains the shared contracts. Drafts retain the spec, transform, flattened rounded geometry, execution preview and exact G-code hash. Serialized snapshots prevent callers from mutating earlier revisions; LRU limits are 16 drafts and 32 MB. The UI retains eight revisions in its current window. Each operation has a three-second cooperative deadline and a disconnect cancellation event; two workers can build at once. No database or app-owned disk storage is introduced in Phase 3.
+Phase 4 stores immutable draft JSON, exact G-code and SVG in `data/artifacts/<id>/`, with SQLite schema version 1 metadata, hash manifests and compressed exact recovery copies. Save stages files before publishing/committing; startup quarantines uncommitted directories and marks unfinished transfers interrupted. Artifact reads verify every file even when a draft is cached. The 16-draft/32 MB cache and eight browser shortcuts do not evict persistent history. History is searchable and paginated; profiles preserve prior revisions and prepared jobs freeze their calibration snapshot.
+
+Implemented API extensions include `/api/drawings/import`, history/thumbnail/repair, measured-profile save/select, `/api/jobs/prepare`, job retrieval, `/api/jobs/{id}/stage`, `/api/jobs/{id}/sd-export`, and storage targets/test-target/select/auto-sync/transfers. Draft downloads remain `/api/drawings/{revision_id}/export?format=json|svg|gcode`. There is no separate prepared-download or machine endpoint yet. Polling supplies automatic-export updates; no SSE transport is implemented.
+
+Every mutation requires a random per-launch token from `/api/session`; the UI refreshes an expired token once and retries only the denied request, never a potentially completed transfer. Export/configuration operations share an in-process guard and POSIX file lock. Linux discovery requires a mounted removable/USB FAT filesystem with UUID; it never mounts/formats a drive. A separately labeled test target is always restricted to `data/test-card`. Publication anchors writes to a directory descriptor, verifies volume identity and reviewed hashes, backs up old `main.nc`, stages short FAT-compatible names, flushes/checksums, replaces only managed filenames and reads back final bytes. Automatic sync binds one frozen job and selected target; changed files/profile or IO failures pause for review. Details and actual limits are in [STORAGE_AND_COMMISSIONING.md](STORAGE_AND_COMMISSIONING.md).
 
 ## Machine state and execution
 

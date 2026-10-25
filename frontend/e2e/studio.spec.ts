@@ -77,7 +77,7 @@ test('offline circle to resized mandala, regeneration, exact draft downloads and
   await page.getByRole('spinbutton', { name: 'Drawing width in millimetres' }).evaluate(element => element.closest('.inspector-body')?.scrollTo(0, 0));
   await page.evaluate(async () => { await document.fonts.ready; window.scrollTo(0, 0); });
   await mkdir('../docs/screenshots', { recursive: true });
-  await page.screenshot({ path: '../docs/screenshots/phase-3-studio.png', fullPage: true });
+  await page.screenshot({ path: '../docs/screenshots/phase-4-studio.png', fullPage: true });
   expect(errors).toEqual([]);
 });
 
@@ -100,7 +100,7 @@ test('mobile drawing and adjustments have no horizontal overflow', async ({ page
   await expect(page.getByTestId('actual-bounds')).toHaveText('100.00 × 100.00 mm');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.evaluate(async () => { await document.fonts.ready; window.scrollTo(0, 0); });
-  await page.screenshot({ path: '../docs/screenshots/phase-3-mobile.png', fullPage: true });
+  await page.screenshot({ path: '../docs/screenshots/phase-4-mobile.png', fullPage: true });
 });
 
 test('offline API is visible and reconnect preserves the command', async ({ page }) => {
@@ -113,4 +113,86 @@ test('offline API is visible and reconnect preserves the command', async ({ page
   await page.getByRole('button', { name: 'Reconnect' }).click();
   await expect(page.getByText('Running locally')).toBeVisible();
   await expect(page.getByRole('textbox', { name: 'Drawing command' })).toHaveValue('Draw a butterfly');
+});
+
+test('saved history reopens after reload and supplied mandala imports with explicit centering', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByText('Running locally')).toBeVisible();
+  const original = await command(page, 'Draw a circle diameter 83');
+  await page.reload();
+  await page.getByRole('button', { name: /Saved history/ }).click();
+  await page.getByRole('textbox', { name: 'Search drawing history' }).fill('diameter 83');
+  await page.getByRole('button', { name: 'Open Circle revision 1', exact: true }).click();
+  await expect(page.getByRole('img', { name: /Circle drawing path/ })).toHaveAttribute('data-gcode-sha256', original.gcode_sha256);
+  await page.getByRole('button', { name: 'Import drawing', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Import a drawing' });
+  await dialog.getByLabel('Drawing file', { exact: true }).setInputFiles('../SdCard/01 Test GCode/mandala_11x14.gcode');
+  await dialog.getByRole('checkbox', { name: 'Center drawing at (0,0) explicitly' }).check();
+  await dialog.getByRole('spinbutton', { name: 'Import fit width' }).fill('120');
+  const importedResponse = page.waitForResponse(response => response.url().endsWith('/api/drawings/import') && response.request().method() === 'POST');
+  await dialog.getByRole('button', { name: 'Import & save drawing' }).click();
+  const response = await importedResponse;
+  expect(response.status()).toBe(200);
+  const imported = await response.json();
+  expect(imported.import_source.original_bounds.width_mm).toBe(252);
+  expect(imported.transform.offset_x_mm).toBe(0);
+  await expect(page.getByRole('img', { name: /Imported drawing path/ })).toHaveAttribute('data-gcode-sha256', imported.gcode_sha256);
+  await expect(page.getByTestId('actual-bounds')).toHaveText('120.00 × 120.00 mm');
+  await expect(page.getByRole('button', { name: 'Regenerate drawing' })).toBeDisabled();
+});
+
+test('prepared simulation exports only to an isolated directory with verified bytes and opt-in sync', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByText('Running locally')).toBeVisible();
+  const draft = await command(page, 'Draw a circle diameter 40');
+  await page.getByRole('button', { name: 'Test export without hardware' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Try a verified test copy' });
+  await dialog.getByRole('button', { name: 'Prepare simulation job' }).click();
+  await expect(dialog.getByText(/Prepared job .*manual origin required/)).toBeVisible();
+  await dialog.getByRole('button', { name: 'Create test directory' }).click();
+  await expect(dialog.getByText('Test directory — no physical card', { exact: true })).toBeVisible();
+  await dialog.getByRole('checkbox', { name: 'Back up and replace the reviewed main.nc with this frozen job.' }).check();
+  await dialog.getByRole('button', { name: 'Export to test directory', exact: true }).click();
+  await expect(dialog.getByText('Test copy verified', { exact: true })).toBeVisible();
+  const targets = await (await page.request.get('/api/storage/targets')).json();
+  const target = targets.targets.find((item: { id: string }) => item.id === targets.selected_target_id);
+  expect(target.kind).toBe('test_directory');
+  const bytes = await readFile(`${target.path}/main.nc`);
+  expect(createHash('sha256').update(bytes).digest('hex')).toBe(draft.gcode_sha256);
+  await page.screenshot({ path: '../docs/screenshots/phase-4-test-export.png', fullPage: true });
+  await dialog.getByRole('checkbox', { name: 'Back up and replace the reviewed main.nc with this frozen job.' }).check();
+  await dialog.getByRole('checkbox', { name: 'Automatically sync this frozen job', exact: true }).check();
+  await expect.poll(async () => (await (await page.request.get('/api/storage/targets')).json()).auto_sync.status, { timeout: 10000 }).toBe('verified');
+  await dialog.getByRole('checkbox', { name: 'Automatically sync this frozen job', exact: true }).uncheck();
+  await expect.poll(async () => (await (await page.request.get('/api/storage/targets')).json()).auto_sync.enabled).toBe(false);
+  const records = await (await page.request.get('/api/storage/transfers')).json();
+  expect(records.some((record: { status: string; target_kind: string }) => record.status === 'verified' && record.target_kind === 'test_directory')).toBe(true);
+});
+
+test('recording an unverified measured profile does not unlock physical preparation', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByText('Running locally')).toBeVisible();
+  await command(page, 'Draw a circle diameter 50');
+  await page.getByRole('button', { name: 'Machine', exact: true }).click();
+  await page.getByRole('button', { name: 'Record / edit measurements' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Record a machine profile' });
+  await dialog.getByRole('textbox', { name: 'Profile name' }).fill('Browser fixture — unverified');
+  await dialog.getByRole('textbox', { name: 'Actual board model' }).fill('Test fixture, not observed hardware');
+  for (const [label, value] of [
+    ['Allowed minimum X mm','-150'], ['Allowed maximum X mm','150'], ['Allowed minimum Y mm','-100'], ['Allowed maximum Y mm','100'],
+    ['Minimum rope length mm','100'], ['Maximum rope length mm','600'],
+  ]) await dialog.getByRole('spinbutton', { name: label, exact: true }).fill(value);
+  await dialog.getByLabel('Measured by', { exact: true }).fill('Browser test fixture');
+  await dialog.getByLabel('Measurement and workspace-test notes', { exact: true }).fill('Synthetic test values only. No physical calibration evidence.');
+  await dialog.getByLabel('Manual origin procedure before every job', { exact: true }).fill('Synthetic fixture only: real origin procedure remains unverified.');
+  await dialog.getByRole('button', { name: 'Save & select unverified profile' }).click();
+  await expect(dialog).not.toBeVisible();
+  await page.getByRole('button', { name: 'Drawing', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Prepare for drawing' })).toBeDisabled();
+  const profiles = await (await page.request.get('/api/profiles')).json();
+  expect(profiles.measured_profiles.find((profile: { label: string }) => profile.label === 'Browser fixture — unverified').verified).toBe(false);
+  await page.getByRole('button', { name: 'Test export without hardware' }).click();
+  const simulation = page.getByRole('dialog', { name: 'Try a verified test copy' });
+  await simulation.getByRole('button', { name: 'Prepare simulation job' }).click();
+  await expect(simulation.getByText(/Prepared job .*manual origin required/)).toBeVisible();
 });

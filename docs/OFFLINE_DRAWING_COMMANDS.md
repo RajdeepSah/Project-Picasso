@@ -33,7 +33,7 @@ Generator parameters:
 - Spiral: positive `turns` up to 100; excessive size/detail may hit the path budget.
 - Every subject: integer `seed 0–4294967295`.
 
-Extra objects, colors, unsupported adjectives/modifiers, relative requests such as “make it bigger”, inches, raw SVG and raw G-code are not interpreted here. Use the inspector for edits. Broader language interpretation is planned for Phase 7; file import/normalization is planned for Phase 4.
+Extra objects, colors, unsupported adjectives/modifiers, relative requests such as “make it bigger”, inches, raw SVG and raw G-code are not interpreted here. Use the inspector for edits. Broader language interpretation is planned for Phase 7; file import/normalization is available in Phase 4 through the Import drawing dialog.
 
 ## Adjust and regenerate
 
@@ -43,7 +43,7 @@ Aspect lock couples width/height using the selected revision's ratio. Unlock it 
 
 **Regenerate drawing** increments the seed by one. **Keep seed when regenerating** retains it and produces identical G-code for the same settings. Seeds vary butterflies, mandalas, patterns and spirals; mathematical circles and rectangles keep their geometry when the seed changes.
 
-New commands, parameter edits, selecting a session revision, cancellation and “New drawing” invalidate older pending UI responses. An obsolete response cannot replace the active drawing. Unsupported commands retain the prior successful drawing.
+New commands, parameter edits, selecting a saved revision, cancellation and “New drawing” invalidate older pending UI responses. An obsolete response cannot replace the active drawing. Unsupported commands retain the prior successful drawing.
 
 ## Preview and simulation
 
@@ -51,21 +51,21 @@ The backend emits exact restricted G-code, parses those bytes back, and verifies
 
 Grid, zoom/fit, travel toggle, playback/pause and scrubbing are available. Playback has a fixed visual cadence and is **not a physical drawing-time estimate**. No speed/feed control is offered because the legacy firmware ignores F.
 
-The initial travel is included, assuming a simulation start of `(0,0)` mm. That is not a position reading. Neither bundled machine reference is verified or selected, and the preview view box is not an approved machine envelope.
+The initial travel is included, assuming a simulation start of `(0,0)` mm. That is not a position reading. Bundled references are never verified or selected automatically, and the preview view box is not an approved machine envelope.
 
 ## Keep a copy
 
 Choose **Draft JSON**, **SVG**, or **G-code** in the inspector. Downloads use the exact selected revision and never regenerate it. They have `UNVERIFIED` in their filenames; the HTTP response also reports `X-Picasso-Execution-Ready: false` and a SHA-256 checksum of the downloaded bytes.
 
-- JSON includes the prompt/spec, transform, rounded geometry, execution preview, warnings, G-code and G-code SHA-256. It is the most complete record to retain. Importing it back is not implemented yet.
+- JSON includes the prompt/spec, transform, rounded geometry, execution preview, warnings, G-code and G-code SHA-256. It is the most complete record to retain. Import drawing can restore its validated geometry as a new imported draft.
 - SVG contains the pen-down path, correctly oriented for a screen, with dimensions/view box and unverified-draft metadata. Travel moves are retained in JSON/G-code rather than drawn into the artwork SVG.
 - `.nc` uses only `G0 Z5`, explicit `G0 X... Y... Z5` travel, and explicit `G1 X... Y... Z0` drawing. It is ASCII with three-decimal XY values and a final LF. See [GCODE_CONTRACT.md](GCODE_CONTRACT.md).
 
-Downloads are not prepared physical jobs. No `SdCard/main.nc` replacement, mounted-card copy, serial write or machine start happens in this phase. Before physical operation, the actual board, calibration, workspace, start position and pen settling must be verified in the later preparation/firmware phases.
+Downloads are not prepared physical jobs. A download itself does not replace files or start the machine. Phase 4 adds separate measured-profile preparation and reviewed SD export; see [STORAGE_AND_COMMISSIONING.md](STORAGE_AND_COMMISSIONING.md). Actual board/calibration/workspace/start and pen behavior must be verified before physical operation.
 
-## Session limits
+## Storage and computational limits
 
-The backend keeps immutable serialized revisions in an LRU cache of at most **16 drafts and 32 MB**. This window shows its last eight revisions. Restarting the service loses them; eviction can make an older revision unavailable for download/editing even if its preview remains in the browser. The UI explains expiration; generate a new drawing if that occurs. Durable SQLite history is Phase 4.
+Phase 4 automatically saves each completed revision to local SQLite and immutable files. History survives restart and supports search, pagination and checksummed repair. The backend's **16 drafts / 32 MB** LRU is only a working cache; eviction does not remove saved artifacts. The browser shows eight recent shortcuts and opens the full saved history separately. Failed or interrupted saves are not reported as saved. Cancellation can race with a save already committed; completed work may appear in history.
 
 Per-operation computational limits:
 
@@ -74,6 +74,6 @@ Per-operation computational limits:
 - Finite positive fit dimensions no larger than 2000 mm; coordinates restricted to ±5000 mm for computational preview only.
 - Rotation −360° to 360° and center offsets ±2000 mm.
 - Curve chord tolerance: simple 0.2 mm, standard 0.08 mm, intricate 0.025 mm; coordinate rounding adds at most approximately 0.000708 mm per point.
-- Cancellation is cooperative at engine checkpoints. Disconnects signal the worker; the UI also ignores obsolete responses. Work already completed at the instant of cancellation may have entered the bounded cache.
+- Cancellation is cooperative at engine checkpoints. Disconnects signal the worker; the UI also ignores obsolete responses. Work already completed at the instant of cancellation may have been saved to history.
 
 Circles/ellipses are sampled analytically with a sagitta bound. Other organic paths are defined by cubic Béziers and flattened with a control-hull distance bound after transformation. Spirals are defined by Hermite cubic segments approximating an Archimedean motif; the recorded flattening tolerance is relative to those stored generator curves. These are geometric approximation limits, not measured mechanical accuracy.

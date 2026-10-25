@@ -14,6 +14,7 @@ from backend.app.drawing.service import DraftService
 
 def test_revision_export_and_hardware_boundaries(tmp_path):
     with TestClient(create_app(frontend_dir=tmp_path), base_url="http://127.0.0.1") as client:
+        client.headers['X-Picasso-Token'] = client.get('/api/session').json()['write_token']
         draft = client.post('/api/drawings/generate', json={'prompt': 'Draw a mandala with 16 petals seed 5'}).json()
         original_id = draft['revision_id']
         assert client.get(f'/api/drawings/{original_id}').json() == draft
@@ -37,9 +38,9 @@ def test_revision_export_and_hardware_boundaries(tmp_path):
             else:
                 assert response.text == revised['gcode']
                 assert response.text.endswith('G0 Z5\n')
-        assert client.post('/api/jobs/prepare', json={'revision_id': original_id}).status_code == 404
+        assert client.post('/api/jobs/prepare', json={'revision_id': original_id}).json()['code'] == 'PROFILE_UNVERIFIED'
         assert client.post('/api/machine/start').status_code == 404
-        assert client.post('/api/jobs/anything/sd-export').status_code == 404
+        assert client.post('/api/jobs/anything/sd-export').status_code == 422
         assert client.get('/api/drawings/not-present/export').status_code == 404
         assert client.get(f'/api/drawings/{original_id}/export?format=exe').status_code == 422
         assert client.post('/api/drawings/generate', json={'prompt': 'Draw a cat'}).json()['code'] == 'UNSUPPORTED_COMMAND'
@@ -70,7 +71,7 @@ def test_disconnect_cancels_worker_without_storing_a_draft(monkeypatch, tmp_path
             pass
         scope = {'type': 'http', 'asgi': {'version': '3.0', 'spec_version': '2.4'}, 'http_version': '1.1',
                  'method': 'POST', 'scheme': 'http', 'path': '/api/drawings/generate', 'query_string': b'',
-                 'headers': [(b'host', b'127.0.0.1'), (b'content-type', b'application/json')],
+                 'headers': [(b'host', b'127.0.0.1'), (b'content-type', b'application/json'), (b'x-picasso-token', app.state.write_token.encode())],
                  'server': ('127.0.0.1', 8000), 'client': ('127.0.0.1', 1234)}
         async with app.router.lifespan_context(app):
             sender = asyncio.create_task(disconnect())

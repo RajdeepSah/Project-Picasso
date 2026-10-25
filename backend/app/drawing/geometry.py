@@ -212,15 +212,22 @@ def validate_strokes(strokes: list[list[Point]]):
         raise DrawingError("DRAWING_TOO_COMPLEX", "Drawing length must be greater than zero and at most 250 metres.")
 
 
-def generate_geometry(spec: DrawingSpec, transform: DrawingTransform, budget: Budget) -> PolylineDrawing:
+def generate_geometry(spec: DrawingSpec, transform: DrawingTransform, budget: Budget, imported_strokes=None) -> PolylineDrawing:
     budget.check()
-    contours = primitives(spec)
+    if spec.generator == "imported":
+        if not imported_strokes:
+            raise DrawingError("INVALID_IMPORT", "Imported geometry is missing.")
+        validate_strokes([stroke.points for stroke in imported_strokes])
+        contours = [polygon(stroke.points, closed=False) for stroke in imported_strokes]
+    else:
+        contours = primitives(spec)
     if len(contours) > MAX_STROKES:
         raise DrawingError("DRAWING_TOO_COMPLEX", "Too many strokes.")
     left, bottom, right, top = curve_bounds(contours)
-    if right - left <= 1e-9 or top - bottom <= 1e-9:
+    if (right - left <= 1e-9 or top - bottom <= 1e-9) and spec.generator != "imported":
         raise DrawingError("DEGENERATE_PATH", "The requested drawing has no two-dimensional extent.")
-    sx, sy = spec.dimensions.width_mm / (right - left), spec.dimensions.height_mm / (top - bottom)
+    sx = spec.dimensions.width_mm / (right - left) if right > left else 1
+    sy = spec.dimensions.height_mm / (top - bottom) if top > bottom else 1
     if transform.preserve_aspect:
         sx = sy = min(sx, sy)
     center = ((left + right) / 2, (top + bottom) / 2)
