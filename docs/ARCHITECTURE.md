@@ -1,6 +1,6 @@
 # Project Picasso architecture
 
-Status: accepted architecture based on the Phase 1 source audit of 2026-10-24. Phases 2–4 implement the local studio, offline engine, durable history/import, operator-recorded profiles, immutable preparation and verified managed SD export. Real-card commissioning remains pending. Serial control, firmware changes, AI and voice are future work. See [PHASE_4_REPORT.md](PHASE_4_REPORT.md).
+Status: accepted architecture based on the Phase 1 source audit of 2026-10-24. Phases 2–4 implement the local studio, offline engine, durable history/import, operator-recorded profiles, immutable preparation and verified managed SD export. Phase 5 adds the canonical cooperative firmware (`firmware/WallDrawingMachine/`), profile-generated `machine_config.h` with a configuration ID that reconciles verified profiles with flashed values, and host parser/simulation tests. Real-card and machine commissioning remain pending. Serial control, AI and voice are future work. See [PHASE_5_REPORT.md](PHASE_5_REPORT.md).
 
 ## Product behavior
 
@@ -72,13 +72,17 @@ config/
   machine-profiles/            # reference candidates; no verified preset yet
 firmware/
   WallDrawingMachine/
-    WallDrawingMachine.ino     # Phase 5: canonical matching sketch folder/name
-    machine_config.h          # immutable pins, explicitly selected calibration
+    WallDrawingMachine.ino     # Phase 5: canonical cooperative sketch (implemented)
+    picasso_config.h           # preserved pins, directions, keypad, timing
+    picasso_core.{h,cpp}       # portable reader/parser/kinematics/step planner
+    machine_config.h           # generated from a profile; git-ignored
+  host/                        # g++ stubs, core tests, parser tool, simulator
+  shims/arduino.h              # Linux case shim for the vendored TinyStepper
 tests/                         # unit, integration, fixtures, hardware procedures
 data/                          # ignored local DB, jobs, preferences, logs
 Drawbot_C/                     # preserved vendor reference, not active app code
 SdCard/                        # preserved current contents, later managed main.nc
-WallDrawingMachine.ino         # preserved empty placeholder until Phase 5 migration
+WallDrawingMachine.ino         # preserved empty placeholder; never the upload path
 ```
 
 Do not delete or rename original trees in early phases. Use `SdCard/` as the configured spelling everywhere. Once Phase 4 implements preparation, preserve its existing `main.nc` in a dated backup before replacing it with an explicitly prepared job. New generated history belongs under `data/`, not scattered through the reference library. Hardware-specific migration is documented before choosing the active firmware.

@@ -2,7 +2,7 @@
 
 A local application being developed to turn drawing commands into previewed, machine-compatible paths for an Arduino wall drawing machine.
 
-**Current milestone: Phase 4 software complete — persistent history, drawing import, measured profiles, immutable preparation, and verified one-way SD export. Real-card and machine commissioning checks remain pending; firmware hardening, USB control, AI and voice are later phases.**
+**Current milestone: Phase 5 software complete. Canonical hardened firmware, profile-generated firmware configuration, host parser/simulation tests and a commissioning guide join the Phase 4 studio (history, import, measured profiles, preparation, verified SD export). The Arduino CLI compile/memory report, real-card readback and physical commissioning remain pending. USB control, AI and voice are later phases.**
 
 ## Install and launch
 
@@ -55,16 +55,18 @@ python3 scripts/setup.py --skip-install
 - Live local-service health, separate unavailable machine/card states, offline error handling and reconnect without losing the command.
 - Getting-started and studio-information dialogs, keyboard submission, and an application error boundary.
 - Physical preparation stays disabled until the selected measured profile is verified. Microphone input remains planned for Phase 8.
+- **Canonical firmware** in `firmware/WallDrawingMachine/` keeps the original pins, libraries and step sequence. It adds a bounded strict parser, validation of the whole file and workspace before any motion, a deliberate per-job origin, cooperative pause/stop, pen settling both ways, coil holding and distinct completed/aborted/failed results. See [the firmware README](firmware/README.md).
+- Machine measurements that differ from both reference sketches can be verified by generating `machine_config.h` from the profile, uploading it, and entering the configuration ID the machine displays. Prepared jobs show the CRC-32 the firmware displays after checking `main.nc`.
 
 Try **“Draw a beautiful mandala”**, **“Draw a butterfly”**, or **“Draw a circle diameter 100”**. You can also specify `120 mm wide`, `100 x 60 mm`, `12 petals`, `5 turns`, `symmetry 8`, `seed 7`, and `simple`/`standard`/`intricate`, where applicable. Unsupported or ambiguous commands explain the supported grammar. See [offline commands and draft workflow](docs/OFFLINE_DRAWING_COMMANDS.md).
 
-Draft previews and downloads remain **unverified for execution**. Physical preparation requires operator-recorded calibration, workspace/rope limits and pen/holding checks matching a bundled firmware reference. The app checks geometry and file bytes; it does not measure carriage position or certify physical safety. Every SD job requires the recorded manual `(0,0)` origin procedure before starting it from the machine's menu. No application action starts the machine.
+Draft previews and downloads remain **unverified for execution**. Physical preparation requires operator-recorded calibration, workspace/rope limits and pen/holding checks matching either a bundled legacy sketch or canonical firmware generated from that profile (proved by its configuration ID). The app checks geometry and file bytes; it does not measure carriage position or certify physical safety. Every SD job requires the recorded manual `(0,0)` origin procedure before starting it from the machine's menu. No application action starts the machine.
 
 To try Phase 4 without hardware: generate a drawing → **Test export without hardware** → prepare a simulation job → create the test directory → review replacement → export. The destination is `data/test-card/main.nc`, clearly labeled as a test. Physical-card discovery/export currently supports Linux/POSIX; the card must be mounted in the computer. Arduino USB does not expose its SPI card. See the [storage and commissioning guide](docs/STORAGE_AND_COMMISSIONING.md) for the physical workflow, backups and automatic-sync limits.
 
 History lives under `data/` and survives restarts. Its SQLite database and checksummed artifacts are local to this computer; stop the app before backing up the entire directory. The browser's eight recently viewed entries are shortcuts, not the history retention limit.
 
-![Phase 4 drawing studio](docs/screenshots/phase-4-studio.png)
+![Phase 5 drawing studio](docs/screenshots/phase-5-studio.png)
 
 ## Start here
 
@@ -78,6 +80,8 @@ History lives under `data/` and survives restarts. Its SQLite database and check
 - [Phase 3 report](docs/PHASE_3_REPORT.md): drawing engine, export, preview and validation results.
 - [Phase 4 report](docs/PHASE_4_REPORT.md): durable storage, import, preparation, transfer tests and remaining hardware checks.
 - [Storage and commissioning guide](docs/STORAGE_AND_COMMISSIONING.md): test exports, profiles, mounted cards, backups and recovery.
+- [Phase 5 report](docs/PHASE_5_REPORT.md): canonical firmware, configuration reconciliation, host tests and pending hardware checks.
+- [Firmware README](firmware/README.md) and [commissioning guide](docs/FIRMWARE_COMMISSIONING.md): build/upload, keypad operation and the physical check sequence.
 - [Third-party notices](docs/THIRD_PARTY_NOTICES.md): bundled font and package provenance.
 
 ## Development checks
@@ -95,6 +99,19 @@ npm run contracts:check
 npm run typecheck
 npm test
 npm run build
+```
+
+Firmware host checks (needs `g++`; included in the pytest run above):
+
+```bash
+python3 scripts/firmware.py host-test
+```
+
+Firmware compile with flash/SRAM report (needs Arduino CLI 1.3.1 and `arduino-cli core install arduino:avr@1.8.6`; CI runs the reference and synthetic-workspace builds):
+
+```bash
+python3 scripts/firmware.py build --reference reference-350
+python3 scripts/firmware.py build --profile <measured-profile-id> --fqbn <your-board-fqbn>
 ```
 
 When backend models change, regenerate the committed JSON schema and TypeScript definitions with `npm run contracts` in `frontend/`. The drift check fails if either is stale.
@@ -119,6 +136,7 @@ The running application exposes its full schema at **http://127.0.0.1:8000/docs*
 - `POST /api/drawings/{revision_id}/revisions`: save an immutable adjustment/regeneration.
 - `GET /api/drawings/{revision_id}` and `/export?format=json|svg|gcode`: retrieve exact saved artifacts.
 - `POST /api/profiles`, `PUT /api/profiles/{id}`, `POST /api/profiles/select`: measured calibration with revision checking.
+- `GET /api/profiles/{id}/firmware-config`: download the generated `machine_config.h` for a measured or reference profile (header `X-Picasso-Firmware-Config-Id`). Nothing is uploaded.
 - `POST /api/jobs/prepare`, `GET /api/jobs/{id}`: freeze/restore a validated job.
 - `GET /api/storage/targets`, `POST /api/storage/select`, `POST /api/storage/test-target`: explicit destination discovery/selection.
 - `POST /api/jobs/{id}/stage`, `POST /api/jobs/{id}/sd-export`: reviewed local-mirror staging or verified selected-target export.
@@ -168,8 +186,10 @@ The actual folder is `SdCard/` (case-sensitive), rather than `sdcard/`. It is a 
 
 Neither version has been established as the firmware installed on the machine. Both use the on-device menu to read `main.nc` from the physical card's root. They do not accept drawing commands over USB. The original files, including the current `SdCard/main.nc`, have been preserved.
 
+The maintained sketch is `firmware/WallDrawingMachine/WallDrawingMachine.ino`; the root file stays an empty placeholder. Canonical firmware rejects the raw vendor samples (including the current `SdCard/main.nc`) before any motion. Import them in the studio and export a fresh job.
+
 ## Next phases
 
-The implemented stack is React + TypeScript + Vite with Python + FastAPI/Pydantic, standard-library geometry/export, and SQLite plus immutable files. pySerial belongs to Phase 6; no USB protocol is present yet. Arduino CLI is not installed.
+The implemented stack is React + TypeScript + Vite with Python + FastAPI/Pydantic, standard-library geometry/export, SQLite plus immutable files, and C++11 Arduino firmware with a host test harness. pySerial belongs to Phase 6; no USB protocol is present yet.
 
-Next: Phase 5 from [the roadmap](docs/DEVELOPMENT_PLAN.md), establishing canonical firmware, hardening its parser/motion handling, and commissioning the actual machine. Real-card readback remains a pending Phase 4 hardware acceptance check. AI interpretation and voice remain Phases 7 and 8.
+Pending hardware acceptance: the Arduino CLI compile and memory report on the actual board, real-card readback (Phase 4) and the [commissioning checks](docs/FIRMWARE_COMMISSIONING.md). Next: Phase 6 from [the roadmap](docs/DEVELOPMENT_PLAN.md), the acknowledged USB protocol on top of this cooperative firmware. AI interpretation and voice remain Phases 7 and 8.

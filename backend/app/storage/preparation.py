@@ -6,6 +6,7 @@ import math
 import os
 import uuid
 
+from .. import firmware
 from ..drawing.errors import DrawingError
 from ..drawing.gcode import parse, verify_roundtrip
 from ..drawing.geometry import segment_distance
@@ -62,10 +63,14 @@ class ProfileManager:
         calibration = request.calibration
         reference = self.references[calibration.base_reference_id]
         if calibration.verified:
-            for name in ('separation_mm', 'anchor_y_mm', 'spool_diameter_mm', 'steps_per_turn', 'pen_up_degrees', 'pen_down_degrees'):
-                if getattr(calibration, name) != getattr(reference, name):
-                    raise DrawingError("FIRMWARE_PROFILE_MISMATCH", "Recorded calibration differs from the selected bundled firmware. Save it unverified; reconcile firmware calibration in Phase 5 before verifying.")
+            if calibration.firmware == 'legacy-reference':
+                for name in ('separation_mm', 'anchor_y_mm', 'spool_diameter_mm', 'steps_per_turn', 'pen_up_degrees', 'pen_down_degrees'):
+                    if getattr(calibration, name) != getattr(reference, name):
+                        raise DrawingError("FIRMWARE_PROFILE_MISMATCH", "Recorded calibration differs from the selected bundled legacy sketch. Save it unverified, generate canonical Picasso firmware from it, upload that firmware and record the configuration ID the machine shows.")
             validate_point((0, 0), calibration)
+        # The ID is read from the machine, so it must describe exactly these values.
+        if calibration.firmware_config_id and calibration.firmware_config_id != firmware.config_id(calibration):
+            raise DrawingError("FIRMWARE_CONFIG_MISMATCH", "The configuration ID does not match these calibration values. Regenerate machine_config.h from this saved profile, upload it and enter the ID the machine shows, or clear the ID and save unverified.")
         with self.repository.connection() as db:
             previous = db.execute("SELECT document FROM profiles WHERE id=?", (identity,)).fetchone() if identity else None
             if identity and previous is None:
@@ -121,8 +126,10 @@ class JobManager:
         preview = parse(draft.gcode, expected_start=(0, 0))
         verify_roundtrip(draft.geometry, preview)
         profile = None
+        crc = firmware.gcode_crc32(draft.gcode)
         warnings = ["Manually establish both physical and firmware (0,0) before every legacy SD drawing. A previous drawing need not finish at origin.",
-                    "Copy verification does not start the machine or measure its position. Physical commissioning remains an operator responsibility."]
+                    "Copy verification does not start the machine or measure its position. Physical commissioning remains an operator responsibility.",
+                    f"Canonical Picasso firmware shows CRC {crc} after checking main.nc; confirm it matches before starting. The legacy sketch cannot."]
         if request.mode == 'physical':
             identity = request.profile_id or self.repository.setting('active_profile')
             if not identity:
@@ -138,7 +145,7 @@ class JobManager:
             warnings.append("Simulation job: export is restricted to the app-owned test directory. It cannot update a physical card or SdCard/main.nc.")
         job = PreparedJob(id=uuid.uuid4().hex, revision_id=draft.revision_id, drawing_id=draft.drawing_id,
                           title=draft.title, mode=request.mode, profile=profile, gcode=draft.gcode,
-                          gcode_sha256=draft.gcode_sha256, preview=preview, created_at=now(), warnings=warnings)
+                          gcode_sha256=draft.gcode_sha256, gcode_crc32=crc, preview=preview, created_at=now(), warnings=warnings)
         self.repository.save(job.id, 'job', {'job.json': job.model_dump_json().encode(), 'drawing.nc': draft.gcode.encode()},
                              {'drawing_id': draft.drawing_id, 'parent_id': draft.revision_id, 'title': draft.title})
         return job

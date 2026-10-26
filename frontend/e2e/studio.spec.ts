@@ -77,7 +77,7 @@ test('offline circle to resized mandala, regeneration, exact draft downloads and
   await page.getByRole('spinbutton', { name: 'Drawing width in millimetres' }).evaluate(element => element.closest('.inspector-body')?.scrollTo(0, 0));
   await page.evaluate(async () => { await document.fonts.ready; window.scrollTo(0, 0); });
   await mkdir('../docs/screenshots', { recursive: true });
-  await page.screenshot({ path: '../docs/screenshots/phase-4-studio.png', fullPage: true });
+  await page.screenshot({ path: '../docs/screenshots/phase-5-studio.png', fullPage: true });
   expect(errors).toEqual([]);
 });
 
@@ -100,7 +100,7 @@ test('mobile drawing and adjustments have no horizontal overflow', async ({ page
   await expect(page.getByTestId('actual-bounds')).toHaveText('100.00 × 100.00 mm');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.evaluate(async () => { await document.fonts.ready; window.scrollTo(0, 0); });
-  await page.screenshot({ path: '../docs/screenshots/phase-4-mobile.png', fullPage: true });
+  await page.screenshot({ path: '../docs/screenshots/phase-5-mobile.png', fullPage: true });
 });
 
 test('offline API is visible and reconnect preserves the command', async ({ page }) => {
@@ -159,7 +159,7 @@ test('prepared simulation exports only to an isolated directory with verified by
   expect(target.kind).toBe('test_directory');
   const bytes = await readFile(`${target.path}/main.nc`);
   expect(createHash('sha256').update(bytes).digest('hex')).toBe(draft.gcode_sha256);
-  await page.screenshot({ path: '../docs/screenshots/phase-4-test-export.png', fullPage: true });
+  await page.screenshot({ path: '../docs/screenshots/phase-5-test-export.png', fullPage: true });
   await dialog.getByRole('checkbox', { name: 'Back up and replace the reviewed main.nc with this frozen job.' }).check();
   await dialog.getByRole('checkbox', { name: 'Automatically sync this frozen job', exact: true }).check();
   await expect.poll(async () => (await (await page.request.get('/api/storage/targets')).json()).auto_sync.status, { timeout: 10000 }).toBe('verified');
@@ -195,4 +195,53 @@ test('recording an unverified measured profile does not unlock physical preparat
   const simulation = page.getByRole('dialog', { name: 'Try a verified test copy' });
   await simulation.getByRole('button', { name: 'Prepare simulation job' }).click();
   await expect(simulation.getByText(/Prepared job .*manual origin required/)).toBeVisible();
+});
+
+test('measurements differing from both references verify only through the canonical firmware ID', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByText('Running locally')).toBeVisible();
+  await command(page, 'Draw a circle diameter 50');
+  await page.getByRole('button', { name: 'Machine', exact: true }).click();
+  await page.getByRole('button', { name: 'Record / edit measurements' }).click();
+  let dialog = page.getByRole('dialog', { name: 'Record a machine profile' });
+  await dialog.getByRole('combobox', { name: 'Edit measured profile' }).selectOption('');
+  await dialog.getByRole('textbox', { name: 'Profile name' }).fill('Browser fixture — canonical firmware');
+  await dialog.getByRole('textbox', { name: 'Actual board model' }).fill('Test fixture, not observed hardware');
+  for (const [label, value] of [
+    ['Motor spacing mm', '362.5'], ['Anchor Y above origin mm', '243'],
+    ['Allowed minimum X mm','-150'], ['Allowed maximum X mm','150'], ['Allowed minimum Y mm','-100'], ['Allowed maximum Y mm','100'],
+    ['Minimum rope length mm','100'], ['Maximum rope length mm','600'],
+  ]) await dialog.getByRole('spinbutton', { name: label, exact: true }).fill(value);
+  await dialog.getByLabel('Measured by', { exact: true }).fill('Browser test fixture');
+  await dialog.getByLabel('Measurement and workspace-test notes', { exact: true }).fill('Synthetic values that differ from both bundled sketches.');
+  await dialog.getByLabel('Manual origin procedure before every job', { exact: true }).fill('Synthetic fixture only: real origin procedure remains unverified.');
+  await dialog.getByRole('combobox', { name: 'Firmware on the machine' }).selectOption('picasso-canonical');
+  await expect(dialog.getByText('Save this profile first')).toBeVisible();
+  await dialog.getByRole('button', { name: 'Save & select unverified profile' }).click();
+  await expect(dialog).not.toBeVisible();
+
+  await page.getByRole('button', { name: 'Record / edit measurements' }).click();
+  dialog = page.getByRole('dialog', { name: 'Record a machine profile' });
+  const identity = (await dialog.locator('.firmware-id code').textContent())!;
+  expect(identity).toMatch(/^[0-9a-f]{16}$/);
+  const profiles = await (await page.request.get('/api/profiles')).json();
+  const header = await page.request.get(`/api/profiles/${profiles.active_profile_id}/firmware-config`);
+  expect(header.headers()['x-picasso-firmware-config-id']).toBe(identity);
+  expect(await header.text()).toContain('#define PICASSO_SEPARATION_MM (362.5f)');
+  await dialog.getByRole('textbox', { name: 'Configuration ID shown on the machine' }).fill('0123456789abcdef');
+  for (const name of ['I confirmed the flashed firmware uses these calibration values.', 'I tested pen clearance/settling and motor holding with this machine.',
+    'I tested the recorded work area and rope-length limits.', 'Mark this profile verified by my recorded checks.']) await dialog.getByRole('checkbox', { name }).check();
+  await dialog.getByRole('button', { name: 'Save & select verified profile' }).click();
+  await expect(dialog.getByRole('alert')).toContainText('configuration ID does not match');
+  await dialog.getByRole('textbox', { name: 'Configuration ID shown on the machine' }).fill(identity);
+  await page.evaluate(async () => { await document.fonts.ready; });
+  await page.screenshot({ path: '../docs/screenshots/phase-5-firmware-profile.png', fullPage: true });
+  await dialog.getByRole('button', { name: 'Save & select verified profile' }).click();
+  await expect(dialog).not.toBeVisible();
+
+  await page.getByRole('button', { name: 'Drawing', exact: true }).click();
+  await page.getByRole('button', { name: 'Prepare for drawing' }).click();
+  const job = page.getByRole('dialog', { name: 'Prepare for the SD workflow' });
+  await job.getByRole('button', { name: 'Prepare physical job' }).click();
+  await expect(job.getByText(/Machine check: canonical firmware shows/)).toContainText(/CRC [0-9a-f]{8}/);
 });

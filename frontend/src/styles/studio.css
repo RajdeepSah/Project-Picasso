@@ -10,6 +10,7 @@
   -webkit-font-smoothing: antialiased;
 }
 * { box-sizing: border-box; }
+code { font-family: inherit; font-variant-numeric: tabular-nums; letter-spacing: 0.03em; }
 body { margin: 0; min-width: 360px; }
 button, input, textarea, select { font: inherit; }
 button { cursor: pointer; }
@@ -253,6 +254,12 @@ input[type="range"] { width: 100%; height: 3px; margin: 16px 0 11px; accent-colo
 .target-summary code { display: block; overflow-wrap: anywhere; font-size: 10px; margin: 8px 0; }
 .target-summary p { line-height: 1.8; margin-top: 5px; }
 .job-ready { display: flex; gap: 7px; color: #819d8f !important; align-items: center; }
+.firmware-reconcile { border-top: 1px solid #eee9f5; margin-top: 16px; }
+.firmware-reconcile .muted-copy { display: flex; gap: 7px; align-items: flex-start; margin: 4px 0 10px; }
+.firmware-id { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; font-size: 11px; color: #8a7d9b; }
+.firmware-id code, .machine-check code { font-size: 11px; color: #5d4f73; background: #f4f1f9; border-radius: 4px; padding: 2px 6px; overflow-wrap: anywhere; }
+.firmware-id a.subtle-button { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+.machine-check { margin: 8px 0 0; }
 .local-stage { margin-top: 12px; }
 .export-message { font-size: 12px; line-height: 1.9; padding: 12px; border: 1px solid #e2daee; background: #f6f2fb; border-radius: 7px; margin-top: 18px; color: #89739d; }
 .verified-transfer { display: flex; gap: 10px; margin: 18px 0; border: 1px solid #d7e6df; background: #f1f7f3; padding: 14px; border-radius: 7px; color: #6b957d; }

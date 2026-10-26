@@ -81,10 +81,18 @@ class MachineProfile(Contract):
     notes: str
 
 
+class FirmwareInfo(Contract):
+    version: str
+    dialect: Literal["picasso-fw-v1"] = "picasso-fw-v1"
+    config_ids: dict[str, str] = Field(default_factory=dict)
+    reason: str
+
+
 class ProfilesResponse(Contract):
     profiles: list[MachineProfile]
     measured_profiles: list["CalibrationProfile"] = Field(default_factory=list)
     active_profile_id: str | None = None
+    firmware: FirmwareInfo | None = None
 
 
 class Capability(Contract):
@@ -99,6 +107,7 @@ class CapabilitiesResponse(Contract):
     history: Capability
     gcode_export: Capability
     sd_export: Capability
+    firmware: Capability
     serial_control: Capability
     ai: Capability
     voice: Capability
@@ -107,7 +116,7 @@ class CapabilitiesResponse(Contract):
 class HealthResponse(Contract):
     application: Literal["project-picasso"] = "project-picasso"
     version: str
-    phase: Literal[4] = 4
+    phase: Literal[5] = 5
     status: Literal["ready"] = "ready"
     instance_id: str
     frontend_ready: bool
@@ -277,6 +286,10 @@ class CalibrationInput(Contract):
     pen_lift_and_holding_tested: bool = False
     workspace_tested: bool = False
     verified: bool = False
+    # Which firmware the machine runs. Canonical firmware is generated from the
+    # profile; its configuration ID, read from the machine, proves the match.
+    firmware: Literal["legacy-reference", "picasso-canonical"] = "legacy-reference"
+    firmware_config_id: Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{16}$")] | None = None
 
     @model_validator(mode="after")
     def measured_region(self):
@@ -287,6 +300,10 @@ class CalibrationInput(Contract):
             raise ValueError("Workspace must lie below and strictly between the motor anchors")
         if self.verified and not (self.firmware_matches_measurements and self.pen_lift_and_holding_tested and self.workspace_tested):
             raise ValueError("Verification requires recorded firmware, pen/holding and workspace checks")
+        if self.firmware == "legacy-reference" and self.firmware_config_id:
+            raise ValueError("A firmware configuration ID applies only to canonical Picasso firmware")
+        if self.verified and self.firmware == "picasso-canonical" and not self.firmware_config_id:
+            raise ValueError("Verifying canonical firmware requires the configuration ID shown on the machine's Info screen")
         return self
 
 
@@ -320,6 +337,7 @@ class PreparedJob(Contract):
     profile: CalibrationProfile | None
     gcode: str
     gcode_sha256: str
+    gcode_crc32: str | None = None  # shown by canonical firmware after it checks main.nc
     preview: ExecutionPreview
     created_at: str
     expected_start_mm: Point2 = (0, 0)

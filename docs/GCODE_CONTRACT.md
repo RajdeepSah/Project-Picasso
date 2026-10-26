@@ -1,6 +1,6 @@
 # Picasso legacy G-code contract
 
-Status: implemented in Phase 3 by `backend/app/drawing/gcode.py`, derived from the two bundled `Walldraw.ino` files. Exports are unverified drafts until physical preparation is implemented. Installed machine firmware remains unknown.
+Status: implemented in Phase 3 by `backend/app/drawing/gcode.py`, derived from the two bundled `Walldraw.ino` files. Phase 5 canonical firmware enforces a strict superset (`picasso-fw-v1`, below). Installed machine firmware remains unknown until commissioning.
 
 ## Actual interpreter behavior
 
@@ -76,6 +76,12 @@ Phase 4 accepts this strict subset and a separately declared absolute-mm linear 
 The current mandala file includes standard setup/end commands and positive paper coordinates. Other samples contain exporter headers/comments and varying Z patterns. Preserve originals, import into canonical paths, transform and validate, then regenerate restricted output. Copying a sample as `main.nc` without that process is not a compatibility strategy.
 
 The Phase 1 audit tool reports explicit coordinate tokens, ignored-comment statistics, and potentially troublesome line patterns. It deliberately does **not** simulate modal G-code, validate machine bounds, or certify these files for execution.
+
+## Canonical firmware enforcement (Phase 5)
+
+`firmware/WallDrawingMachine/` parses `picasso-fw-v1`. That dialect accepts every line this contract emits, plus `G00`/`G01`, lowercase letters, any word order, optional spacing between words, `;` and balanced non-nested `( )` comments, CRLF line endings and an unterminated final line. Each command needs exactly one G0/G1 and an explicit Z. X and Y must appear together. A G0 must raise (Z>0) and a G1 must lower (Z≤0). Anything else fails: unknown words or opcodes, duplicate words, malformed or exponent numbers, more than 4 integer or 5 fraction digits, NUL, non-ASCII bytes, a bare CR, or more than 63 payload bytes.
+
+The firmware reads the entire file and validates every segment, starting at `(0,0)`, against the compiled workspace, the anchor branch and the rope limits **before any motion**. It then shows the move count and the file's CRC-32 (`PreparedJob.gcode_crc32`). Its limits allow 0.01 mm of float tolerance, so it never rejects a job the host approved. Host tests compare the firmware parser line by line with every generator's export and compare its geometry verdicts with `validate_physical_path`. The raw vendor samples are rejected (header comment over 63 bytes, modal pen state), which is the intended outcome. See [firmware/README.md](../firmware/README.md).
 
 ## Future serial framing
 

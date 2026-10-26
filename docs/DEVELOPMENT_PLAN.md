@@ -1,6 +1,6 @@
 # Project Picasso development plan
 
-Baseline: 2026-10-24. **Phases 1–3 and Phase 4 software are complete. Phase 4 real-card verification remains pending. Phases 5–8 are planned.** This plan is the implementation handoff for Codex. Read the architecture, G-code contract, and relevant audit before changing the associated subsystem.
+Baseline: 2026-10-24. **Phases 1–3 and the Phase 4 and Phase 5 software are complete. Phase 4 real-card verification, the Phase 5 Arduino CLI compile/memory report and physical commissioning remain pending. Phases 6–8 are planned.** This plan is the implementation handoff for Codex. Read the architecture, G-code contract, and relevant audit before changing the associated subsystem.
 
 ## Outcome and sequencing
 
@@ -15,7 +15,7 @@ The target is a real local drawing studio: launch once, type a drawing command, 
         |
 4 history/import + verified SD export [software complete; real card pending]
         |
-5 firmware hardening + hardware commissioning
+5 firmware hardening + hardware commissioning [software complete; compile report + commissioning pending]
         |
 6 acknowledged USB execution
         |
@@ -143,6 +143,8 @@ Checks:
 Exit: complete offline-to-card workflow is real and tested in software. If hardware is absent, mark the real-card check pending and describe the working simulated filesystem tests accurately.
 
 ## Phase 5 — canonical firmware, parser hardening, and machine commissioning
+
+**Status: software complete; Arduino CLI compile/memory report and physical commissioning pending.** See [PHASE_5_REPORT.md](PHASE_5_REPORT.md), [firmware/README.md](../firmware/README.md) and [FIRMWARE_COMMISSIONING.md](FIRMWARE_COMMISSIONING.md). The tasks below retain the agreed scope as a reference.
 
 **Goal:** establish a known firmware baseline and reliable local SD execution without changing the existing hardware pin map.
 

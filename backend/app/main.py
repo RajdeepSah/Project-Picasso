@@ -18,9 +18,9 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
-from . import APP_VERSION
+from . import APP_VERSION, firmware
 from .models import (ApiError, AutoSyncRequest, AutoSyncState, CalibrationProfile, CalibrationSaveRequest,
-                     CapabilitiesResponse, Capability, DrawingDraft, ExportRequest, GenerateRequest, HistoryResponse,
+                     CapabilitiesResponse, Capability, DrawingDraft, ExportRequest, FirmwareInfo, GenerateRequest, HistoryResponse,
                      ImportRequest, PreparationRequest, PreparedJob, ProfileSelectionRequest, RevisionRequest,
                      HealthResponse, MachineStatus, ProfilesResponse, SessionResponse, StageRequest, StudioStatus,
                      StorageTarget, TargetSelectionRequest, TargetsResponse, TransferRecord)
@@ -44,6 +44,7 @@ def capabilities() -> CapabilitiesResponse:
         history=Capability(available=True, phase=4, reason="Drawings and revisions are saved to local SQLite and checksummed artifacts."),
         gcode_export=Capability(available=True, phase=3, reason="Draft downloads and immutable profile-based preparation are available."),
         sd_export=Capability(available=True, phase=4, reason="Verified managed filesystem export is available. Physical cards require operator-recorded calibration and explicit volume selection; test exports use an isolated directory."),
+        firmware=Capability(available=True, phase=5, reason="Canonical firmware source and profile-generated configuration are available. Building, uploading and commissioning are explicit operator steps; no board is contacted."),
         serial_control=planned(6, "USB control needs hardened firmware and the Phase 6 protocol."),
         ai=planned(7, "Optional AI interpretation arrives in Phase 7."),
         voice=planned(8, "Microphone input arrives in Phase 8."),
@@ -147,7 +148,22 @@ def create_app(*, frontend_dir: Path | None = None, instance_id: str | None = No
 
     @app.get("/api/profiles", response_model=ProfilesResponse)
     def get_profiles():
-        return ProfilesResponse(profiles=app.state.profiles, measured_profiles=app.state.profile_manager.all(), active_profile_id=app.state.repository.setting('active_profile'))
+        measured = app.state.profile_manager.all()
+        info = FirmwareInfo(version=firmware.FIRMWARE_VERSION, config_ids={profile.id: firmware.config_id(profile) for profile in [*app.state.profiles, *measured]},
+                            reason="Configuration IDs fingerprint the values compiled into canonical firmware. The machine shows its ID on the Info screen.")
+        return ProfilesResponse(profiles=app.state.profiles, measured_profiles=measured, active_profile_id=app.state.repository.setting('active_profile'), firmware=info)
+
+    @app.get('/api/profiles/{profile_id}/firmware-config')
+    def firmware_config(profile_id: str):
+        references = {profile.id: profile for profile in app.state.profiles}
+        if profile_id in references:
+            profile, kind = references[profile_id], 'source reference (no workspace)'
+        else:
+            profile = app.state.profile_manager.get(profile_id)
+            kind = 'verified measured' if profile.verified else 'unverified measured'
+        return Response(firmware.render(profile, kind=kind), media_type='text/x-c', headers={
+            'Content-Disposition': f'attachment; filename="{firmware.CONFIG_FILENAME}"',
+            'X-Picasso-Firmware-Config-Id': firmware.config_id(profile), 'X-Picasso-Hardware-Verified': 'false'})
 
     @app.post('/api/profiles', response_model=CalibrationProfile)
     def create_profile(request: CalibrationSaveRequest):

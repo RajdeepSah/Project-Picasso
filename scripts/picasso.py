@@ -119,7 +119,7 @@ def main() -> int:
             processes.append(subprocess.Popen(["node", "node_modules/vite/bin/vite.js", "--host", "127.0.0.1", "--port", str(args.frontend_port), "--strictPort"], cwd=FRONTEND, env=environment, **child_options))
             url = f"http://127.0.0.1:{args.frontend_port}"
             wait_ready(url, processes)
-        print(f"\nProject Picasso is ready: {url}\nPhase 4 · Saved drawings and verified export. Press Ctrl+C to stop.\n", flush=True)
+        print(f"\nProject Picasso is ready: {url}\nPhase 5 · Canonical firmware and commissioning tools. Press Ctrl+C to stop.\n", flush=True)
         if not args.no_browser:
             try:
                 if not webbrowser.open(url):

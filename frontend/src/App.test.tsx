@@ -12,7 +12,7 @@ const planned = { available: false, phase: 4, reason: 'Future feature.' };
 const studio: Studio = {
   health: { version: '0.3.0', instance_id: 'test', frontend_ready: true, python_version: '3.14.4' },
   capabilities: { dashboard: { ...planned, available: true }, generation: { ...planned, available: true }, history: planned,
-    gcode_export: { ...planned, available: true }, sd_export: planned, serial_control: planned, ai: planned, voice: planned },
+    gcode_export: { ...planned, available: true }, sd_export: planned, firmware: planned, serial_control: planned, ai: planned, voice: planned },
   profiles: { profiles: [] },
   status: { machine: { reason: 'No discovery implemented.' }, storage: { reason: 'No card configured.' } },
 };

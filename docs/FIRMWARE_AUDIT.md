@@ -2,6 +2,8 @@
 
 Audit date: 2026-10-24. This report describes files present in the workspace, not a verified image read from the Arduino. No firmware was modified or uploaded during Phase 1.
 
+> Phase 5 status: the defects below are addressed in the canonical sketch `firmware/WallDrawingMachine/`; the reference sketches stay unchanged as evidence. The remediation map is in [firmware/README.md](../firmware/README.md), and the remaining physical checks are in [FIRMWARE_COMMISSIONING.md](FIRMWARE_COMMISSIONING.md). This audit remains the record of legacy behaviour.
+
 ## Sources and baseline decision
 
 - `WallDrawingMachine.ino` is **empty (0 bytes)**. It cannot establish the machine's current pin map or behavior.

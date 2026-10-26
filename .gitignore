@@ -17,3 +17,6 @@ data/
 !.env.example
 frontend/test-results/
 frontend/playwright-report/
+
+# Generated firmware configuration (python3 scripts/firmware.py config)
+firmware/WallDrawingMachine/machine_config.h
