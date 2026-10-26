@@ -143,6 +143,36 @@ uint32_t crc32Update(uint32_t crc, uint8_t byte);
 const uint32_t kCrcInitial = 0xFFFFFFFFUL;
 inline uint32_t crc32Final(uint32_t crc) { return ~crc; }
 
+// ------------------------------------------------- serial protocol v1 framing
+// Frames are "@<body>*<CRC16 hex>\n"; see docs/SERIAL_PROTOCOL.md.
+const uint8_t kFrameBody = 90;     // host -> device body limit
+uint16_t crc16Update(uint16_t crc, uint8_t byte);  // CRC-16/CCITT-FALSE
+const uint16_t kCrc16Initial = 0xFFFF;
+
+enum FrameError : uint8_t { FRAME_OK = 0, FRAME_LONG, FRAME_CRC, FRAME_FORMAT, FRAME_BYTE };
+
+class FrameReader {
+ public:
+  enum Result : uint8_t { NONE, FRAME, REJECTED };
+  void reset();
+  Result feed(uint8_t byte);
+  // Valid after FRAME until the next feed(); NUL-terminated, writable for tokenizing.
+  char* body() { return buffer_; }
+  uint8_t length() const { return length_; }
+  FrameError error() const { return error_; }
+
+ private:
+  Result reject(FrameError error);
+  char buffer_[kFrameBody + 7];  // body, '*', 4 hex digits, optional CR, NUL
+  uint8_t length_;
+  uint8_t state_;
+  FrameError error_;
+};
+
+// Whole-token parsers for protocol fields.
+bool parseUnsigned(const char* text, uint32_t& value);
+bool parseDecimal(const char* text, float& value);
+
 }  // namespace picasso
 
 #endif

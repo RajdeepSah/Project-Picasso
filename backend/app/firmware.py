@@ -13,7 +13,7 @@ import zlib
 
 from .drawing.errors import DrawingError
 
-FIRMWARE_VERSION = "0.5.0"
+FIRMWARE_VERSION = "0.6.0"
 FIRMWARE_DIALECT = "picasso-fw-v1"
 CONFIG_SCHEMA = 1
 CONFIG_FILENAME = "machine_config.h"

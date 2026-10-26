@@ -1,6 +1,7 @@
 import type { ApiError, AutoSyncRequest, AutoSyncState, CalibrationProfile, CalibrationSaveRequest, CapabilitiesResponse,
-  DrawingDraft, ExportRequest, HealthResponse, HistoryResponse, ImportRequest, PreparedJob, ProfilesResponse,
-  RevisionRequest, SessionResponse, StageRequest, StorageTarget, StudioStatus, TargetsResponse, TransferRecord } from './contracts';
+  DrawingDraft, ExportRequest, HealthResponse, HistoryResponse, HomeRequest, ImportRequest, MachineState, PortsResponse, PreparedJob,
+  ProfilesResponse, RevisionRequest, SessionResponse, StageRequest, StorageTarget, StudioStatus, TargetsResponse, TransferRecord,
+  UsbRun, UsbStartRequest } from './contracts';
 
 let writeToken = '';
 
@@ -74,6 +75,13 @@ export const exportJob = (id: string, request: ExportRequest) => mutate<Transfer
 export const stageJob = (id: string, request: StageRequest) => mutate<TransferRecord>(`/api/jobs/${id}/stage`, request, freshSignal());
 export const armAutoSync = (request: AutoSyncRequest) => mutate<AutoSyncState>('/api/storage/auto-sync', request, freshSignal());
 export const fetchTransfers = () => get<TransferRecord[]>('/api/storage/transfers', freshSignal());
+export const fetchPorts = () => get<PortsResponse>('/api/machine/ports', freshSignal());
+export const fetchMachine = (signal = freshSignal()) => get<MachineState>('/api/machine', signal);
+export const connectMachine = (port: string) => mutate<MachineState>('/api/machine/connect', { port }, freshSignal());
+export const disconnectMachine = () => mutate<MachineState>('/api/machine/disconnect', {}, freshSignal());
+export const homeMachine = (request: HomeRequest) => mutate<MachineState>('/api/machine/home', request, freshSignal());
+export const controlMachine = (action: 'pause' | 'resume' | 'stop') => mutate<MachineState>(`/api/machine/${action}`, {}, freshSignal());
+export const startUsbRun = (jobId: string, request: UsbStartRequest) => mutate<UsbRun>(`/api/jobs/${encodeURIComponent(jobId)}/usb-start`, request, freshSignal());
 
 export async function downloadDraft(id: string, format: 'json' | 'svg' | 'gcode', signal: AbortSignal) {
   const response = await fetch(`/api/drawings/${encodeURIComponent(id)}/export?format=${format}`, {

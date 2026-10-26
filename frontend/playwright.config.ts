@@ -20,6 +20,7 @@ export default defineConfig({
     reuseExistingServer: false,
     timeout: 30000,
     gracefulShutdown: { signal: 'SIGTERM', timeout: 10000 },
-    env: { PICASSO_DATA_DIR: testData, PICASSO_MIRROR_DIR: join(testData, 'sd-mirror') },
+    // The simulated port runs the real firmware sketch in the host simulator (needs g++); it is labelled as simulation.
+    env: { PICASSO_DATA_DIR: testData, PICASSO_MIRROR_DIR: join(testData, 'sd-mirror'), PICASSO_SIMULATED_DEVICE: '1', PICASSO_SIMULATED_SPEED: '3' },
   },
 });

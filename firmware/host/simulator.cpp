@@ -4,15 +4,27 @@
 // evidence of the firmware logic only, never of the physical machine.
 //
 // A scenario script on stdin drives it, one command per line:
-//   card <path> | nocard | nofile | fail_after <bytes>
+//   card <path> | nocard | nofile | fail_after <bytes> | boot_counter <n>
 //   boot | key <down|enter|esc> | wait <ms> | until <state> <timeout_ms> | report
+//   frame <body>            queue "@<body>*<crc>\n" on the serial input
+//   raw <text>              queue raw serial bytes (\n, \r and \xHH escapes)
+//   bridge <speed> <report> from now on stdin/stdout are the serial port and
+//                           simulated time follows the wall clock x speed;
+//                           at stdin EOF the JSON report is written to <report>
 #include "Arduino.h"
 #include "SD.h"
 #include "Servo.h"
 #include "U8x8lib.h"
+#include "EEPROM.h"
 #include PICASSO_MACHINE_CONFIG
+#include "picasso_core.h"
 
+#include <poll.h>
+#include <unistd.h>
+
+#include <chrono>
 #include <cstdio>
+#include <deque>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -55,6 +67,13 @@ long failAt = -1, served = 0;
 
 std::vector<std::pair<uint64_t, std::string>> serial;
 std::string serialLine;
+std::deque<uint8_t> serialInput;
+bool bridging = false;
+std::string bridgeOutput;
+uint8_t eeprom[1024];
+struct EraseEeprom {
+  EraseEeprom() { memset(eeprom, 0xFF, sizeof(eeprom)); }
+} eraseEeprom;
 std::string rows[8];
 int beepEdges = 0;
 std::vector<uint64_t> keyPresses;
@@ -64,6 +83,16 @@ void advance(uint64_t us) { now += us; }
 void flushSerial() {
   serial.push_back(std::make_pair(now, serialLine));
   serialLine.clear();
+}
+
+void emit(char ch) {
+  if (bridging) bridgeOutput += ch;
+  if (ch == '\n') flushSerial();
+  else if (ch != '\r') serialLine += ch;
+}
+
+void emitText(const std::string& text) {
+  for (char ch : text) emit(ch);
 }
 
 void recordStep(Motor& motor) {
@@ -87,6 +116,7 @@ void recordStep(Motor& motor) {
 // ------------------------------------------------------------ Arduino API
 HardwareSerial Serial;
 SDClass SD;
+EEPROMClass EEPROM;
 const uint8_t u8x8_font_amstrad_cpc_extended_r[] = {0};
 
 unsigned long millis() { return static_cast<unsigned long>(sim::now / 1000); }
@@ -109,14 +139,25 @@ int analogRead(uint8_t pin) {
 }
 
 void HardwareSerial::begin(unsigned long) {}
-void HardwareSerial::print(const char* text) { sim::serialLine += text; }
-void HardwareSerial::print(const __FlashStringHelper* text) { sim::serialLine += reinterpret_cast<const char*>(text); }
-void HardwareSerial::print(unsigned long value) { sim::serialLine += std::to_string(value); }
-void HardwareSerial::print(unsigned int value) { sim::serialLine += std::to_string(value); }
-void HardwareSerial::print(int value) { sim::serialLine += std::to_string(value); }
-void HardwareSerial::println(const char* text) { print(text); sim::flushSerial(); }
-void HardwareSerial::println(const __FlashStringHelper* text) { print(text); sim::flushSerial(); }
-void HardwareSerial::println() { sim::flushSerial(); }
+int HardwareSerial::available() { return static_cast<int>(sim::serialInput.size()); }
+int HardwareSerial::read() {
+  if (sim::serialInput.empty()) return -1;
+  uint8_t byte = sim::serialInput.front();
+  sim::serialInput.pop_front();
+  return byte;
+}
+size_t HardwareSerial::write(uint8_t byte) {
+  sim::emit(static_cast<char>(byte));
+  return 1;
+}
+void HardwareSerial::print(const char* text) { sim::emitText(text); }
+void HardwareSerial::print(const __FlashStringHelper* text) { sim::emitText(reinterpret_cast<const char*>(text)); }
+void HardwareSerial::print(unsigned long value) { sim::emitText(std::to_string(value)); }
+void HardwareSerial::print(unsigned int value) { sim::emitText(std::to_string(value)); }
+void HardwareSerial::print(int value) { sim::emitText(std::to_string(value)); }
+void HardwareSerial::println(const char* text) { print(text); sim::emit('\n'); }
+void HardwareSerial::println(const __FlashStringHelper* text) { print(text); sim::emit('\n'); }
+void HardwareSerial::println() { sim::emit('\n'); }
 
 uint8_t Servo::attach(int) { return 0; }
 void Servo::write(int angle) {
@@ -249,10 +290,110 @@ static int keyValue(const std::string& name) {
   std::exit(2);
 }
 
+// Reads stdin directly (not through std::cin) so bytes after "bridge" are
+// never trapped in a stream buffer.
+static std::string pending;
+static bool inputClosed = false;
+
+static bool nextLine(std::string& line) {
+  for (;;) {
+    size_t end = pending.find('\n');
+    if (end != std::string::npos) {
+      line = pending.substr(0, end);
+      pending.erase(0, end + 1);
+      return true;
+    }
+    if (inputClosed) {
+      if (pending.empty()) return false;
+      line.swap(pending);
+      pending.clear();
+      return true;
+    }
+    char buffer[4096];
+    ssize_t count = ::read(0, buffer, sizeof(buffer));
+    if (count <= 0) inputClosed = true;
+    else pending.append(buffer, static_cast<size_t>(count));
+  }
+}
+
+static void queueSerial(const std::string& bytes) {
+  for (char ch : bytes) sim::serialInput.push_back(static_cast<uint8_t>(ch));
+}
+
+static std::string frameFor(const std::string& body) {
+  uint16_t crc = picasso::kCrc16Initial;
+  for (char ch : body) crc = picasso::crc16Update(crc, static_cast<uint8_t>(ch));
+  char hex[5];
+  std::snprintf(hex, sizeof(hex), "%04X", crc);
+  return "@" + body + "*" + hex + "\n";
+}
+
+static std::string unescape(const std::string& text) {
+  std::string out;
+  for (size_t i = 0; i < text.size(); ++i) {
+    if (text[i] != '\\' || i + 1 >= text.size()) {
+      out += text[i];
+      continue;
+    }
+    char code = text[++i];
+    if (code == 'n') out += '\n';
+    else if (code == 'r') out += '\r';
+    else if (code == 'x' && i + 2 < text.size()) {
+      out += static_cast<char>(std::stoi(text.substr(i + 1, 2), nullptr, 16));
+      i += 2;
+    } else out += code;
+  }
+  return out;
+}
+
+static void writeAll(const std::string& bytes) {
+  size_t done = 0;
+  while (done < bytes.size()) {
+    ssize_t count = ::write(1, bytes.data() + done, bytes.size() - done);
+    if (count <= 0) return;
+    done += static_cast<size_t>(count);
+  }
+}
+
+// Real-time serial bridge for the host controller tests.
+static int bridge(double speed, const std::string& reportPath) {
+  sim::bridging = true;
+  queueSerial(pending);
+  pending.clear();
+  auto start = std::chrono::steady_clock::now();
+  uint64_t base = sim::now;
+  bool open = !inputClosed;
+  while (open) {
+    pollfd input = {0, POLLIN, 0};
+    while (::poll(&input, 1, 0) > 0) {
+      char buffer[512];
+      ssize_t count = ::read(0, buffer, sizeof(buffer));
+      if (count <= 0) {
+        open = false;
+        break;
+      }
+      for (ssize_t i = 0; i < count; ++i) sim::serialInput.push_back(static_cast<uint8_t>(buffer[i]));
+    }
+    uint64_t wall = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start).count();
+    uint64_t mapped = base + static_cast<uint64_t>(static_cast<double>(wall) * speed);
+    if (mapped > sim::now) sim::now = mapped;
+    loop();
+    if (!sim::bridgeOutput.empty()) {
+      writeAll(sim::bridgeOutput);
+      sim::bridgeOutput.clear();
+    }
+  }
+  std::ofstream out(reportPath);
+  std::streambuf* previous = std::cout.rdbuf(out.rdbuf());
+  report(false);
+  std::cout.rdbuf(previous);
+  return 0;
+}
+
 int main() {
   std::string line;
   int status = 0;
-  while (std::getline(std::cin, line)) {
+  while (nextLine(line)) {
     std::istringstream words(line);
     std::string command;
     if (!(words >> command) || command[0] == '#') continue;
@@ -266,6 +407,18 @@ int main() {
       }
       sim::card.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
       sim::cardPresent = sim::filePresent = true;
+    } else if (command == "frame" || command == "raw") {
+      std::string rest = line.size() > command.size() + 1 ? line.substr(command.size() + 1) : "";
+      queueSerial(command == "frame" ? frameFor(rest) : unescape(rest));
+    } else if (command == "boot_counter") {
+      uint32_t counter;
+      words >> counter;
+      EEPROM.put(PICASSO_EEPROM_BOOT_ADDRESS, counter);
+    } else if (command == "bridge") {
+      double speed;
+      std::string path;
+      words >> speed >> path;
+      return bridge(speed, path);
     } else if (command == "nocard") {
       sim::cardPresent = false;
     } else if (command == "nofile") {

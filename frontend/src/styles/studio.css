@@ -290,3 +290,27 @@ input[type="range"] { width: 100%; height: 3px; margin: 16px 0 11px; accent-colo
 @media (max-width: 700px) { .drawing-controls { max-height: none; } .paper.has-drawing { height: 330px; margin: 45px 0; } }
 @media (max-width: 1000px) { .history-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .history-toolbar { align-items: flex-start; flex-direction: column; } }
 @media (max-width: 600px) { .history-grid { grid-template-columns: 1fr; } .history-panel { padding: 16px; }.form-grid { gap: 0 8px; }.import-button { padding: 8px; font-size: 9px; }.page-heading { flex-wrap: wrap; } }
+
+.machine-panel { margin-bottom: 6px; }
+.port-row { display: flex; gap: 6px; align-items: center; margin-bottom: 8px; }
+.port-row select { flex: 1; min-width: 0; padding: 8px; border: 1px solid #e2e1e9; border-radius: 5px; font-size: 10px; color: #6f6880; background: #fff; }
+.machine-details dd { overflow-wrap: anywhere; }
+.machine-details dd.match { color: #6f9a83; } .machine-details dd.mismatch { color: #b7795f; }
+.machine-panel .subtle-button, .home-control .subtle-button { display: inline-flex; align-items: center; gap: 6px; margin: 8px 8px 0 0; }
+.machine-message { margin: 10px 0 0; }
+.connection-connected { color: #5f8f76; border-color: #d7e6df; background: #f1f7f3; }
+.connection-lost, .connection-incompatible { color: #b06a52; border-color: #f0ddd5; background: #fbf3ef; }
+.stop-button { color: #b0563f !important; border-color: #efd3ca !important; }
+.home-control { margin-top: 8px; }
+.usb-checks { list-style: none; padding: 0; margin: 0 0 6px; display: grid; gap: 6px; }
+.usb-checks li { display: flex; gap: 7px; align-items: center; font-size: 11px; color: #b08a7a; }
+.usb-checks li.ok { color: #6f9a83; }
+.usb-run { border: 1px solid #e4def0; border-radius: 7px; padding: 12px; margin-top: 14px; background: #faf9fd; }
+.usb-run p { font-size: 10px; line-height: 1.8; color: #8c8299; overflow-wrap: anywhere; }
+.usb-run-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 12px; }
+.usb-progress { height: 6px; border-radius: 3px; background: #ece8f4; overflow: hidden; margin-bottom: 8px; }
+.usb-progress span { display: block; height: 100%; background: var(--accent); transition: width 0.3s ease; }
+.usb-run.completed .usb-progress span { background: #6f9a83; } .usb-run.fault .usb-progress span, .usb-run.aborted .usb-progress span, .usb-run.failed .usb-progress span { background: #c27a63; }
+.usb-run-actions { display: flex; gap: 8px; margin: 6px 0; }
+.usb-run-actions .subtle-button { display: inline-flex; align-items: center; gap: 6px; }
+@media (prefers-reduced-motion: reduce) { .usb-progress span { transition: none; } }

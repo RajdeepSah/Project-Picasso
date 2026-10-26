@@ -28,10 +28,12 @@ def test_real_capabilities_and_independent_uninspected_hardware_states(client):
     assert caps["gcode_export"]["available"] is True
     assert caps["history"]["available"] is True
     assert caps["sd_export"]["available"] is True
-    for name in ("serial_control", "ai", "voice"):
+    assert caps["serial_control"]["available"] is True and "explicit" in caps["serial_control"]["reason"].lower()
+    for name in ("ai", "voice"):
         assert caps[name]["available"] is False
         assert caps[name]["reason"]
     status = client.get("/api/status").json()
+    assert status["machine"]["state"] == "disconnected"  # nothing is opened until the operator connects
     assert status["machine"]["discovery_performed"] is False
     assert status["machine"]["position_known"] is False
     assert status["storage"]["state"] == "not_configured"

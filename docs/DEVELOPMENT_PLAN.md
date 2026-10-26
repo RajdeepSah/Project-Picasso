@@ -1,6 +1,6 @@
 # Project Picasso development plan
 
-Baseline: 2026-10-24. **Phases 1–3 and the Phase 4 and Phase 5 software are complete. Phase 4 real-card verification, the Phase 5 Arduino CLI compile/memory report and physical commissioning remain pending. Phases 6–8 are planned.** This plan is the implementation handoff for Codex. Read the architecture, G-code contract, and relevant audit before changing the associated subsystem.
+Baseline: 2026-10-24. **Phases 1–3 and the Phase 4, 5 and 6 software are complete. Phase 4 real-card verification, the Phase 5 Arduino CLI compile/memory report, physical commissioning and the Phase 6 hardware USB checks remain pending. Phases 7–8 are planned.** This plan is the implementation handoff for Codex. Read the architecture, G-code contract, and relevant audit before changing the associated subsystem.
 
 ## Outcome and sequencing
 
@@ -17,7 +17,7 @@ The target is a real local drawing studio: launch once, type a drawing command, 
         |
 5 firmware hardening + hardware commissioning [software complete; compile report + commissioning pending]
         |
-6 acknowledged USB execution
+6 acknowledged USB execution [software complete; hardware checks pending]
         |
 7 optional AI interpretation/composition
         |
@@ -171,6 +171,8 @@ Checks:
 Exit: firmware builds and software tests pass. Mark hardware commissioning complete only when the physical checks and profile measurements are recorded; otherwise leave that part pending. No automatic upload occurs on application startup.
 
 ## Phase 6 — USB protocol and acknowledged machine control
+
+**Status: software complete against simulated devices; hardware USB checks pending.** See [PHASE_6_REPORT.md](PHASE_6_REPORT.md) and [SERIAL_PROTOCOL.md](SERIAL_PROTOCOL.md). The tasks below retain the agreed scope as a reference.
 
 **Goal:** send drawings over an existing suitable USB serial connection with truthful state, progress, pause and stop.
 

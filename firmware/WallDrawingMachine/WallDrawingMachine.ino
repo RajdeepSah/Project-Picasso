@@ -5,12 +5,15 @@
 // is replaced by cooperative state machines: keypad, pen settling, SD reading
 // and motion are serviced on every loop() pass, so pause/stop are honoured
 // between bounded motion slices. SD jobs are validated completely (syntax,
-// workspace and rope limits) before any motion. See firmware/README.md.
+// workspace and rope limits) before any motion. A host can stream a job over
+// USB with serial protocol v1 (docs/SERIAL_PROTOCOL.md): one acknowledged
+// command at a time, never executed twice. See firmware/README.md.
 
 #include <TinyStepper_28BYJ_48.h>
 #include <Servo.h>
 #include <SD.h>
 #include <U8x8lib.h>
+#include <EEPROM.h>
 #include <string.h>
 
 #include "picasso_config.h"
@@ -24,6 +27,7 @@
 #error "machine_config.h is missing. Generate it from a profile: python3 scripts/firmware.py config --profile <id> (see firmware/README.md)."
 #endif
 
+static_assert(PICASSO_PROTOCOL_VERSION == 1, "sendHello() and docs/SERIAL_PROTOCOL.md describe protocol version 1");
 static_assert(PICASSO_CONFIG_SCHEMA == 1, "machine_config.h targets a different configuration schema; regenerate it");
 static_assert(PICASSO_PEN_UP_DEGREES >= 0 && PICASSO_PEN_UP_DEGREES <= 180, "pen up angle out of range");
 static_assert(PICASSO_PEN_DOWN_DEGREES >= 0 && PICASSO_PEN_DOWN_DEGREES <= 180, "pen down angle out of range");
@@ -50,11 +54,11 @@ enum Mode : uint8_t {
   MODE_MESSAGE, MODE_VALIDATING, MODE_READY, MODE_EXECUTING, MODE_RESULT
 };
 enum Phase : uint8_t { EX_FETCH, EX_SETTLE, EX_MOVE, EX_PAUSING, EX_PAUSED, EX_RESUMING, EX_ENDING };
-enum JobKind : uint8_t { JOB_SD, JOB_SQUARE, JOB_ORIGIN };
+enum JobKind : uint8_t { JOB_SD, JOB_SQUARE, JOB_ORIGIN, JOB_USB };
 enum Outcome : uint8_t { OUTCOME_COMPLETED, OUTCOME_ABORTED, OUTCOME_FAILED };
 enum Reason : uint8_t {
   REASON_NONE, REASON_PARSE, REASON_STOPPED, REASON_SD_INIT, REASON_NO_FILE, REASON_SD_READ,
-  REASON_FILE_CHANGED, REASON_NO_MOVES
+  REASON_FILE_CHANGED, REASON_NO_MOVES, REASON_HOST_STOP, REASON_HOST_LOST, REASON_SEQUENCE
 };
 enum Confirm : uint8_t { CONFIRM_ORIGIN, CONFIRM_RELEASE };
 enum MotionResult : uint8_t { MOTION_BUSY, MOTION_DONE, MOTION_HELD };
@@ -62,6 +66,12 @@ enum Fetch : uint8_t { FETCH_BUSY, FETCH_COMMAND, FETCH_END, FETCH_FAILED };
 
 static const char kReasons[][16] PROGMEM = {
   "", "", "Stopped by user", "SD init failed", "No main.nc", "SD read error", "File changed", "No moves",
+  "Host stop", "Host lost", "Sequence error",
+};
+// Protocol reason codes, in Reason order (REASON_PARSE uses the status code).
+static const char kReasonCodes[][13] PROGMEM = {
+  "NONE", "PARSE", "STOPPED", "SD_INIT", "NO_FILE", "SD_READ", "FILE_CHANGED", "NO_MOVES",
+  "HOST_STOP", "HOST_LOST", "SEQUENCE",
 };
 static const char kJogLabels[4][11] PROGMEM = {"L rope +", "L rope -", "R rope +", "R rope -"};
 
@@ -73,6 +83,21 @@ static bool originValid = false;
 static bool originFresh = false;
 static float posX = 0, posY = 0;
 static long rope1 = 0, rope2 = 0;  // commanded rope lengths in steps
+static uint16_t originRevision = 0;  // increments on every confirmed origin
+
+// ------------------------------------------------------------ host session
+// Boot ID: EEPROM counter incremented on every reset, so a host can tell a
+// reset (and therefore an unknown position) from a continuing session.
+static uint32_t bootId = 0;
+static picasso::FrameReader frames;
+static bool hostJob = false;          // job started by the host: watchdog applies
+static unsigned long hostSeenAt = 0;  // last valid frame
+static char usbToken[9];
+static uint32_t usbReceived = 0, usbCompleted = 0;
+static bool usbPending = false;       // received and validated, not yet started
+static bool usbInFlight = false;      // started, not yet acknowledged
+static picasso::Command usbCommand;
+static uint16_t txCrc = 0;
 
 // --------------------------------------------------------------------- pen
 static bool penDown = false;
@@ -215,6 +240,8 @@ static JobKind jobKind = JOB_SD;
 static Phase phase = EX_FETCH;
 static Phase pausedFrom = EX_FETCH;
 static bool pauseRequested = false, stopRequested = false, resumePenDown = false;
+static Reason stopReason = REASON_STOPPED;
+static bool hasResult = false;
 static Outcome outcome = OUTCOME_COMPLETED;
 static Reason reason = REASON_NONE;
 static picasso::Status failure = picasso::OK;
@@ -254,12 +281,197 @@ static void setOrigin() {
   picasso::ik(geometry, 0, 0, rope1, rope2);
   originValid = true;
   originFresh = true;
+  ++originRevision;
   logEvent(F("ORIGIN SET"));
 }
 
 static void invalidateOrigin() {
   originValid = false;
   originFresh = false;
+}
+
+// ------------------------------------------------------- protocol frames out
+// Frames are written directly to Serial while the CRC is accumulated, so no
+// transmit buffer is needed.
+static void txByte(char ch) {
+  txCrc = picasso::crc16Update(txCrc, static_cast<uint8_t>(ch));
+  Serial.write(static_cast<uint8_t>(ch));
+}
+
+static void txP(PGM_P text) {
+  char ch;
+  while ((ch = static_cast<char>(pgm_read_byte(text++)))) txByte(ch);
+}
+
+static void txRam(const char* text) {
+  while (*text) txByte(*text++);
+}
+
+static void txBegin(PGM_P kind) {
+  Serial.write('@');
+  txCrc = picasso::kCrc16Initial;
+  txP(kind);
+}
+
+static void txWordP(PGM_P text) {
+  txByte(' ');
+  txP(text);
+}
+
+static void txWord(const char* text) {
+  txByte(' ');
+  txRam(text);
+}
+
+static void txNumber(uint32_t value) {
+  char text[11];
+  formatUnsigned(text, value);
+  txWord(text);
+}
+
+static void txHex(uint32_t value) {
+  char text[9];
+  formatHex(text, value);
+  txWord(text);
+}
+
+// Commanded millimetres with three decimals.
+static void txFixed(float value) {
+  long scaled = static_cast<long>(value * 1000.0f + (value >= 0 ? 0.5f : -0.5f));
+  txByte(' ');
+  if (scaled < 0) {
+    txByte('-');
+    scaled = -scaled;
+  }
+  char text[11];
+  formatUnsigned(text, static_cast<uint32_t>(scaled / 1000));
+  txRam(text);
+  txByte('.');
+  uint16_t fraction = static_cast<uint16_t>(scaled % 1000);
+  txByte(static_cast<char>('0' + fraction / 100));
+  txByte(static_cast<char>('0' + fraction / 10 % 10));
+  txByte(static_cast<char>('0' + fraction % 10));
+}
+
+static void txEnd() {
+  char hex[5];
+  uint16_t value = txCrc;
+  for (int8_t i = 3; i >= 0; --i) {
+    uint8_t nibble = value & 0xF;
+    hex[i] = static_cast<char>(nibble < 10 ? '0' + nibble : 'A' + nibble - 10);
+    value >>= 4;
+  }
+  hex[4] = '\0';
+  Serial.write('*');
+  Serial.print(hex);
+  Serial.write('\n');
+}
+
+static void reasonCode(char* code, size_t size) {
+  if (reason == REASON_PARSE) picasso::statusCode(failure, code, size);
+  else {
+    strncpy_P(code, kReasonCodes[reason], size - 1);
+    code[size - 1] = '\0';
+  }
+}
+
+static void txJobKind() {
+  if (jobKind == JOB_USB) {
+    txWordP(PSTR("USB:"));
+    txRam(usbToken);
+  } else txWordP(jobKind == JOB_SD ? PSTR("SD") : jobKind == JOB_SQUARE ? PSTR("SQUARE") : PSTR("HOME"));
+}
+
+static void txJob() {
+  if (mode == MODE_EXECUTING) txJobKind();
+  else txWordP(PSTR("-"));
+}
+
+static bool deviceIdle() { return mode == MODE_MAIN || mode == MODE_RESULT; }
+
+static PGM_P protocolState() {
+  if (deviceIdle()) return PSTR("IDLE");
+  if (mode != MODE_EXECUTING) return PSTR("LOCAL");
+  switch (phase) {
+    case EX_PAUSING: return PSTR("PAUSING");
+    case EX_PAUSED: return PSTR("PAUSED");
+    case EX_RESUMING: return PSTR("RESUMING");
+    case EX_ENDING: return PSTR("ENDING");
+    default: return PSTR("RUNNING");
+  }
+}
+
+static void sendStatus() {
+  txBegin(PSTR("ST"));
+  txWordP(protocolState());
+  txJob();
+  txHex(bootId);
+  txNumber(originRevision);
+  txWordP(!originValid ? PSTR("UNSET") : originFresh ? PSTR("FRESH") : PSTR("VALID"));
+  txFixed(posX);
+  txFixed(posY);
+  txWordP(penDown ? PSTR("DOWN") : PSTR("UP"));
+  txNumber(usbReceived);
+  txNumber(usbCompleted);
+  txByte(' ');
+  txP(!hasResult ? PSTR("NONE") : outcome == OUTCOME_COMPLETED ? PSTR("COMPLETED") : outcome == OUTCOME_ABORTED ? PSTR("ABORTED") : PSTR("FAILED"));
+  txByte(':');
+  char code[13];
+  reasonCode(code, sizeof(code));
+  txRam(hasResult ? code : "NONE");
+  txEnd();
+}
+
+static void sendHello() {
+  txBegin(PSTR("HELLO 1 " PICASSO_FIRMWARE_VERSION " " PICASSO_DIALECT " " PICASSO_CONFIG_ID));
+  txHex(bootId);
+  txWordP(PSTR("STREAM,PAUSE,STOP,HOME"));
+  txEnd();
+}
+
+static void sendReply(PGM_P kind, PGM_P command, PGM_P detail) {
+  txBegin(kind);
+  txWordP(command);
+  if (detail) txWordP(detail);
+  txEnd();
+}
+
+static void sendSequence(PGM_P kind, uint32_t sequence) {
+  txBegin(kind);
+  txNumber(sequence);
+}
+
+static void sendAck(uint32_t sequence, bool duplicate) {
+  sendSequence(PSTR("ACK"), sequence);
+  txFixed(posX);
+  txFixed(posY);
+  if (duplicate) txWordP(PSTR("DUP"));
+  txEnd();
+}
+
+static void sendNak(uint32_t sequence, const char* code) {
+  sendSequence(PSTR("NAK"), sequence);
+  txWord(code);
+  txEnd();
+}
+
+static void sendNakP(uint32_t sequence, PGM_P code) {
+  sendSequence(PSTR("NAK"), sequence);
+  txWordP(code);
+  txEnd();
+}
+
+static void sendEvent(PGM_P event) {
+  txBegin(PSTR("EVT"));
+  txWordP(event);
+  txJobKind();
+  txNumber(usbCompleted);
+  txFixed(posX);
+  txFixed(posY);
+  char code[13];
+  reasonCode(code, sizeof(code));
+  txWord(code);
+  txEnd();
 }
 
 // -------------------------------------------------------------- menu views
@@ -401,6 +613,8 @@ static void enterResult() {
   else originText(3);
   render();
   logResult();
+  hasResult = true;
+  sendEvent(outcome == OUTCOME_COMPLETED ? PSTR("COMPLETED") : outcome == OUTCOME_ABORTED ? PSTR("ABORTED") : PSTR("FAILED"));
   if (outcome == OUTCOME_COMPLETED) startBeep(5, 300, 300);  // legacy completion pattern
   else if (outcome == OUTCOME_ABORTED) startBeep(2, 150, 150);
   else startBeep(1, 1500, 0);
@@ -467,7 +681,8 @@ static MotionResult serviceMotion(bool hold) {
 // --------------------------------------------------------------- execution
 static void renderRunning() {
   clearText();
-  textP(0, jobKind == JOB_SD ? PSTR("RUNNING main.nc") : jobKind == JOB_SQUARE ? PSTR("TEST SQUARE") : PSTR("TO ORIGIN"));
+  textP(0, jobKind == JOB_SD ? PSTR("RUNNING main.nc") : jobKind == JOB_SQUARE ? PSTR("TEST SQUARE")
+           : jobKind == JOB_USB ? PSTR("USB job") : PSTR("TO ORIGIN"));
   textP(2, PSTR("ENT=pause"));
   textP(3, PSTR("ESC=stop"));
   render();
@@ -478,6 +693,7 @@ static void startExecution(JobKind kind) {
   mode = MODE_EXECUTING;
   originFresh = false;  // motion consumes the operator's origin confirmation
   pauseRequested = stopRequested = false;
+  stopReason = REASON_STOPPED;
   motionStarted = true;
   outcome = OUTCOME_COMPLETED;
   reason = REASON_NONE;
@@ -487,7 +703,7 @@ static void startExecution(JobKind kind) {
   current.hasXY = false;
   commandPen(false);
   phase = EX_SETTLE;
-  logEvent(kind == JOB_SD ? F("START SD") : kind == JOB_SQUARE ? F("START SQUARE") : F("START ORIGIN"));
+  logEvent(kind == JOB_SD ? F("START SD") : kind == JOB_SQUARE ? F("START SQUARE") : kind == JOB_USB ? F("START USB") : F("START ORIGIN"));
   renderRunning();
 }
 
@@ -496,6 +712,7 @@ static void endExecution(Outcome result, Reason why, picasso::Status status) {
   reason = why;
   failure = status;
   if (jobKind == JOB_SD && result != OUTCOME_COMPLETED) failedLine = reader.lineNumber();
+  if (jobKind == JOB_USB && result != OUTCOME_COMPLETED) failedLine = usbReceived;  // sequence number
   commandPen(false);  // raise first; the display update can take tens of ms
   phase = EX_ENDING;
   logEvent(result == OUTCOME_ABORTED ? F("STOPPING") : result == OUTCOME_FAILED ? F("FAILING") : F("FINISHING"));
@@ -540,8 +757,30 @@ static Fetch fetchSdCommand() {
   return FETCH_BUSY;
 }
 
+// The first reason wins: keypad, host STOP or the host-loss watchdog.
+static void requestStop(Reason why) {
+  if (stopRequested) return;
+  stopRequested = true;
+  stopReason = why;
+}
+
+// A USB command is acknowledged only once its pen change and motion finished.
+static void commandDone() {
+  if (jobKind != JOB_USB || !usbInFlight) return;
+  usbInFlight = false;
+  usbCompleted = usbReceived;
+  sendAck(usbCompleted, false);
+}
+
 static Fetch fetchCommand() {
   if (jobKind == JOB_SD) return fetchSdCommand();
+  if (jobKind == JOB_USB) {
+    if (!usbPending) return FETCH_BUSY;  // END from the host completes the job
+    usbPending = false;
+    usbInFlight = true;
+    current = usbCommand;
+    return FETCH_COMMAND;
+  }
   if (programIndex >= programLength) return FETCH_END;
   current = program[programIndex++];
   return FETCH_COMMAND;
@@ -551,7 +790,7 @@ static Fetch fetchCommand() {
 // or at a motion sub-target boundary.
 static void reachSafePoint() {
   if (stopRequested) {
-    endExecution(OUTCOME_ABORTED, REASON_STOPPED, picasso::OK);
+    endExecution(OUTCOME_ABORTED, stopReason, picasso::OK);
     return;
   }
   pausedFrom = phase;
@@ -563,6 +802,12 @@ static void reachSafePoint() {
 
 static void finishExecution() {
   closeJob();
+  if (jobKind == JOB_USB && (usbPending || usbInFlight)) {
+    // Received but not completed: it may have run partly; the event reports the position.
+    sendNakP(usbReceived, PSTR("ABORTED"));
+    usbPending = usbInFlight = false;
+  }
+  hostJob = false;
   if (PICASSO_RELEASE_AFTER_JOB) {
     m1.disableMotor();
     m2.disableMotor();
@@ -571,18 +816,26 @@ static void finishExecution() {
   enterResult();
 }
 
+// Resume always needs an explicit request (keypad ENTER or host RESUME).
+static void resumeExecution() {
+  pauseRequested = false;
+  commandPen(resumePenDown);
+  phase = EX_RESUMING;
+  logEvent(F("RESUMING"));
+  sendEvent(PSTR("RESUMED"));
+  renderRunning();
+}
+
+static bool canPause() { return phase != EX_PAUSING && phase != EX_PAUSED && phase != EX_RESUMING && phase != EX_ENDING; }
+
 static void serviceExecution(Key key) {
-  if (key == KEY_ESC) stopRequested = true;
+  if (key == KEY_ESC) requestStop(REASON_STOPPED);
   else if (key == KEY_ENTER) {
     if (phase == EX_PAUSED) {
-      pauseRequested = false;
-      commandPen(resumePenDown);
-      phase = EX_RESUMING;
-      logEvent(F("RESUMING"));
-      renderRunning();
+      resumeExecution();
       return;
     }
-    if (phase != EX_PAUSING && phase != EX_RESUMING && phase != EX_ENDING) pauseRequested = true;
+    if (canPause()) pauseRequested = true;
   }
   switch (phase) {
     case EX_FETCH: {
@@ -609,22 +862,26 @@ static void serviceExecution(Key key) {
         phase = EX_MOVE;
       } else {
         phase = EX_FETCH;
+        commandDone();
       }
       return;
     case EX_MOVE: {
       MotionResult result = serviceMotion(stopRequested || pauseRequested);
-      if (result == MOTION_DONE) phase = EX_FETCH;
-      else if (result == MOTION_HELD) reachSafePoint();
+      if (result == MOTION_DONE) {
+        phase = EX_FETCH;
+        commandDone();
+      } else if (result == MOTION_HELD) reachSafePoint();
       return;
     }
     case EX_PAUSING:
       if (!penSettled()) return;
       if (stopRequested) {
-        endExecution(OUTCOME_ABORTED, REASON_STOPPED, picasso::OK);
+        endExecution(OUTCOME_ABORTED, stopReason, picasso::OK);
         return;
       }
       phase = EX_PAUSED;
       logEvent(F("PAUSED"));
+      sendEvent(PSTR("PAUSED"));
       clearText();
       textP(0, PSTR("PAUSED  pen up"));
       textP(2, PSTR("ENT=resume"));
@@ -632,7 +889,7 @@ static void serviceExecution(Key key) {
       render();
       return;
     case EX_PAUSED:
-      if (stopRequested) endExecution(OUTCOME_ABORTED, REASON_STOPPED, picasso::OK);
+      if (stopRequested) endExecution(OUTCOME_ABORTED, stopReason, picasso::OK);
       return;
     case EX_RESUMING:
       if (penSettled()) phase = pausedFrom;
@@ -946,6 +1203,241 @@ static void handleMenuKey(Key key) {
   }
 }
 
+// ------------------------------------------------------- protocol frames in
+static bool parseHex32(const char* text, uint32_t& value) {
+  uint32_t result = 0;
+  uint8_t digits = 0;
+  for (; *text; ++text, ++digits) {
+    char ch = *text;
+    uint8_t nibble;
+    if (ch >= '0' && ch <= '9') nibble = static_cast<uint8_t>(ch - '0');
+    else if (ch >= 'a' && ch <= 'f') nibble = static_cast<uint8_t>(ch - 'a' + 10);
+    else return false;
+    if (digits >= 8) return false;
+    result = (result << 4) | nibble;
+  }
+  value = result;
+  return digits == 8;
+}
+
+static bool sessionMatches(const char* boot, const char* revision, PGM_P command) {
+  uint32_t expectedBoot, expectedRevision;
+  if (!parseHex32(boot, expectedBoot) || !picasso::parseUnsigned(revision, expectedRevision)) {
+    sendReply(PSTR("ERR"), command, PSTR("ARGS"));
+    return false;
+  }
+  if (expectedBoot != bootId) {
+    sendReply(PSTR("ERR"), command, PSTR("SESSION"));
+    return false;
+  }
+  if (expectedRevision != originRevision) {
+    sendReply(PSTR("ERR"), command, PSTR("REFERENCE"));
+    return false;
+  }
+  return true;
+}
+
+static bool ownUsbJob() { return mode == MODE_EXECUTING && jobKind == JOB_USB; }
+
+// BEGIN <token> <x> <y> <boot> <orev>: binds a USB job to this boot, origin
+// reference and commanded position. It never moves to satisfy them.
+static void handleBegin(char** words, uint8_t count) {
+  PGM_P command = PSTR("BEGIN");
+  float x, y;
+  uint32_t token;
+  if (count != 6 || !parseHex32(words[1], token) || !picasso::parseDecimal(words[2], x) || !picasso::parseDecimal(words[3], y)) {
+    sendReply(PSTR("ERR"), command, PSTR("ARGS"));
+    return;
+  }
+  if (!deviceIdle()) {
+    sendReply(PSTR("ERR"), command, PSTR("STATE"));
+    return;
+  }
+  if (!geometry.hasRegion) {
+    sendReply(PSTR("ERR"), command, PSTR("NO_REGION"));
+    return;
+  }
+  if (!originValid) {
+    sendReply(PSTR("ERR"), command, PSTR("NO_ORIGIN"));
+    return;
+  }
+  if (!sessionMatches(words[4], words[5], command)) return;
+  if (fabs(posX - x) > 0.0005f || fabs(posY - y) > 0.0005f) {
+    sendReply(PSTR("ERR"), command, PSTR("POSITION"));
+    return;
+  }
+  strncpy(usbToken, words[1], sizeof(usbToken) - 1);
+  usbToken[sizeof(usbToken) - 1] = '\0';
+  usbReceived = usbCompleted = 0;
+  usbPending = usbInFlight = false;
+  jobKind = JOB_USB;
+  checker.begin(geometry, posX, posY);
+  hostJob = true;
+  startExecution(JOB_USB);
+  txBegin(PSTR("OK BEGIN"));
+  txWord(usbToken);
+  txEnd();
+}
+
+// M <seq> <gcode>: validated on receipt, acknowledged after completion.
+static void handleMotion(char* rest) {
+  char* payload = strchr(rest, ' ');
+  if (payload) *payload++ = '\0';
+  else payload = rest + strlen(rest);
+  uint32_t sequence;
+  if (!picasso::parseUnsigned(rest, sequence) || sequence == 0) {
+    sendReply(PSTR("ERR"), PSTR("M"), PSTR("ARGS"));
+    return;
+  }
+  if (!ownUsbJob() || phase == EX_ENDING) {
+    sendNakP(sequence, PSTR("STATE"));
+    return;
+  }
+  if (sequence == usbReceived && (usbPending || usbInFlight)) {  // repeated while running
+    sendSequence(PSTR("RCV"), sequence);
+    txWordP(PSTR("DUP"));
+    txEnd();
+    return;
+  }
+  if (sequence <= usbCompleted) {  // already executed: never again
+    sendAck(sequence, true);
+    return;
+  }
+  if (usbPending || usbInFlight) {
+    sendNakP(sequence, PSTR("BUSY"));
+    return;
+  }
+  if (sequence != usbReceived + 1) {
+    sendNakP(sequence, PSTR("SEQUENCE"));
+    usbReceived = sequence;
+    endExecution(OUTCOME_FAILED, REASON_SEQUENCE, picasso::OK);
+    return;
+  }
+  size_t length = strlen(payload);
+  picasso::Status status = length > picasso::kLinePayload ? picasso::ERR_LINE_TOO_LONG
+                         : picasso::parseLine(payload, static_cast<uint8_t>(length), usbCommand);
+  if (status == picasso::OK) status = checker.accept(usbCommand);
+  usbReceived = sequence;
+  if (status != picasso::OK) {
+    char code[12];
+    picasso::statusCode(status, code, sizeof(code));
+    sendNak(sequence, code);
+    endExecution(OUTCOME_FAILED, REASON_PARSE, status);
+    return;
+  }
+  sendSequence(PSTR("RCV"), sequence);
+  txEnd();
+  if (usbCommand.empty) {
+    usbCompleted = sequence;
+    sendAck(sequence, false);
+  } else {
+    usbPending = true;
+  }
+}
+
+static void handleHome(char** words, uint8_t count) {
+  PGM_P command = PSTR("HOME");
+  if (count != 3) {
+    sendReply(PSTR("ERR"), command, PSTR("ARGS"));
+    return;
+  }
+  if (!deviceIdle()) {
+    sendReply(PSTR("ERR"), command, PSTR("STATE"));
+    return;
+  }
+  if (!geometry.hasRegion) {
+    sendReply(PSTR("ERR"), command, PSTR("NO_REGION"));
+    return;
+  }
+  if (!originValid) {
+    sendReply(PSTR("ERR"), command, PSTR("NO_ORIGIN"));
+    return;
+  }
+  if (!sessionMatches(words[1], words[2], command)) return;
+  programLength = 0;
+  programPenUp();
+  programMove(0, 0, 0);
+  hostJob = true;
+  if (!startProgram(JOB_ORIGIN)) {  // the validated route leaves the workspace
+    hostJob = false;
+    sendReply(PSTR("ERR"), command, PSTR("PATH"));
+    return;
+  }
+  sendReply(PSTR("OK"), command, 0);
+}
+
+static void handleFrame(char* body) {
+  hostSeenAt = millis();
+  if (body[0] == 'M' && body[1] == ' ') {
+    handleMotion(body + 2);
+    return;
+  }
+  char* words[7];
+  uint8_t count = 0;
+  for (char* word = strtok(body, " "); word; word = strtok(0, " ")) {
+    if (count == 7) {
+      sendReply(PSTR("ERR"), PSTR("FRAME"), PSTR("ARGS"));
+      return;
+    }
+    words[count++] = word;
+  }
+  if (!count) return;
+  const char* command = words[0];
+  if (!strcmp_P(command, PSTR("HELLO"))) {
+    if (count == 2 && !strcmp_P(words[1], PSTR("1"))) sendHello();
+    else sendReply(PSTR("ERR"), PSTR("HELLO"), PSTR("VERSION 1"));
+  } else if (!strcmp_P(command, PSTR("STATUS"))) {
+    sendStatus();
+  } else if (!strcmp_P(command, PSTR("BEGIN"))) {
+    handleBegin(words, count);
+  } else if (!strcmp_P(command, PSTR("END"))) {
+    if (count != 2 || !ownUsbJob() || strcmp(words[1], usbToken)) sendReply(PSTR("ERR"), PSTR("END"), PSTR("STATE"));
+    else if (usbPending || usbInFlight || phase != EX_FETCH || pauseRequested || stopRequested) sendReply(PSTR("ERR"), PSTR("END"), PSTR("BUSY"));
+    else {
+      endExecution(OUTCOME_COMPLETED, REASON_NONE, picasso::OK);
+      txBegin(PSTR("OK END"));
+      txWord(usbToken);
+      txEnd();
+    }
+  } else if (!strcmp_P(command, PSTR("PAUSE"))) {
+    if (ownUsbJob() && canPause()) {
+      pauseRequested = true;
+      sendReply(PSTR("OK"), PSTR("PAUSE"), 0);
+    } else sendReply(PSTR("ERR"), PSTR("PAUSE"), PSTR("STATE"));
+  } else if (!strcmp_P(command, PSTR("RESUME"))) {
+    if (ownUsbJob() && phase == EX_PAUSED && !stopRequested) {
+      resumeExecution();
+      sendReply(PSTR("OK"), PSTR("RESUME"), 0);
+    } else sendReply(PSTR("ERR"), PSTR("RESUME"), PSTR("STATE"));
+  } else if (!strcmp_P(command, PSTR("STOP"))) {
+    if (mode == MODE_EXECUTING && phase != EX_ENDING) {
+      requestStop(REASON_HOST_STOP);
+      sendReply(PSTR("OK"), PSTR("STOP"), 0);
+    } else sendReply(PSTR("ERR"), PSTR("STOP"), PSTR("STATE"));
+  } else if (!strcmp_P(command, PSTR("HOME"))) {
+    handleHome(words, count);
+  } else {
+    sendReply(PSTR("ERR"), PSTR("FRAME"), PSTR("UNKNOWN"));
+  }
+}
+
+static void serviceSerial() {
+  for (uint8_t budget = 0; budget < 64 && Serial.available() > 0; ++budget) {
+    int value = Serial.read();
+    if (value < 0) return;
+    picasso::FrameReader::Result result = frames.feed(static_cast<uint8_t>(value));
+    if (result == picasso::FrameReader::FRAME) handleFrame(frames.body());
+    else if (result == picasso::FrameReader::REJECTED) {
+      static const char kFrameErrors[][7] PROGMEM = {"OK", "LONG", "CRC", "FORMAT", "BYTE"};
+      sendReply(PSTR("ERR"), PSTR("FRAME"), kFrameErrors[frames.error()]);
+    }
+  }
+  // Host-loss watchdog: a host-started job never continues without its host.
+  if (mode == MODE_EXECUTING && hostJob && !stopRequested && millis() - hostSeenAt > PICASSO_HOST_TIMEOUT_MS) {
+    requestStop(REASON_HOST_LOST);
+  }
+}
+
 // ------------------------------------------------------------ entry points
 void setup() {
   Serial.begin(PICASSO_BAUD);
@@ -973,7 +1465,13 @@ void setup() {
                      PICASSO_REGION_MAX_Y_MM, PICASSO_REGION_MARGIN_MM, PICASSO_ROPE_MIN_MM, PICASSO_ROPE_MAX_MM);
 #endif
 
-  // Informational boot line, not a control protocol (Phase 6 defines that).
+  // A new boot ID for every reset lets a host detect that position is unknown.
+  EEPROM.get(PICASSO_EEPROM_BOOT_ADDRESS, bootId);
+  ++bootId;
+  EEPROM.put(PICASSO_EEPROM_BOOT_ADDRESS, bootId);
+  frames.reset();
+
+  // Informational log line; protocol frames start with '@' (docs/SERIAL_PROTOCOL.md).
   Serial.print(F("PICASSO FW " PICASSO_FIRMWARE_VERSION " DIALECT " PICASSO_DIALECT " CFG " PICASSO_CONFIG_ID));
   Serial.println(geometry.hasRegion ? F(" REGION SET ORIGIN UNSET") : F(" REGION NONE ORIGIN UNSET"));
 
@@ -983,10 +1481,15 @@ void setup() {
   textP(3, PSTR("Origin: unset"));
   render();
   delay(1500);
+  txBegin(PSTR("BOOT"));
+  txHex(bootId);
+  txWordP(PSTR("1"));
+  txEnd();
   enterMain();
 }
 
 void loop() {
+  serviceSerial();
   serviceBeep();
   Key key = pollKey();
   switch (mode) {

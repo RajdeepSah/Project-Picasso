@@ -1,7 +1,6 @@
 """Canonical firmware host checks: core unit tests, cross-checks against the
 backend and simulated runs of the real sketch. Simulation is not hardware evidence."""
 
-import importlib.util
 import json
 import math
 from pathlib import Path
@@ -20,29 +19,15 @@ from backend.app.models import DrawingBounds, ExecutionPreview, ExecutionSegment
 from backend.app.storage.preparation import validate_physical_path
 from backend.app.storage.repository import Repository
 
+from conftest import firmware_script as script
+
 ROOT = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location("picasso_firmware_script", ROOT / "scripts" / "firmware.py")
-script = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(script)
 
 pytestmark = pytest.mark.skipif(shutil.which("g++") is None and shutil.which("c++") is None, reason="host C++ compiler unavailable")
 
 SET_ORIGIN = ["key down", "key enter", "key enter", "key enter", "until main 3000"]
 START_SD = ["key enter", "until ready 60000", "key enter"]
 SQUARE = "G0 Z5\nG0 X-10.000 Y-10.000 Z5\nG1 X10.000 Y-10.000 Z0\nG1 X10.000 Y10.000 Z0\nG1 X-10.000 Y10.000 Z0\nG1 X-10.000 Y-10.000 Z0\nG0 Z5\n"
-
-
-@pytest.fixture(scope="session")
-def profile():
-    return script.host_test_profile()
-
-
-@pytest.fixture(scope="session")
-def build(tmp_path_factory, profile):
-    out = tmp_path_factory.mktemp("firmware-host")
-    config = out / "machine_config.h"
-    script.write_config(profile, "synthetic host-test", config)
-    return script.host_build(out, config)
 
 
 @pytest.fixture(scope="session")
@@ -170,7 +155,7 @@ def test_firmware_geometry_agrees_with_backend_validation(build, profile):
 def test_reset_has_no_origin_and_jobs_need_a_fresh_confirmation(build, tmp_path, profile):
     boot, ready = simulate(build, tmp_path, ["boot", "report", "key enter", "until ready 60000", "key enter", "wait 300", "report"], card=SQUARE)
     assert boot["origin_valid"] is False and boot["display"][3] == "Origin: unset"
-    assert boot["serial"][0][1] == f"PICASSO FW 0.5.0 DIALECT picasso-fw-v1 CFG {firmware.config_id(profile)} REGION SET ORIGIN UNSET"
+    assert boot["serial"][0][1] == f"PICASSO FW {firmware.FIRMWARE_VERSION} DIALECT picasso-fw-v1 CFG {firmware.config_id(profile)} REGION SET ORIGIN UNSET"
     assert ready["mode"] == "ready" and ready["display"][2] == "Set origin 1st"
     assert ready["display"][1] == f"CRC {firmware.gcode_crc32(SQUARE)}"
     assert ready["steps"] == [0, 0] and ready["motion_started"] is False
@@ -193,7 +178,9 @@ def test_prepared_job_runs_to_completion_with_exact_rope_lengths(build, tmp_path
     downs = [write for write in result["servo_writes"] if write[1] == profile.pen_down_degrees]
     assert len(downs) == draft.preview.strokes
     assert result["min_gap_after_pen_down_ms"] >= 300 and result["min_gap_after_pen_up_ms"] >= 300
-    assert result["beep_edges"] >= 1 and result["serial"][-1][1] == "PICASSO RESULT COMPLETED LINE 0 REASON NONE MOTION YES"
+    lines = [line for _, line in result["serial"]]
+    assert result["beep_edges"] >= 1 and "PICASSO RESULT COMPLETED LINE 0 REASON NONE MOTION YES" in lines
+    assert lines[-1].startswith(f"@EVT COMPLETED SD 0 {end[0]:.3f} {end[1]:.3f} NONE*")  # protocol event for any host
 
 
 @pytest.mark.parametrize("card, reason, line", [

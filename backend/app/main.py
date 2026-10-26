@@ -23,7 +23,10 @@ from .models import (ApiError, AutoSyncRequest, AutoSyncState, CalibrationProfil
                      CapabilitiesResponse, Capability, DrawingDraft, ExportRequest, FirmwareInfo, GenerateRequest, HistoryResponse,
                      ImportRequest, PreparationRequest, PreparedJob, ProfileSelectionRequest, RevisionRequest,
                      HealthResponse, MachineStatus, ProfilesResponse, SessionResponse, StageRequest, StudioStatus,
-                     StorageTarget, TargetSelectionRequest, TargetsResponse, TransferRecord)
+                     StorageTarget, TargetSelectionRequest, TargetsResponse, TransferRecord, ConnectRequest, HomeRequest,
+                     MachineState, PortsResponse, SerialPortInfo, UsbRun, UsbStartRequest)
+from .machine import transport as serial_transport
+from .machine.controller import MachineController
 from .profiles import load_reference_profiles
 from .drawing.errors import DrawingError
 from .drawing.service import DraftService
@@ -45,18 +48,19 @@ def capabilities() -> CapabilitiesResponse:
         gcode_export=Capability(available=True, phase=3, reason="Draft downloads and immutable profile-based preparation are available."),
         sd_export=Capability(available=True, phase=4, reason="Verified managed filesystem export is available. Physical cards require operator-recorded calibration and explicit volume selection; test exports use an isolated directory."),
         firmware=Capability(available=True, phase=5, reason="Canonical firmware source and profile-generated configuration are available. Building, uploading and commissioning are explicit operator steps; no board is contacted."),
-        serial_control=planned(6, "USB control needs hardened firmware and the Phase 6 protocol."),
+        serial_control=Capability(available=True, phase=6, reason="Explicit USB connection to Picasso firmware 0.6+ with acknowledged one-command streaming, pause and stop. Hardware execution remains unverified until commissioning."),
         ai=planned(7, "Optional AI interpretation arrives in Phase 7."),
         voice=planned(8, "Microphone input arrives in Phase 8."),
     )
 
 
-def create_app(*, frontend_dir: Path | None = None, instance_id: str | None = None, data_dir: Path | None = None, mirror_dir: Path | None = None, target_provider=None) -> FastAPI:
+def create_app(*, frontend_dir: Path | None = None, instance_id: str | None = None, data_dir: Path | None = None, mirror_dir: Path | None = None, target_provider=None, machine_transport=None, simulated_device: bool | None = None) -> FastAPI:
     build_dir = frontend_dir if frontend_dir is not None else ROOT / "frontend" / "dist"
     run_id = instance_id or os.environ.get("PICASSO_INSTANCE_ID") or uuid.uuid4().hex
     storage_root = data_dir or Path(os.environ.get('PICASSO_DATA_DIR', ROOT / 'data'))
     mirror_root = mirror_dir or Path(os.environ.get('PICASSO_MIRROR_DIR', ROOT / 'SdCard'))
     write_token = secrets.token_urlsafe(32)
+    simulated = os.environ.get('PICASSO_SIMULATED_DEVICE') == '1' if simulated_device is None else simulated_device
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -67,6 +71,14 @@ def create_app(*, frontend_dir: Path | None = None, instance_id: str | None = No
         app.state.profile_manager = ProfileManager(app.state.repository, app.state.profiles)
         app.state.jobs = JobManager(app.state.repository, app.state.drafts, app.state.profile_manager)
         app.state.storage = ExportManager(app.state.repository, app.state.jobs, mirror_root, target_provider)
+        def open_port(port):
+            if machine_transport is not None:
+                return machine_transport(port)
+            if port == serial_transport.SIMULATED_PORT:
+                from .machine.simulated import simulated_transport
+                return simulated_transport(storage_root / 'simulator')
+            return serial_transport.SerialTransport(port)
+        app.state.machine = MachineController(app.state.repository, app.state.jobs, app.state.profile_manager, open_port, simulated)
         async def watch_cards():
             while True:
                 await asyncio.sleep(2)
@@ -75,6 +87,7 @@ def create_app(*, frontend_dir: Path | None = None, instance_id: str | None = No
         try:
             yield
         finally:
+            await asyncio.to_thread(app.state.machine.shutdown)  # best-effort STOP of an active run
             watcher.cancel()
             with suppress(asyncio.CancelledError):
                 await watcher
@@ -180,10 +193,58 @@ def create_app(*, frontend_dir: Path | None = None, instance_id: str | None = No
 
     @app.get("/api/status", response_model=StudioStatus)
     def get_status():
+        machine = app.state.machine.state()
         return StudioStatus(
-            machine=MachineStatus(reason="Serial control is not implemented. No ports have been inspected."),
+            machine=MachineStatus(state=machine.connection, reason=machine.message, discovery_performed=False,
+                                  position_known=bool(machine.status and machine.status.origin != 'UNSET')),
             storage=app.state.storage.status(),
         )
+
+    def listed_ports():
+        return serial_transport.list_ports(simulated)
+
+    @app.get('/api/machine/ports', response_model=PortsResponse)
+    def machine_ports():
+        try:
+            ports = listed_ports()
+        except Exception as exc:  # enumeration only; nothing is opened
+            return PortsResponse(ports=[], error=f'Port enumeration failed: {exc}')
+        return PortsResponse(ports=[SerialPortInfo(**vars(port)) for port in ports])
+
+    @app.get('/api/machine', response_model=MachineState)
+    def machine_state():
+        return app.state.machine.state()
+
+    @app.post('/api/machine/connect', response_model=MachineState)
+    async def machine_connect(request: ConnectRequest):
+        # Only a currently listed port can be opened; arbitrary paths are refused.
+        if machine_transport is None and request.port not in {port.device for port in listed_ports()}:
+            raise DrawingError('PORT_NOT_LISTED', 'Select a port from the current list, then connect.', 404)
+        return await asyncio.to_thread(app.state.machine.connect, request.port)
+
+    @app.post('/api/machine/disconnect', response_model=MachineState)
+    async def machine_disconnect():
+        return await asyncio.to_thread(app.state.machine.disconnect)
+
+    @app.post('/api/machine/home', response_model=MachineState)
+    async def machine_home(request: HomeRequest):
+        return await asyncio.to_thread(app.state.machine.home, request)
+
+    @app.post('/api/machine/pause', response_model=MachineState)
+    async def machine_pause():
+        return await asyncio.to_thread(app.state.machine.pause)
+
+    @app.post('/api/machine/resume', response_model=MachineState)
+    async def machine_resume():
+        return await asyncio.to_thread(app.state.machine.resume)
+
+    @app.post('/api/machine/stop', response_model=MachineState)
+    async def machine_stop():
+        return await asyncio.to_thread(app.state.machine.stop)
+
+    @app.post('/api/jobs/{job_id}/usb-start', response_model=UsbRun)
+    async def usb_start(job_id: str, request: UsbStartRequest):
+        return await asyncio.to_thread(app.state.machine.start, job_id, request)
 
     async def run_generation(http_request: Request, operation, *args):
         cancel = threading.Event()

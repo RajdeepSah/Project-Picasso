@@ -2,7 +2,7 @@
 
 A local application being developed to turn drawing commands into previewed, machine-compatible paths for an Arduino wall drawing machine.
 
-**Current milestone: Phase 5 software complete. Canonical hardened firmware, profile-generated firmware configuration, host parser/simulation tests and a commissioning guide join the Phase 4 studio (history, import, measured profiles, preparation, verified SD export). The Arduino CLI compile/memory report, real-card readback and physical commissioning remain pending. USB control, AI and voice are later phases.**
+**Current milestone: Phase 6 software complete.** The studio connects explicitly to a USB port and streams a verified job one acknowledged command at a time, with pause, stop and a firmware host-loss watchdog (serial protocol v1, firmware 0.6.0). It builds on the Phase 5 canonical firmware and the Phase 4 history, import, preparation and verified SD export. All of this is tested against simulated devices only. **Still pending:** the Arduino CLI compile/memory report, real-card readback, physical commissioning and the hardware USB checks. AI and voice are Phases 7–8.
 
 ## Install and launch
 
@@ -56,6 +56,7 @@ python3 scripts/setup.py --skip-install
 - Getting-started and studio-information dialogs, keyboard submission, and an application error boundary.
 - Physical preparation stays disabled until the selected measured profile is verified. Microphone input remains planned for Phase 8.
 - **Canonical firmware** in `firmware/WallDrawingMachine/` keeps the original pins, libraries and step sequence. It adds a bounded strict parser, validation of the whole file and workspace before any motion, a deliberate per-job origin, cooperative pause/stop, pen settling both ways, coil holding and distinct completed/aborted/failed results. See [the firmware README](firmware/README.md).
+- **USB control**: list ports without opening them; connect explicitly; verify firmware, configuration ID, boot session, origin and position; then stream a verified physical job one acknowledged command at a time, with pause, resume, stop, live acknowledged progress and a validated *Go to origin*. Runs are recorded locally. Restarts and resets never resume. See the [serial protocol](docs/SERIAL_PROTOCOL.md).
 - Machine measurements that differ from both reference sketches can be verified by generating `machine_config.h` from the profile, uploading it, and entering the configuration ID the machine displays. Prepared jobs show the CRC-32 the firmware displays after checking `main.nc`.
 
 Try **“Draw a beautiful mandala”**, **“Draw a butterfly”**, or **“Draw a circle diameter 100”**. You can also specify `120 mm wide`, `100 x 60 mm`, `12 petals`, `5 turns`, `symmetry 8`, `seed 7`, and `simple`/`standard`/`intricate`, where applicable. Unsupported or ambiguous commands explain the supported grammar. See [offline commands and draft workflow](docs/OFFLINE_DRAWING_COMMANDS.md).
@@ -66,7 +67,7 @@ To try Phase 4 without hardware: generate a drawing → **Test export without ha
 
 History lives under `data/` and survives restarts. Its SQLite database and checksummed artifacts are local to this computer; stop the app before backing up the entire directory. The browser's eight recently viewed entries are shortcuts, not the history retention limit.
 
-![Phase 5 drawing studio](docs/screenshots/phase-5-studio.png)
+![Phase 6 drawing studio](docs/screenshots/phase-6-studio.png)
 
 ## Start here
 
@@ -81,6 +82,7 @@ History lives under `data/` and survives restarts. Its SQLite database and check
 - [Phase 4 report](docs/PHASE_4_REPORT.md): durable storage, import, preparation, transfer tests and remaining hardware checks.
 - [Storage and commissioning guide](docs/STORAGE_AND_COMMISSIONING.md): test exports, profiles, mounted cards, backups and recovery.
 - [Phase 5 report](docs/PHASE_5_REPORT.md): canonical firmware, configuration reconciliation, host tests and pending hardware checks.
+- [Phase 6 report](docs/PHASE_6_REPORT.md) and [serial protocol](docs/SERIAL_PROTOCOL.md): USB streaming, fault handling, simulated-device tests and serial permissions.
 - [Firmware README](firmware/README.md) and [commissioning guide](docs/FIRMWARE_COMMISSIONING.md): build/upload, keypad operation and the physical check sequence.
 - [Third-party notices](docs/THIRD_PARTY_NOTICES.md): bundled font and package provenance.
 
@@ -136,6 +138,8 @@ The running application exposes its full schema at **http://127.0.0.1:8000/docs*
 - `POST /api/drawings/{revision_id}/revisions`: save an immutable adjustment/regeneration.
 - `GET /api/drawings/{revision_id}` and `/export?format=json|svg|gcode`: retrieve exact saved artifacts.
 - `POST /api/profiles`, `PUT /api/profiles/{id}`, `POST /api/profiles/select`: measured calibration with revision checking.
+- `GET /api/machine/ports`, `GET /api/machine`, `POST /api/machine/connect|disconnect|home|pause|resume|stop`: explicit USB session and controls. Only listed ports can be opened.
+- `POST /api/jobs/{id}/usb-start`: bind a verified physical job to the displayed boot session, origin revision and configuration, then stream it.
 - `GET /api/profiles/{id}/firmware-config`: download the generated `machine_config.h` for a measured or reference profile (header `X-Picasso-Firmware-Config-Id`). Nothing is uploaded.
 - `POST /api/jobs/prepare`, `GET /api/jobs/{id}`: freeze/restore a validated job.
 - `GET /api/storage/targets`, `POST /api/storage/select`, `POST /api/storage/test-target`: explicit destination discovery/selection.
@@ -143,7 +147,7 @@ The running application exposes its full schema at **http://127.0.0.1:8000/docs*
 - `POST /api/storage/auto-sync`, `GET /api/storage/transfers`: exact-job automatic export and durable transfer records.
 - `POST /api/artifacts/{id}/repair`: restore a damaged artifact from its checksummed database recovery copy.
 
-All mutations require `X-Picasso-Token`, obtained from `GET /api/session`; it changes on service restart. The browser handles this automatically. API clients must fetch the token and include the header; `/docs` shows the request schemas but does not attach it automatically. Unexpected hosts/origins are rejected. There are no serial-connect or motion endpoints. Generation retains cooperative cancellation, complexity limits and two concurrent workers.
+All mutations require `X-Picasso-Token`, obtained from `GET /api/session`; it changes on service restart. The browser handles this automatically. API clients must fetch the token and include the header; `/docs` shows the request schemas but does not attach it automatically. Unexpected hosts/origins are rejected. Motion happens only through an explicitly started USB run or the explicit, firmware-validated *Go to origin*. Generation retains cooperative cancellation, complexity limits and two concurrent workers.
 
 ## Run the Phase 1 audit
 
@@ -190,6 +194,6 @@ The maintained sketch is `firmware/WallDrawingMachine/WallDrawingMachine.ino`; t
 
 ## Next phases
 
-The implemented stack is React + TypeScript + Vite with Python + FastAPI/Pydantic, standard-library geometry/export, SQLite plus immutable files, and C++11 Arduino firmware with a host test harness. pySerial belongs to Phase 6; no USB protocol is present yet.
+The implemented stack is React + TypeScript + Vite with Python + FastAPI/Pydantic, standard-library geometry/export, SQLite plus immutable files, and C++11 Arduino firmware with a host test harness. USB access uses pySerial 3.5.
 
-Pending hardware acceptance: the Arduino CLI compile and memory report on the actual board, real-card readback (Phase 4) and the [commissioning checks](docs/FIRMWARE_COMMISSIONING.md). Next: Phase 6 from [the roadmap](docs/DEVELOPMENT_PLAN.md), the acknowledged USB protocol on top of this cooperative firmware. AI interpretation and voice remain Phases 7 and 8.
+Pending hardware acceptance: the Arduino CLI compile and memory report on the actual board, real-card readback (Phase 4) and the [commissioning checks](docs/FIRMWARE_COMMISSIONING.md). Pending hardware acceptance also includes the Phase 6 USB checks (commissioning guide §10). Next: Phase 7, optional AI interpretation, then Phase 8 voice and release polish.

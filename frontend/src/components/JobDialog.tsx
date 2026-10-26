@@ -1,7 +1,39 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Check, FileDown, FlaskConical, RefreshCw, ShieldCheck, X } from 'lucide-react';
-import { armAutoSync, createTestTarget, exportJob, fetchJobs, fetchTargets, fetchTransfers, prepareJob, selectTarget, stageJob } from '../api/client';
+import { Check, FileDown, FlaskConical, RefreshCw, ShieldCheck, Usb, X } from 'lucide-react';
+import { armAutoSync, createTestTarget, exportJob, fetchJobs, fetchTargets, fetchTransfers, prepareJob, selectTarget, stageJob, startUsbRun } from '../api/client';
+import { HomeControl } from './MachinePanel';
+import { UsbRunCard, runActive, useMachine } from './UsbRunCard';
 import type { CalibrationProfile, DrawingDraft, ExportRequest, PreparedJob, TargetsResponse, TransferRecord } from '../api/contracts';
+
+function UsbStep({ job, profile }: { job: PreparedJob | null; profile?: CalibrationProfile }) {
+  const [machine, refresh] = useMachine(true);
+  const [clear, setClear] = useState(false); const [busy, setBusy] = useState(false); const [message, setMessage] = useState('');
+  const status = machine?.status; const hello = machine?.hello;
+  const start = job?.expected_start_mm ?? [0, 0];
+  const checks: [string, boolean][] = [
+    ['Connected to Picasso firmware (Machine tab)', machine?.connection === 'connected'],
+    ['Verified profile records canonical firmware with the machine\'s configuration ID', !!hello && profile?.firmware === 'picasso-canonical' && profile.firmware_config_id === hello.config_id],
+    ['Origin set on the machine\'s keypad', !!status && status.origin !== 'UNSET'],
+    [`Machine idle at the job start (${start[0].toFixed(1)}, ${start[1].toFixed(1)})`, !!status && status.state === 'IDLE' && status.position_mm[0] === start[0] && status.position_mm[1] === start[1]],
+  ];
+  const ready = !!job && checks.every(([, ok]) => ok) && clear && !runActive(machine?.run);
+  const begin = async () => {
+    if (!job || !status || !hello) return;
+    setBusy(true); setMessage('');
+    try { await startUsbRun(job.id, { expected_boot_id: status.boot_id, expected_origin_revision: status.origin_revision, expected_config_id: hello.config_id, area_clear_confirmed: true }); setClear(false); await refresh(); }
+    catch (error) { setMessage(error instanceof Error ? error.message : 'The run could not start.'); }
+    finally { setBusy(false); }
+  };
+  return <div className="workflow-step"><h3>4. Or draw over USB</h3>
+    <p>Streams this frozen job one acknowledged command at a time. Nothing moves until you start, and the keypad's ESC always stops the machine.</p>
+    <ul className="usb-checks">{checks.map(([label, ok]) => <li key={label} className={ok ? 'ok' : ''}>{ok ? <Check size={13} /> : <X size={13} />}{label}</li>)}</ul>
+    {machine && <HomeControl machine={machine} refresh={refresh} />}
+    <label className="checkbox-control"><input type="checkbox" checked={clear} onChange={event => setClear(event.target.checked)} />The drawing area is clear and I am watching the machine.</label>
+    <button className="primary-button dialog-done" disabled={!ready || busy} onClick={() => void begin()}><Usb size={16} />{busy ? 'Binding the job…' : 'Start USB drawing'}</button>
+    {message && <p className="form-error" role="alert">{message}</p>}
+    {machine?.run && machine.run.job_id === job?.id && <UsbRunCard run={machine.run} refresh={refresh} />}
+  </div>;
+}
 
 export function JobDialog({ draft, mode, profile, close, updated }: {
   draft: DrawingDraft; mode: 'physical' | 'simulation'; profile?: CalibrationProfile; close: () => void; updated: () => void;
@@ -58,6 +90,7 @@ export function JobDialog({ draft, mode, profile, close, updated }: {
       <label className="checkbox-control auto-sync-control"><input type="checkbox" aria-label="Automatically sync this frozen job" checked={pendingAutoSync ?? targets?.auto_sync.enabled ?? false} disabled={busy || (!targets?.auto_sync.enabled && (!job || !currentTarget || !replace || (mode === 'physical' && (!owns || !origin))))} onChange={event => { const enabled = event.target.checked; setPendingAutoSync(enabled); void run(async () => { try { const state = await armAutoSync(enabled ? { enabled, job_id: job!.id, export: request() } : { enabled }); setMessage(state.message ?? 'Automatic export settings updated.'); await refresh(); } finally { setPendingAutoSync(null); } }); }} />Automatically copy this exact job when this target is accessible (including now).</label>
       {targets?.auto_sync.enabled && <p className="job-ready">Auto-sync: {targets.auto_sync.status}. {targets.auto_sync.message}</p>}
     </div>
+    {mode === 'physical' && <UsbStep job={job} profile={profile} />}
     {message && <p className="export-message" role="status">{message}</p>}{record?.status === 'verified' && <div className="verified-transfer"><Check size={18} /><div><strong>{record.target_kind === 'test_directory' ? 'Test copy verified' : 'File copy verified'}</strong><p>{record.bytes_verified} bytes · SHA-256 {record.gcode_sha256.slice(0, 16)}</p>{record.backup && <p>Previous main.nc preserved in {record.backup}.</p>}</div></div>}
     {logs.length > 0 && <details className="transfer-log"><summary>Recent transfer records</summary>{logs.slice(0, 6).map(log => <p key={log.id}>{log.target_kind} · {log.status} · {log.message}</p>)}</details>}
     <p className="insight-caption">File readback does not guarantee power-loss atomicity or hardware execution. Close file handles and use the operating system's safe eject before moving a physical card.</p>

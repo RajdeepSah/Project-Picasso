@@ -18,6 +18,7 @@ from ..models import HistoryEntry, HistoryResponse
 
 ID = re.compile(r"[a-f0-9]{32}")
 FILES = {"draft.json", "drawing.nc", "preview.svg", "job.json"}
+ACTIVE_RUN_STATES = {"starting", "streaming", "pausing", "paused", "resuming", "stopping"}
 
 
 def now():
@@ -104,6 +105,7 @@ class Repository:
                 CREATE TABLE IF NOT EXISTS profiles(id TEXT PRIMARY KEY, revision TEXT NOT NULL, document TEXT NOT NULL);
                 CREATE TABLE IF NOT EXISTS profile_versions(id TEXT, revision TEXT, document TEXT NOT NULL, PRIMARY KEY(id,revision));
                 CREATE TABLE IF NOT EXISTS transfers(id TEXT PRIMARY KEY, document TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS runs(id TEXT PRIMARY KEY, document TEXT NOT NULL);
                 PRAGMA user_version=1;
             ''')
         self._recover()
@@ -133,6 +135,12 @@ class Repository:
                     document.update(status="interrupted", message="Service restarted during export. Inspect target and retry explicitly.")
                     db.execute("UPDATE transfers SET document=? WHERE id=?", (json.dumps(document), row["id"]))
                     self.recovery_notices.append("An interrupted export requires review.")
+            for row in db.execute("SELECT id,document FROM runs").fetchall():
+                document = json.loads(row["document"])
+                if document["state"] in ACTIVE_RUN_STATES:
+                    document.update(state="interrupted", message="The application stopped during this USB run. The firmware stops host jobs after 3 s without the host; nothing resumes automatically. Re-check the machine before another run.")
+                    db.execute("UPDATE runs SET document=? WHERE id=?", (json.dumps(document), row["id"]))
+                    self.recovery_notices.append("An interrupted USB run requires review.")
         for parent in (self.staging, self.artifacts):
             for item in parent.iterdir():
                 if item.is_symlink():
@@ -254,6 +262,14 @@ class Repository:
     def record_transfer(self, record):
         with self.connection() as db:
             db.execute("INSERT INTO transfers VALUES(?,?) ON CONFLICT(id) DO UPDATE SET document=excluded.document", (record.id, record.model_dump_json()))
+
+    def record_run(self, run):
+        with self.connection() as db:
+            db.execute("INSERT INTO runs VALUES(?,?) ON CONFLICT(id) DO UPDATE SET document=excluded.document", (run.id, run.model_dump_json()))
+
+    def runs(self, limit=10):
+        with self.connection() as db:
+            return [json.loads(row[0]) for row in db.execute("SELECT document FROM runs ORDER BY rowid DESC LIMIT ?", (limit,))]
 
     def transfers(self, limit=30):
         with self.connection() as db:

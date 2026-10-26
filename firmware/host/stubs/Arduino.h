@@ -25,6 +25,8 @@ typedef bool boolean;
 #define PSTR(text) (text)
 #define strncpy_P strncpy
 #define strncat_P strncat
+#define strcmp_P strcmp
+#define pgm_read_byte(address) (*reinterpret_cast<const uint8_t*>(address))
 
 class __FlashStringHelper;
 #define F(text) (reinterpret_cast<const __FlashStringHelper*>(text))
@@ -40,6 +42,9 @@ int analogRead(uint8_t pin);
 class HardwareSerial {
  public:
   void begin(unsigned long baud);
+  int available();
+  int read();
+  size_t write(uint8_t byte);
   void print(const char* text);
   void print(const __FlashStringHelper* text);
   void print(unsigned long value);

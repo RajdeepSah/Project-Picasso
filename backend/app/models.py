@@ -116,18 +116,111 @@ class CapabilitiesResponse(Contract):
 class HealthResponse(Contract):
     application: Literal["project-picasso"] = "project-picasso"
     version: str
-    phase: Literal[5] = 5
+    phase: Literal[6] = 6
     status: Literal["ready"] = "ready"
     instance_id: str
     frontend_ready: bool
     python_version: str
 
 
+MachineConnection = Literal["disconnected", "connecting", "connected", "incompatible", "lost"]
+RunState = Literal["starting", "streaming", "pausing", "paused", "resuming", "stopping",
+                   "completed", "aborted", "failed", "fault", "interrupted"]
+HexBoot = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{8}$")]
+
+
 class MachineStatus(Contract):
-    state: Literal["unavailable"] = "unavailable"
+    state: Literal["unavailable"] | MachineConnection = "unavailable"
     reason: str
-    discovery_performed: Literal[False] = False
-    position_known: Literal[False] = False
+    discovery_performed: bool = False
+    position_known: bool = False
+
+
+class SerialPortInfo(Contract):
+    device: str
+    description: str
+    hwid: str
+    likely_arduino: bool
+    simulated: bool = False
+
+
+class PortsResponse(Contract):
+    ports: list[SerialPortInfo]
+    error: str | None = None
+
+
+class DeviceHello(Contract):
+    protocol: int
+    firmware_version: str
+    dialect: str
+    config_id: str
+    boot_id: str
+    capabilities: list[str]
+
+
+class DeviceStatus(Contract):
+    state: str
+    job: str
+    boot_id: str
+    origin_revision: int
+    origin: str
+    position_mm: Point2
+    position_source: Literal["commanded"] = "commanded"  # step-count estimate, never measured
+    pen_down: bool
+    received_seq: int
+    completed_seq: int
+    result: str
+    reason: str
+    observed_at: str
+
+
+class UsbRun(Contract):
+    id: str
+    job_id: str
+    title: str
+    port: str
+    boot_id: str
+    origin_revision: int
+    token: str
+    total_commands: int
+    sent_seq: int = 0
+    acknowledged_seq: int = 0
+    state: RunState
+    message: str
+    position_mm: Point2 | None = None
+    current_line: str | None = None
+    started_at: str
+    updated_at: str
+    measured_feedback: Literal[False] = False
+
+
+class MachineState(Contract):
+    connection: MachineConnection
+    port: str | None = None
+    simulated: bool = False
+    message: str
+    hello: DeviceHello | None = None
+    status: DeviceStatus | None = None
+    status_age_s: Finite | None = None
+    run: UsbRun | None = None
+    recent_runs: list[UsbRun] = Field(default_factory=list)
+
+
+class ConnectRequest(Contract):
+    port: str = Field(min_length=1, max_length=200)
+
+
+class UsbStartRequest(Contract):
+    expected_boot_id: HexBoot
+    expected_origin_revision: int = Field(ge=0, le=65535)
+    expected_config_id: Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{16}$")]
+    area_clear_confirmed: bool = False
+
+
+class HomeRequest(Contract):
+    expected_boot_id: HexBoot
+    expected_origin_revision: int = Field(ge=0, le=65535)
+    route_confirmed: bool = False
 
 
 class StorageStatus(Contract):
@@ -433,7 +526,8 @@ ALL_CONTRACTS = (DrawingSpec | PolylineDrawing | ProfilesResponse | Capabilities
                  | HealthResponse | StudioStatus | ApiError | GenerateRequest | DrawingDraft | RevisionRequest
                  | ImportRequest | HistoryResponse | CalibrationSaveRequest | CalibrationProfile
                  | PreparationRequest | PreparedJob | TargetsResponse | TargetSelectionRequest
-                 | ExportRequest | StageRequest | TransferRecord | AutoSyncRequest | AutoSyncState | SessionResponse | ProfileSelectionRequest)
+                 | ExportRequest | StageRequest | TransferRecord | AutoSyncRequest | AutoSyncState | SessionResponse | ProfileSelectionRequest
+                 | PortsResponse | MachineState | ConnectRequest | UsbStartRequest | HomeRequest)
 
 ProfilesResponse.model_rebuild()
 DrawingDraft.model_rebuild()

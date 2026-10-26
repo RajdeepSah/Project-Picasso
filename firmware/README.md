@@ -2,7 +2,7 @@
 
 `firmware/WallDrawingMachine/` is the single maintained sketch for the wall drawing machine. It replaces neither reference copy: `Drawbot_C/02 arduino code/Walldraw/Walldraw.ino` (350 mm) and `SdCard/02 arduino code/Walldraw/Walldraw.ino` (400 mm) stay byte-for-byte unchanged, and the root `WallDrawingMachine.ino` remains the original **empty placeholder**. Open this folder, not the repository root, when you build or upload.
 
-Version **0.5.0**, SD dialect `picasso-fw-v1`. Nothing in the studio or the scripts uploads firmware, opens a serial port or moves the machine. Uploading is an explicit maintenance step, described under **Build and upload** below.
+Version **0.6.0**, SD dialect `picasso-fw-v1`, serial protocol **1** ([docs/SERIAL_PROTOCOL.md](../docs/SERIAL_PROTOCOL.md)). Nothing in the studio or the scripts uploads firmware. The studio opens a serial port only when the operator connects explicitly, and moves the machine only through an explicitly started, acknowledged USB run. Uploading is an explicit maintenance step, described under **Build and upload** below.
 
 ## What stays the same
 
@@ -112,7 +112,13 @@ DOWN moves to the next item, ENTER selects and ESC goes back.
   - *Release motors*: de-energizes the coils and invalidates the origin.
 - **Info**: firmware version, configuration ID and whether a workspace is compiled in.
 
-Serial output at 115200 baud is an informational log (`PICASSO ...` lines). It is **not** a control protocol and the firmware ignores serial input. Phase 6 defines the USB protocol.
+Serial output at 115200 baud mixes informational log lines (`PICASSO ...`) with protocol frames (`@...*CRC`). Protocol v1 lets a host stream a job one acknowledged command at a time after the same validation as SD jobs. The details:
+
+- **Origin.** A host can never set the origin.
+- **Starting.** BEGIN requires an idle device, a referenced origin, the current boot ID (an EEPROM counter, new on every reset) and origin revision, and the exact commanded start position.
+- **Duplicates.** Repeated sequence numbers are never executed twice.
+- **Stopping.** ESC on the keypad always stops. A host job stops by itself (`HOST_LOST`) after 3 s without any frame from the host.
+- **Exclusivity.** SD and USB jobs cannot overlap, because BEGIN is refused unless the menus are idle.
 
 ## Host tests
 
@@ -125,6 +131,6 @@ python3 scripts/firmware.py host-test     # core unit tests + simulator smoke ru
 
 - `core_tests`: reader, parser, geometry, legacy step-sequence equivalence and CRC.
 - `picasso_tool`: parser and geometry cross-checks against the backend.
-- `simulator`: the **real sketch** linked with the unmodified TinyStepper library, against simulated time, pins, keypad, servo, SD card and a 400 kHz I²C display model.
+- `simulator`: the **real sketch** linked with the unmodified TinyStepper library, against simulated time, pins, keypad, servo, SD card, EEPROM, serial port and a 400 kHz I²C display model. `bridge <speed>` mode turns stdin and stdout into the serial port in scaled real time, so the Python host controller can drive the sketch; the studio exposes it as a labelled *Simulated Picasso firmware* port when `PICASSO_SIMULATED_DEVICE=1`.
 
 Simulator results are logic evidence only. They are not motor, servo, SD or timing measurements on the machine.

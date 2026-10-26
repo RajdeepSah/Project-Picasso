@@ -346,7 +346,64 @@ static void testCrc() {
   CHECK(std::strcmp(code, "OK") == 0);
 }
 
+static std::string frame(const std::string& body) {
+  uint16_t crc = kCrc16Initial;
+  for (char ch : body) crc = crc16Update(crc, static_cast<uint8_t>(ch));
+  char hex[5];
+  std::snprintf(hex, sizeof(hex), "%04X", crc);
+  return "@" + body + "*" + hex + "\n";
+}
+
+struct Framed {
+  std::vector<std::string> bodies;
+  std::vector<FrameError> errors;
+};
+
+static Framed feedFrames(const std::string& bytes) {
+  FrameReader reader;
+  reader.reset();
+  Framed result;
+  for (unsigned char byte : bytes) {
+    FrameReader::Result step = reader.feed(byte);
+    if (step == FrameReader::FRAME) result.bodies.push_back(reader.body());
+    if (step == FrameReader::REJECTED) result.errors.push_back(reader.error());
+  }
+  return result;
+}
+
+static void testFraming() {
+  uint16_t crc = kCrc16Initial;
+  for (const char* p = "123456789"; *p; ++p) crc = crc16Update(crc, static_cast<uint8_t>(*p));
+  CHECK(crc == 0x29B1);  // CRC-16/CCITT-FALSE check value
+  Framed good = feedFrames(frame("STATUS") + "PICASSO log line\n" + frame("M 1 G0 X1.000 Y2.000 Z5"));
+  CHECK(good.errors.empty() && good.bodies.size() == 2 && good.bodies[1] == "M 1 G0 X1.000 Y2.000 Z5");
+  std::string crlf = frame("HELLO 1");
+  crlf.insert(crlf.size() - 1, "\r");
+  CHECK(feedFrames(crlf).bodies.size() == 1);
+  std::string corrupt = frame("M 2 G1 X1.000 Y2.000 Z0");
+  corrupt[6] = '9';
+  Framed bad = feedFrames(corrupt);
+  CHECK(bad.bodies.empty() && bad.errors.size() == 1 && bad.errors[0] == FRAME_CRC);
+  CHECK(feedFrames("@STATUS*12G4\n").errors[0] == FRAME_FORMAT);
+  CHECK(feedFrames("@STATUS\n").errors[0] == FRAME_FORMAT);
+  CHECK(feedFrames(frame("A*B")).errors[0] == FRAME_FORMAT);
+  CHECK(feedFrames(frame(std::string(90, 'X'))).bodies.size() == 1);
+  CHECK(feedFrames(frame(std::string(91, 'X'))).errors[0] == FRAME_LONG);
+  CHECK(feedFrames("@" + std::string(200, 'X') + "\n").errors[0] == FRAME_LONG);
+  CHECK(feedFrames("@STA\x01TUS*0000\n").errors[0] == FRAME_BYTE);
+  // A new '@' resynchronises after garbage or a truncated frame.
+  Framed resync = feedFrames("@M 3 G0 X1" + frame("STOP"));
+  CHECK(resync.bodies.size() == 1 && resync.bodies[0] == "STOP" && resync.errors.empty());
+  uint32_t value = 0;
+  CHECK(parseUnsigned("4294967295", value) && value == 4294967295UL);
+  CHECK(!parseUnsigned("4294967296", value) && !parseUnsigned("", value) && !parseUnsigned("12a", value) && !parseUnsigned("-1", value));
+  float number = 0;
+  CHECK(parseDecimal("-12.345", number) && number == -12.345f);
+  CHECK(!parseDecimal("1.2.3", number) && !parseDecimal("1e3", number) && !parseDecimal("", number) && !parseDecimal("12 ", number));
+}
+
 int main() {
+  testFraming();
   testReader();
   testParser();
   testGeometry();

@@ -77,7 +77,7 @@ def test_canonical_firmware_reconciles_measurements_that_differ_from_both_refere
 
 def test_api_lists_ids_downloads_headers_and_prepares_crc(tmp_path):
     with connect(create_app(frontend_dir=tmp_path)) as client:
-        assert client.get("/api/health").json()["phase"] == 5
+        assert client.get("/api/health").json()["phase"] == 6
         assert client.get("/api/capabilities").json()["firmware"]["available"] is True
         saved = client.post("/api/profiles", json={"calibration": canonical().model_dump(), "select_for_preparation": True}).json()
         profiles = client.get("/api/profiles").json()

@@ -609,6 +609,167 @@
       "title": "Capability",
       "type": "object"
     },
+    "ConnectRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "port": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Port",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "port"
+      ],
+      "title": "ConnectRequest",
+      "type": "object"
+    },
+    "DeviceHello": {
+      "additionalProperties": false,
+      "properties": {
+        "boot_id": {
+          "title": "Boot Id",
+          "type": "string"
+        },
+        "capabilities": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Capabilities",
+          "type": "array"
+        },
+        "config_id": {
+          "title": "Config Id",
+          "type": "string"
+        },
+        "dialect": {
+          "title": "Dialect",
+          "type": "string"
+        },
+        "firmware_version": {
+          "title": "Firmware Version",
+          "type": "string"
+        },
+        "protocol": {
+          "title": "Protocol",
+          "type": "integer"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "protocol",
+        "firmware_version",
+        "dialect",
+        "config_id",
+        "boot_id",
+        "capabilities"
+      ],
+      "title": "DeviceHello",
+      "type": "object"
+    },
+    "DeviceStatus": {
+      "additionalProperties": false,
+      "properties": {
+        "boot_id": {
+          "title": "Boot Id",
+          "type": "string"
+        },
+        "completed_seq": {
+          "title": "Completed Seq",
+          "type": "integer"
+        },
+        "job": {
+          "title": "Job",
+          "type": "string"
+        },
+        "observed_at": {
+          "title": "Observed At",
+          "type": "string"
+        },
+        "origin": {
+          "title": "Origin",
+          "type": "string"
+        },
+        "origin_revision": {
+          "title": "Origin Revision",
+          "type": "integer"
+        },
+        "pen_down": {
+          "title": "Pen Down",
+          "type": "boolean"
+        },
+        "position_mm": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Position Mm",
+          "type": "array"
+        },
+        "position_source": {
+          "const": "commanded",
+          "default": "commanded",
+          "title": "Position Source",
+          "type": "string"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "received_seq": {
+          "title": "Received Seq",
+          "type": "integer"
+        },
+        "result": {
+          "title": "Result",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "state": {
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "state",
+        "job",
+        "boot_id",
+        "origin_revision",
+        "origin",
+        "position_mm",
+        "pen_down",
+        "received_seq",
+        "completed_seq",
+        "result",
+        "reason",
+        "observed_at"
+      ],
+      "title": "DeviceStatus",
+      "type": "object"
+    },
     "Dimensions": {
       "additionalProperties": false,
       "properties": {
@@ -1238,8 +1399,8 @@
           "type": "string"
         },
         "phase": {
-          "const": 5,
-          "default": 5,
+          "const": 6,
+          "default": 6,
           "title": "Phase",
           "type": "integer"
         },
@@ -1387,6 +1548,39 @@
         "limit"
       ],
       "title": "HistoryResponse",
+      "type": "object"
+    },
+    "HomeRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "expected_boot_id": {
+          "pattern": "^[0-9a-f]{8}$",
+          "title": "Expected Boot Id",
+          "type": "string"
+        },
+        "expected_origin_revision": {
+          "maximum": 65535,
+          "minimum": 0,
+          "title": "Expected Origin Revision",
+          "type": "integer"
+        },
+        "route_confirmed": {
+          "default": false,
+          "title": "Route Confirmed",
+          "type": "boolean"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "expected_boot_id",
+        "expected_origin_revision"
+      ],
+      "title": "HomeRequest",
       "type": "object"
     },
     "ImportRequest": {
@@ -1617,17 +1811,116 @@
       "title": "MachineProfile",
       "type": "object"
     },
+    "MachineState": {
+      "additionalProperties": false,
+      "properties": {
+        "connection": {
+          "enum": [
+            "disconnected",
+            "connecting",
+            "connected",
+            "incompatible",
+            "lost"
+          ],
+          "title": "Connection",
+          "type": "string"
+        },
+        "hello": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DeviceHello"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "port": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Port"
+        },
+        "recent_runs": {
+          "items": {
+            "$ref": "#/$defs/UsbRun"
+          },
+          "title": "Recent Runs",
+          "type": "array"
+        },
+        "run": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/UsbRun"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "simulated": {
+          "default": false,
+          "title": "Simulated",
+          "type": "boolean"
+        },
+        "status": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DeviceStatus"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "status_age_s": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Status Age S"
+        }
+      },
+      "required": [
+        "connection",
+        "message"
+      ],
+      "title": "MachineState",
+      "type": "object"
+    },
     "MachineStatus": {
       "additionalProperties": false,
       "properties": {
         "discovery_performed": {
-          "const": false,
           "default": false,
           "title": "Discovery Performed",
           "type": "boolean"
         },
         "position_known": {
-          "const": false,
           "default": false,
           "title": "Position Known",
           "type": "boolean"
@@ -1643,10 +1936,24 @@
           "type": "integer"
         },
         "state": {
-          "const": "unavailable",
+          "anyOf": [
+            {
+              "const": "unavailable",
+              "type": "string"
+            },
+            {
+              "enum": [
+                "disconnected",
+                "connecting",
+                "connected",
+                "incompatible",
+                "lost"
+              ],
+              "type": "string"
+            }
+          ],
           "default": "unavailable",
-          "title": "State",
-          "type": "string"
+          "title": "State"
         }
       },
       "required": [
@@ -1694,6 +2001,41 @@
         "strokes"
       ],
       "title": "PolylineDrawing",
+      "type": "object"
+    },
+    "PortsResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error"
+        },
+        "ports": {
+          "items": {
+            "$ref": "#/$defs/SerialPortInfo"
+          },
+          "title": "Ports",
+          "type": "array"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "ports"
+      ],
+      "title": "PortsResponse",
       "type": "object"
     },
     "PreparationRequest": {
@@ -2000,6 +2342,46 @@
         }
       },
       "title": "RevisionRequest",
+      "type": "object"
+    },
+    "SerialPortInfo": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "device": {
+          "title": "Device",
+          "type": "string"
+        },
+        "hwid": {
+          "title": "Hwid",
+          "type": "string"
+        },
+        "likely_arduino": {
+          "title": "Likely Arduino",
+          "type": "boolean"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "simulated": {
+          "default": false,
+          "title": "Simulated",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "device",
+        "description",
+        "hwid",
+        "likely_arduino"
+      ],
+      "title": "SerialPortInfo",
       "type": "object"
     },
     "SessionResponse": {
@@ -2432,6 +2814,183 @@
       "title": "TransferRecord",
       "type": "object"
     },
+    "UsbRun": {
+      "additionalProperties": false,
+      "properties": {
+        "acknowledged_seq": {
+          "default": 0,
+          "title": "Acknowledged Seq",
+          "type": "integer"
+        },
+        "boot_id": {
+          "title": "Boot Id",
+          "type": "string"
+        },
+        "current_line": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Current Line"
+        },
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "job_id": {
+          "title": "Job Id",
+          "type": "string"
+        },
+        "measured_feedback": {
+          "const": false,
+          "default": false,
+          "title": "Measured Feedback",
+          "type": "boolean"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "origin_revision": {
+          "title": "Origin Revision",
+          "type": "integer"
+        },
+        "port": {
+          "title": "Port",
+          "type": "string"
+        },
+        "position_mm": {
+          "anyOf": [
+            {
+              "maxItems": 2,
+              "minItems": 2,
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Position Mm"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "sent_seq": {
+          "default": 0,
+          "title": "Sent Seq",
+          "type": "integer"
+        },
+        "started_at": {
+          "title": "Started At",
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "starting",
+            "streaming",
+            "pausing",
+            "paused",
+            "resuming",
+            "stopping",
+            "completed",
+            "aborted",
+            "failed",
+            "fault",
+            "interrupted"
+          ],
+          "title": "State",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "token": {
+          "title": "Token",
+          "type": "string"
+        },
+        "total_commands": {
+          "title": "Total Commands",
+          "type": "integer"
+        },
+        "updated_at": {
+          "title": "Updated At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "job_id",
+        "title",
+        "port",
+        "boot_id",
+        "origin_revision",
+        "token",
+        "total_commands",
+        "state",
+        "message",
+        "started_at",
+        "updated_at"
+      ],
+      "title": "UsbRun",
+      "type": "object"
+    },
+    "UsbStartRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "area_clear_confirmed": {
+          "default": false,
+          "title": "Area Clear Confirmed",
+          "type": "boolean"
+        },
+        "expected_boot_id": {
+          "pattern": "^[0-9a-f]{8}$",
+          "title": "Expected Boot Id",
+          "type": "string"
+        },
+        "expected_config_id": {
+          "pattern": "^[0-9a-f]{16}$",
+          "title": "Expected Config Id",
+          "type": "string"
+        },
+        "expected_origin_revision": {
+          "maximum": 65535,
+          "minimum": 0,
+          "title": "Expected Origin Revision",
+          "type": "integer"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "expected_boot_id",
+        "expected_origin_revision",
+        "expected_config_id"
+      ],
+      "title": "UsbStartRequest",
+      "type": "object"
+    },
     "WorkRegion": {
       "additionalProperties": false,
       "properties": {
@@ -2558,6 +3117,21 @@
     },
     {
       "$ref": "#/$defs/ProfileSelectionRequest"
+    },
+    {
+      "$ref": "#/$defs/PortsResponse"
+    },
+    {
+      "$ref": "#/$defs/MachineState"
+    },
+    {
+      "$ref": "#/$defs/ConnectRequest"
+    },
+    {
+      "$ref": "#/$defs/UsbStartRequest"
+    },
+    {
+      "$ref": "#/$defs/HomeRequest"
     }
   ],
   "title": "PicassoContracts"

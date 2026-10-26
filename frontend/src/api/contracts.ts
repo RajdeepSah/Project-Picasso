@@ -25,7 +25,12 @@ export type PicassoContracts =
   | AutoSyncRequest
   | AutoSyncState
   | SessionResponse
-  | ProfileSelectionRequest;
+  | ProfileSelectionRequest
+  | PortsResponse
+  | MachineState
+  | ConnectRequest
+  | UsbStartRequest
+  | HomeRequest;
 export type Detail = "sparse" | "standard" | "dense";
 export type HeightMm = number;
 export type SchemaVersion = 1;
@@ -118,17 +123,17 @@ export type SchemaVersion11 = 1;
 export type Application = "project-picasso";
 export type FrontendReady = boolean;
 export type InstanceId = string;
-export type Phase1 = 5;
+export type Phase1 = 6;
 export type PythonVersion = string;
 export type SchemaVersion12 = 1;
 export type Status = "ready";
 export type Version2 = string;
 export type CredentialsRequired = false;
-export type DiscoveryPerformed = false;
-export type PositionKnown = false;
+export type DiscoveryPerformed = boolean;
+export type PositionKnown = boolean;
 export type Reason2 = string;
 export type SchemaVersion13 = 1;
-export type State = "unavailable";
+export type State = "unavailable" | ("disconnected" | "connecting" | "connected" | "incompatible" | "lost");
 export type SchemaVersion14 = 1;
 export type DiscoveryPerformed1 = boolean;
 export type LocalMirror = "SdCard";
@@ -331,6 +336,87 @@ export type WriteToken = string;
 export type ExpectedRevision1 = string;
 export type ProfileId1 = string;
 export type SchemaVersion41 = 1;
+export type Error = string | null;
+export type Description = string;
+export type Device = string;
+export type Hwid = string;
+export type LikelyArduino = boolean;
+export type SchemaVersion42 = 1;
+export type Simulated = boolean;
+export type Ports = SerialPortInfo[];
+export type SchemaVersion43 = 1;
+export type Connection = "disconnected" | "connecting" | "connected" | "incompatible" | "lost";
+export type BootId = string;
+export type Capabilities = string[];
+export type ConfigId = string;
+export type Dialect4 = string;
+export type FirmwareVersion = string;
+export type Protocol = number;
+export type SchemaVersion44 = 1;
+export type Message3 = string;
+export type Port = string | null;
+export type AcknowledgedSeq = number;
+export type BootId1 = string;
+export type CurrentLine = string | null;
+export type Id5 = string;
+export type JobId3 = string;
+export type MeasuredFeedback = false;
+export type Message4 = string;
+export type OriginRevision = number;
+export type Port1 = string;
+export type PositionMm = [number, number] | null;
+export type SchemaVersion45 = 1;
+export type SentSeq = number;
+export type StartedAt = string;
+export type State3 =
+  | "starting"
+  | "streaming"
+  | "pausing"
+  | "paused"
+  | "resuming"
+  | "stopping"
+  | "completed"
+  | "aborted"
+  | "failed"
+  | "fault"
+  | "interrupted";
+export type Title3 = string;
+export type Token = string;
+export type TotalCommands = number;
+export type UpdatedAt = string;
+export type RecentRuns = UsbRun[];
+export type SchemaVersion46 = 1;
+export type Simulated1 = boolean;
+export type BootId2 = string;
+export type CompletedSeq = number;
+export type Job = string;
+export type ObservedAt = string;
+export type Origin = string;
+export type OriginRevision1 = number;
+export type PenDown1 = boolean;
+/**
+ * @minItems 2
+ * @maxItems 2
+ */
+export type PositionMm1 = [number, number];
+export type PositionSource = "commanded";
+export type Reason5 = string;
+export type ReceivedSeq = number;
+export type Result = string;
+export type SchemaVersion47 = 1;
+export type State4 = string;
+export type StatusAgeS = number | null;
+export type Port2 = string;
+export type SchemaVersion48 = 1;
+export type AreaClearConfirmed = boolean;
+export type ExpectedBootId = string;
+export type ExpectedConfigId = string;
+export type ExpectedOriginRevision = number;
+export type SchemaVersion49 = 1;
+export type ExpectedBootId1 = string;
+export type ExpectedOriginRevision1 = number;
+export type RouteConfirmed = boolean;
+export type SchemaVersion50 = 1;
 
 export interface DrawingSpec {
   detail?: Detail;
@@ -731,4 +817,91 @@ export interface ProfileSelectionRequest {
   expected_revision: ExpectedRevision1;
   profile_id: ProfileId1;
   schema_version?: SchemaVersion41;
+}
+export interface PortsResponse {
+  error?: Error;
+  ports: Ports;
+  schema_version?: SchemaVersion43;
+}
+export interface SerialPortInfo {
+  description: Description;
+  device: Device;
+  hwid: Hwid;
+  likely_arduino: LikelyArduino;
+  schema_version?: SchemaVersion42;
+  simulated?: Simulated;
+}
+export interface MachineState {
+  connection: Connection;
+  hello?: DeviceHello | null;
+  message: Message3;
+  port?: Port;
+  recent_runs?: RecentRuns;
+  run?: UsbRun | null;
+  schema_version?: SchemaVersion46;
+  simulated?: Simulated1;
+  status?: DeviceStatus | null;
+  status_age_s?: StatusAgeS;
+}
+export interface DeviceHello {
+  boot_id: BootId;
+  capabilities: Capabilities;
+  config_id: ConfigId;
+  dialect: Dialect4;
+  firmware_version: FirmwareVersion;
+  protocol: Protocol;
+  schema_version?: SchemaVersion44;
+}
+export interface UsbRun {
+  acknowledged_seq?: AcknowledgedSeq;
+  boot_id: BootId1;
+  current_line?: CurrentLine;
+  id: Id5;
+  job_id: JobId3;
+  measured_feedback?: MeasuredFeedback;
+  message: Message4;
+  origin_revision: OriginRevision;
+  port: Port1;
+  position_mm?: PositionMm;
+  schema_version?: SchemaVersion45;
+  sent_seq?: SentSeq;
+  started_at: StartedAt;
+  state: State3;
+  title: Title3;
+  token: Token;
+  total_commands: TotalCommands;
+  updated_at: UpdatedAt;
+}
+export interface DeviceStatus {
+  boot_id: BootId2;
+  completed_seq: CompletedSeq;
+  job: Job;
+  observed_at: ObservedAt;
+  origin: Origin;
+  origin_revision: OriginRevision1;
+  pen_down: PenDown1;
+  position_mm: PositionMm1;
+  position_source?: PositionSource;
+  reason: Reason5;
+  received_seq: ReceivedSeq;
+  result: Result;
+  schema_version?: SchemaVersion47;
+  state: State4;
+}
+export interface ConnectRequest {
+  port: Port2;
+  schema_version?: SchemaVersion48;
+}
+export interface UsbStartRequest {
+  area_clear_confirmed?: AreaClearConfirmed;
+  expected_boot_id: ExpectedBootId;
+  expected_config_id: ExpectedConfigId;
+  expected_origin_revision: ExpectedOriginRevision;
+  schema_version?: SchemaVersion49;
+}
+export interface HomeRequest {
+  expected_boot_id: ExpectedBootId1;
+  expected_origin_revision: ExpectedOriginRevision1;
+  route_confirmed?: RouteConfirmed;
+  schema_version?: SchemaVersion50;
 }

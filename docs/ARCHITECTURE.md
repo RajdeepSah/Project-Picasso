@@ -1,6 +1,6 @@
 # Project Picasso architecture
 
-Status: accepted architecture based on the Phase 1 source audit of 2026-10-24. Phases 2–4 implement the local studio, offline engine, durable history/import, operator-recorded profiles, immutable preparation and verified managed SD export. Phase 5 adds the canonical cooperative firmware (`firmware/WallDrawingMachine/`), profile-generated `machine_config.h` with a configuration ID that reconciles verified profiles with flashed values, and host parser/simulation tests. Real-card and machine commissioning remain pending. Serial control, AI and voice are future work. See [PHASE_5_REPORT.md](PHASE_5_REPORT.md).
+Status: accepted architecture based on the Phase 1 source audit of 2026-10-24. Phases 2–4 implement the local studio, offline engine, durable history/import, operator-recorded profiles, immutable preparation and verified managed SD export. Phase 5 adds the canonical cooperative firmware (`firmware/WallDrawingMachine/`), profile-generated `machine_config.h` with a configuration ID that reconciles verified profiles with flashed values, and host parser/simulation tests. Phase 6 adds serial protocol v1 ([SERIAL_PROTOCOL.md](SERIAL_PROTOCOL.md)): firmware 0.6.0 answers framed, CRC-checked requests and the host controller (`backend/app/machine/`) streams one acknowledged command at a time, with priority stop/pause and a firmware host-loss watchdog. Real-card, machine commissioning and hardware USB checks remain pending. AI and voice are future work. See [PHASE_6_REPORT.md](PHASE_6_REPORT.md).
 
 ## Product behavior
 

@@ -77,7 +77,7 @@ test('offline circle to resized mandala, regeneration, exact draft downloads and
   await page.getByRole('spinbutton', { name: 'Drawing width in millimetres' }).evaluate(element => element.closest('.inspector-body')?.scrollTo(0, 0));
   await page.evaluate(async () => { await document.fonts.ready; window.scrollTo(0, 0); });
   await mkdir('../docs/screenshots', { recursive: true });
-  await page.screenshot({ path: '../docs/screenshots/phase-5-studio.png', fullPage: true });
+  await page.screenshot({ path: '../docs/screenshots/phase-6-studio.png', fullPage: true });
   expect(errors).toEqual([]);
 });
 
@@ -100,7 +100,7 @@ test('mobile drawing and adjustments have no horizontal overflow', async ({ page
   await expect(page.getByTestId('actual-bounds')).toHaveText('100.00 × 100.00 mm');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
   await page.evaluate(async () => { await document.fonts.ready; window.scrollTo(0, 0); });
-  await page.screenshot({ path: '../docs/screenshots/phase-5-mobile.png', fullPage: true });
+  await page.screenshot({ path: '../docs/screenshots/phase-6-mobile.png', fullPage: true });
 });
 
 test('offline API is visible and reconnect preserves the command', async ({ page }) => {
@@ -159,7 +159,7 @@ test('prepared simulation exports only to an isolated directory with verified by
   expect(target.kind).toBe('test_directory');
   const bytes = await readFile(`${target.path}/main.nc`);
   expect(createHash('sha256').update(bytes).digest('hex')).toBe(draft.gcode_sha256);
-  await page.screenshot({ path: '../docs/screenshots/phase-5-test-export.png', fullPage: true });
+  await page.screenshot({ path: '../docs/screenshots/phase-6-test-export.png', fullPage: true });
   await dialog.getByRole('checkbox', { name: 'Back up and replace the reviewed main.nc with this frozen job.' }).check();
   await dialog.getByRole('checkbox', { name: 'Automatically sync this frozen job', exact: true }).check();
   await expect.poll(async () => (await (await page.request.get('/api/storage/targets')).json()).auto_sync.status, { timeout: 10000 }).toBe('verified');
@@ -235,7 +235,7 @@ test('measurements differing from both references verify only through the canoni
   await expect(dialog.getByRole('alert')).toContainText('configuration ID does not match');
   await dialog.getByRole('textbox', { name: 'Configuration ID shown on the machine' }).fill(identity);
   await page.evaluate(async () => { await document.fonts.ready; });
-  await page.screenshot({ path: '../docs/screenshots/phase-5-firmware-profile.png', fullPage: true });
+  await page.screenshot({ path: '../docs/screenshots/phase-6-firmware-profile.png', fullPage: true });
   await dialog.getByRole('button', { name: 'Save & select verified profile' }).click();
   await expect(dialog).not.toBeVisible();
 
@@ -244,4 +244,58 @@ test('measurements differing from both references verify only through the canoni
   const job = page.getByRole('dialog', { name: 'Prepare for the SD workflow' });
   await job.getByRole('button', { name: 'Prepare physical job' }).click();
   await expect(job.getByText(/Machine check: canonical firmware shows/)).toContainText(/CRC [0-9a-f]{8}/);
+});
+
+test('a verified job streams over USB to the simulated firmware with acknowledged progress', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByText('Running locally')).toBeVisible();
+  const token = (await (await page.request.get('/api/session')).json()).write_token;
+  const headers = { 'X-Picasso-Token': token };
+  // Same values as the synthetic configuration compiled into the simulator.
+  const calibration = { label: 'Simulated firmware fixture', base_reference_id: 'reference-350', board: 'Host simulator, not hardware',
+    separation_mm: 350, anchor_y_mm: 250, spool_diameter_mm: 35, steps_per_turn: 2048, pen_up_degrees: 85, pen_down_degrees: 70,
+    allowed_region: { min_x_mm: -150, max_x_mm: 150, min_y_mm: -100, max_y_mm: 150, margin_mm: 5 }, rope_min_mm: 100, rope_max_mm: 600,
+    measured_by: 'Browser test', measurement_notes: 'Synthetic simulator values; no physical evidence.', origin_procedure: 'Simulator keypad script confirms the origin.',
+    firmware: 'picasso-canonical' };
+  const saved = await (await page.request.post('/api/profiles', { data: { calibration, select_for_preparation: true }, headers })).json();
+  const identity = (await (await page.request.get('/api/profiles')).json()).firmware.config_ids[saved.id];
+  const verified = await page.request.put(`/api/profiles/${saved.id}`, { headers, data: { expected_revision: saved.revision, select_for_preparation: true,
+    calibration: { ...calibration, firmware_config_id: identity, verified: true, firmware_matches_measurements: true, pen_lift_and_holding_tested: true, workspace_tested: true } } });
+  expect(verified.ok()).toBe(true);
+  await page.reload();
+  await expect(page.getByText('Running locally')).toBeVisible();
+  await command(page, 'Draw a circle diameter 40');
+
+  await page.getByRole('button', { name: 'Machine', exact: true }).click();
+  await page.getByRole('combobox', { name: 'Serial port' }).selectOption('sim://picasso-firmware');
+  await page.getByRole('button', { name: 'Connect' }).click();
+  const panel = page.getByRole('region', { name: 'USB machine' });
+  await expect(panel.getByText('Connected', { exact: true })).toBeVisible({ timeout: 30000 });
+  await expect(panel.getByText(`${identity} ✓ profile`)).toBeVisible();
+  await expect(panel.getByText('Confirmed', { exact: true })).toBeVisible();
+  await expect(page.getByText('Machine connected')).toBeVisible({ timeout: 20000 });
+
+  await page.getByRole('button', { name: 'Drawing', exact: true }).click();
+  await page.getByRole('button', { name: 'Prepare for drawing' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Prepare for the SD workflow' });
+  await dialog.getByRole('button', { name: 'Prepare physical job' }).click();
+  await expect(dialog.getByText(/Prepared job/)).toBeVisible();
+  await expect(dialog.locator('.usb-checks li.ok')).toHaveCount(4);
+  const start = dialog.getByRole('button', { name: 'Start USB drawing' });
+  await expect(start).toBeDisabled();
+  await dialog.getByRole('checkbox', { name: 'The drawing area is clear and I am watching the machine.' }).check();
+  await start.click();
+  const run = dialog.getByLabel('USB run');
+  await expect(run).toBeVisible();
+  await expect(run.getByText('COMPLETED', { exact: true })).toBeVisible({ timeout: 60000 });
+  await expect(run.getByRole('progressbar')).toHaveAttribute('aria-valuenow', await run.getByRole('progressbar').getAttribute('aria-valuemax') ?? '');
+  await page.evaluate(async () => { await document.fonts.ready; });
+  await page.screenshot({ path: '../docs/screenshots/phase-6-usb-run.png', fullPage: true });
+  const runs = (await (await page.request.get('/api/machine')).json()).recent_runs;
+  expect(runs[0].state).toBe('completed');
+  expect(runs[0].measured_feedback).toBe(false);
+  await dialog.getByRole('button', { name: 'Close export' }).click();
+  await page.getByRole('button', { name: 'Machine', exact: true }).click();
+  await page.getByRole('button', { name: 'Disconnect' }).click();
+  await expect(panel.getByText('Not connected', { exact: true })).toBeVisible();
 });

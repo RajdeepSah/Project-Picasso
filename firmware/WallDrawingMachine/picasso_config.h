@@ -4,8 +4,9 @@
 #ifndef PICASSO_CONFIG_H
 #define PICASSO_CONFIG_H
 
-#define PICASSO_FIRMWARE_VERSION "0.5.0"
+#define PICASSO_FIRMWARE_VERSION "0.6.0"
 #define PICASSO_DIALECT "picasso-fw-v1"
+#define PICASSO_PROTOCOL_VERSION 1
 
 // Pin map: unchanged from the reference sketches (UNO-style wiring comments).
 #define PICASSO_LEFT_IN1 7
@@ -21,6 +22,11 @@
 #define PICASSO_BEEP_PIN A2
 #define PICASSO_SD_CS_PIN 4
 #define PICASSO_BAUD 115200
+
+// USB protocol: a host-started job stops if no valid frame arrives for this long.
+#define PICASSO_HOST_TIMEOUT_MS 3000
+// EEPROM address of the 32-bit boot counter that forms the boot ID.
+#define PICASSO_EEPROM_BOOT_ADDRESS 0
 
 // Direction constants: legacy values. The legacy names M1_REEL_IN/M2_REEL_IN
 // are the directions moveto() uses when IK asks for a longer rope, so they

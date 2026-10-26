@@ -85,4 +85,4 @@ The firmware reads the entire file and validates every segment, starting at `(0,
 
 ## Future serial framing
 
-Do not send legacy file bytes to the USB port and expect motion. Phase 6 will wrap this restricted command language in a separately versioned framing protocol with a handshake, session/sequence IDs, bounded sizes, acknowledgements and control messages. That protocol must retain the same stroke geometry and pen mapping. Device capability negotiation determines whether streaming, SD upload, speed control, or pause is supported.
+Implemented in Phase 6: [SERIAL_PROTOCOL.md](SERIAL_PROTOCOL.md). Do not send legacy file bytes to the USB port and expect motion. Protocol v1 wraps this restricted command language in a separately versioned framing protocol with a handshake, session/sequence IDs, bounded sizes, acknowledgements and control messages. That protocol must retain the same stroke geometry and pen mapping. Device capability negotiation determines whether streaming, SD upload, speed control, or pause is supported.

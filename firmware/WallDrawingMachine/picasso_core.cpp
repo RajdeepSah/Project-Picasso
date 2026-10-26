@@ -381,4 +381,104 @@ uint32_t crc32Update(uint32_t crc, uint8_t byte) {
   return crc;
 }
 
+// ------------------------------------------------------------- framing
+
+uint16_t crc16Update(uint16_t crc, uint8_t byte) {
+  crc ^= static_cast<uint16_t>(byte) << 8;
+  for (uint8_t bit = 0; bit < 8; ++bit) crc = (crc & 0x8000) ? static_cast<uint16_t>((crc << 1) ^ 0x1021) : static_cast<uint16_t>(crc << 1);
+  return crc;
+}
+
+enum FrameState : uint8_t { WAITING, IN_FRAME, DISCARDING };
+
+void FrameReader::reset() {
+  length_ = 0;
+  state_ = WAITING;
+  error_ = FRAME_OK;
+  buffer_[0] = '\0';
+}
+
+FrameReader::Result FrameReader::reject(FrameError error) {
+  error_ = error;
+  state_ = WAITING;
+  length_ = 0;
+  buffer_[0] = '\0';
+  return REJECTED;
+}
+
+static int8_t hexValue(char ch) {
+  if (ch >= '0' && ch <= '9') return static_cast<int8_t>(ch - '0');
+  if (ch >= 'A' && ch <= 'F') return static_cast<int8_t>(ch - 'A' + 10);
+  return -1;
+}
+
+FrameReader::Result FrameReader::feed(uint8_t byte) {
+  if (byte == '@') {  // a new frame always resynchronises
+    state_ = IN_FRAME;
+    length_ = 0;
+    error_ = FRAME_OK;
+    return NONE;
+  }
+  if (state_ == WAITING) return NONE;
+  if (byte == '\n') {
+    if (state_ == DISCARDING) return reject(error_);
+    uint8_t size = length_;
+    if (size && buffer_[size - 1] == '\r') --size;
+    if (size < 5 || buffer_[size - 5] != '*') return reject(FRAME_FORMAT);
+    uint16_t expected = 0;
+    for (uint8_t i = size - 4; i < size; ++i) {
+      int8_t digit = hexValue(buffer_[i]);
+      if (digit < 0) return reject(FRAME_FORMAT);
+      expected = static_cast<uint16_t>((expected << 4) | digit);
+    }
+    uint8_t bodyLength = size - 5;
+    if (bodyLength > kFrameBody) return reject(FRAME_LONG);
+    uint16_t crc = kCrc16Initial;
+    for (uint8_t i = 0; i < bodyLength; ++i) {
+      if (buffer_[i] == '*') return reject(FRAME_FORMAT);
+      crc = crc16Update(crc, static_cast<uint8_t>(buffer_[i]));
+    }
+    if (crc != expected) return reject(FRAME_CRC);
+    buffer_[bodyLength] = '\0';
+    length_ = bodyLength;
+    state_ = WAITING;
+    error_ = FRAME_OK;
+    return FRAME;
+  }
+  if (state_ == DISCARDING) return NONE;
+  if (byte != '\r' && (byte < 0x20 || byte > 0x7E)) {
+    error_ = FRAME_BYTE;
+    state_ = DISCARDING;
+    return NONE;
+  }
+  if (length_ >= sizeof(buffer_) - 1) {
+    error_ = FRAME_LONG;
+    state_ = DISCARDING;
+    return NONE;
+  }
+  buffer_[length_++] = static_cast<char>(byte);
+  return NONE;
+}
+
+bool parseUnsigned(const char* text, uint32_t& value) {
+  uint8_t digits = 0;
+  uint32_t result = 0;
+  for (; *text; ++text) {
+    if (!isDigit(*text) || ++digits > 10) return false;
+    uint32_t next = result * 10 + static_cast<uint32_t>(*text - '0');
+    if (next / 10 != result) return false;  // overflow
+    result = next;
+  }
+  if (!digits) return false;
+  value = result;
+  return true;
+}
+
+bool parseDecimal(const char* text, float& value) {
+  size_t length = strlen(text);
+  if (length == 0 || length > kLinePayload) return false;
+  uint8_t index = 0;
+  return parseNumber(text, static_cast<uint8_t>(length), index, value) && index == length;
+}
+
 }  // namespace picasso
