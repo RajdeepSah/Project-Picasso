@@ -22,7 +22,7 @@ async function generateCircle() {
   const submit = vi.spyOn(api, 'submitCommand').mockResolvedValue(structuredClone(fixture));
   render(<App />);
   await screen.findByText('Running locally');
-  fireEvent.click(screen.getByRole('button', { name: 'Draw a circle' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Circle' }));
   fireEvent.keyDown(screen.getByRole('textbox', { name: 'Drawing command' }), { key: 'Enter' });
   await screen.findByRole('img', { name: 'Circle drawing path preview, simulation only' });
   return submit;
@@ -35,6 +35,8 @@ describe('offline drawing studio', () => {
     expect(screen.getByTestId('drawing-path')).toHaveAttribute('d', expect.stringContaining('M'));
     expect(screen.getByTestId('actual-bounds')).toHaveTextContent('120.00 × 120.00 mm');
     expect(screen.getByRole('button', { name: /Voice input unavailable/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Export G-code' })).toBeEnabled();
+    fireEvent.click(screen.getByRole('button', { name: 'More export options' }));
     expect(screen.getByRole('button', { name: /Prepare for drawing/ })).toBeDisabled();
     expect(screen.getByRole('button', { name: /Draft JSON/ })).toBeEnabled();
     fireEvent.click(screen.getByRole('button', { name: 'Toggle travel paths' }));
@@ -58,6 +60,7 @@ describe('offline drawing studio', () => {
     expect(screen.getByRole('spinbutton', { name: 'Drawing height in millimetres' })).toHaveValue(140);
     await waitFor(() => expect(revise).toHaveBeenCalled(), { timeout: 2000 });
     expect(revise.mock.calls[0][1].spec?.dimensions).toEqual({ width_mm: 140, height_mm: 140 });
+    fireEvent.click(screen.getByRole('button', { name: /drawing options/ }));
     fireEvent.click(screen.getByRole('button', { name: /New drawing/ }));
     await act(async () => complete({ ...fixture, revision_id: 'stale-r2', revision: 2 }));
     expect(screen.queryByRole('img', { name: /drawing path preview/ })).not.toBeInTheDocument();

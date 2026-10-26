@@ -7,8 +7,8 @@ Phase 4 software is implemented. Physical-card copy/readback and machine commiss
 Install once with `python3 scripts/setup.py`, then launch with `python3 scripts/picasso.py`. After source updates, rebuild with `python3 scripts/setup.py --skip-install`. Existing locked dependencies cover this phase; no new runtime packages were added.
 
 1. Enter **Draw a beautiful mandala**, inspect the path, and adjust its dimensions/placement.
-2. Open **Saved history** to search, reopen or inspect earlier revisions. Completed revisions save automatically; browser reload and service restart retain them.
-3. Choose **Test export without hardware**, then **Prepare simulation job**.
+2. Open **History** (or **Gallery** for thumbnails) to search, reopen or inspect earlier revisions. Completed revisions save automatically; browser reload and service restart retain them.
+3. From the menu beside **Export G-code**, choose **Test export without hardware**, then **Prepare simulation job**.
 4. Choose **Create test directory**. This selects only the app-owned `data/test-card` directory.
 5. Review replacement and choose **Export to test directory**. Success requires final `main.nc` readback matching the frozen job SHA-256; it is labeled **Test copy verified**.
 6. Optionally opt into automatically copying this exact frozen job when this selected target is accessible. This can copy immediately. Turn it off when finished.
@@ -51,7 +51,7 @@ Edits create a new profile version/hash and retain prior versions. Existing prep
 ## Prepare and export to a physical card
 
 1. Record and select the actual verified measured profile. Inspect the drawing at its final size and center placement.
-2. Choose **Prepare for drawing**, then **Prepare physical job**. The immutable job freezes revision, code/hash, preview, profile snapshot and expected `(0,0)` start. All rounded drawing and travel endpoints must lie inside the measured rectangle/margins below the anchors. Rope checks include each segment's interior nearest point, endpoint maximum length and half-step allowance.
+2. From the menu beside **Export G-code**, choose **Prepare for drawing**, then **Prepare physical job**. The immutable job freezes revision, code/hash, preview, profile snapshot and expected `(0,0)` start. All rounded drawing and travel endpoints must lie inside the measured rectangle/margins below the anchors. Rope checks include each segment's interior nearest point, endpoint maximum length and half-step allowance.
 3. Connect a card reader and mount the card with the host OS. Refresh targets and explicitly select the intended card. Linux discovery inspects removable/USB ancestry with `lsblk`; writes require a mounted writable FAT16/FAT32 filesystem (`vfat`/`msdos`) and stable UUID. Non-FAT or UUID-less candidates are unavailable for writes. No disk is mounted, formatted or selected automatically.
 4. Review current `main.nc`, acknowledge its backup/replacement, exclusive computer ownership and the manual origin/start procedure. Optionally choose to update the local `SdCard/main.nc` mirror from the same job. **Stage local SD mirror only** works without a mounted card, for a physically prepared job.
 5. Export. Publication verifies the selected volume/root identity, reviewed existing hash, free space and current job/profile; backs up old `main.nc`; writes short FAT-compatible temporary files; flushes/closes and verifies the staged code; activates managed `main.nc` and `PICASSO.JSN`; then reads back the final code before reporting success.

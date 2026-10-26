@@ -1,9 +1,26 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Grid2X2, Maximize2, Minus, Pause, PenLine, Play, Plus, Route, ShieldCheck, Square, Usb } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from 'react';
+import { Grid2X2, Hand, Minus, MousePointer2, Pause, PenLine, Play, Plus, Route, Scan, Square, TriangleAlert, Usb } from 'lucide-react';
 import type { DrawingDraft } from '../api/contracts';
 
 /** A run streaming on the machine, shown over the preview. Position is commanded, not measured. */
 export type Execution = { fraction: number | null; position: [number, number] | null; percent: number; stop: () => void; stopping: boolean };
+
+const sheets = { A5: [148, 210], A4: [210, 297], A3: [297, 420], Letter: [215.9, 279.4] } as const;
+type Sheet = keyof typeof sheets;
+/** A page drawn around the preview, centred on the drawing origin. It frames the view only; exported paths are unchanged. */
+export type PaperId = 'fit' | `${Sheet}-${'portrait' | 'landscape'}`;
+export const paperOptions: { id: PaperId; label: string }[] = [
+  ...(Object.keys(sheets) as Sheet[]).flatMap(name => (['portrait', 'landscape'] as const).map(side => ({ id: `${name}-${side}` as PaperId, label: `${name} · ${side === 'portrait' ? 'Portrait' : 'Landscape'}` }))),
+  { id: 'fit', label: 'Fit to drawing' },
+];
+export const isPaper = (value: unknown): value is PaperId => paperOptions.some(option => option.id === value);
+export function paperSize(id: PaperId): [number, number] | null {
+  if (id === 'fit') return null;
+  const [name, side] = id.split('-') as [Sheet, string];
+  const [width, height] = sheets[name];
+  return side === 'portrait' ? [width, height] : [height, width];
+}
+export const paperLabel = (id: PaperId) => paperOptions.find(option => option.id === id)?.label ?? 'Fit to drawing';
 
 /** Share of the path (drawing + travel) covered by the first `acknowledged` G-code lines, in streaming order. */
 export function executedFraction(draft: DrawingDraft, acknowledged: number) {
@@ -39,15 +56,21 @@ function trace(draft: DrawingDraft, fraction: number) {
   return { drawing: drawing.join(' '), travel: travel.join(' '), cursor };
 }
 
-export function DrawingPreview({ draft, busy, grid, setGrid, zoom, setZoom, execute, executeBlocked, execution }: {
-  draft: DrawingDraft | null; busy: boolean; grid: boolean; setGrid: (value: boolean) => void;
+const mm = (value: number) => Number(value.toFixed(1)).toString();
+
+export function DrawingPreview({ draft, busy, paper, grid, setGrid, zoom, setZoom, execute, executeBlocked, execution }: {
+  draft: DrawingDraft | null; busy: boolean; paper: PaperId; grid: boolean; setGrid: (value: boolean) => void;
   zoom: number; setZoom: (value: number) => void;
   execute: () => void; executeBlocked: string; execution: Execution | null;
 }) {
   const [showTravel, setShowTravel] = useState(true);
   const [progress, setProgress] = useState(1);
   const [playing, setPlaying] = useState(false);
+  const [tool, setTool] = useState<'select' | 'pan'>('select');
+  const [pan, setPan] = useState<[number, number]>([0, 0]);
+  const drag = useRef<{ x: number; y: number; from: [number, number] } | null>(null);
   useEffect(() => { setProgress(1); setPlaying(false); }, [draft?.revision_id]);
+  useEffect(() => { setPan([0, 0]); }, [draft?.drawing_id]);
   const executing = !!execution;
   useEffect(() => { if (executing) setPlaying(false); }, [executing]);
   useEffect(() => {
@@ -57,47 +80,98 @@ export function DrawingPreview({ draft, busy, grid, setGrid, zoom, setZoom, exec
   }, [playing]);
   useEffect(() => { if (progress >= 1) setPlaying(false); }, [progress]);
   const shown = execution?.fraction ?? progress;
+  const sheet = paperSize(paper);
+  const [sheetWidth, sheetHeight] = sheet ?? [0, 0];
   const paths = useMemo(() => {
     if (!draft) return null;
     const box = draft.preview.bounds;
-    const left = Math.min(box.min_x_mm, 0), right = Math.max(box.max_x_mm, 0);
-    const bottom = Math.min(box.min_y_mm, 0), top = Math.max(box.max_y_mm, 0);
-    const margin = Math.max(5, Math.max(right - left, top - bottom) * .09);
-    const viewBox = `${left - margin} ${-top - margin} ${right - left + margin * 2} ${top - bottom + margin * 2}`;
-    return { viewBox, ...trace(draft, shown), left: left - margin, right: right + margin, bottom: bottom - margin, top: top + margin };
-  }, [draft, shown]);
+    let left = Math.min(box.min_x_mm, 0), right = Math.max(box.max_x_mm, 0);
+    let bottom = Math.min(box.min_y_mm, 0), top = Math.max(box.max_y_mm, 0);
+    if (sheetWidth) { left = -sheetWidth / 2; right = sheetWidth / 2; bottom = -sheetHeight / 2; top = sheetHeight / 2; }
+    else {
+      const margin = Math.max(5, Math.max(right - left, top - bottom) * .09);
+      left -= margin; right += margin; bottom -= margin; top += margin;
+    }
+    const overflow = !!sheetWidth && (box.min_x_mm < left - .01 || box.max_x_mm > right + .01 || box.min_y_mm < bottom - .01 || box.max_y_mm > top + .01);
+    return { viewBox: `${left} ${-top} ${right - left} ${top - bottom}`, ratio: (right - left) / (top - bottom), overflow, ...trace(draft, shown), left, right, bottom, top };
+  }, [draft, shown, sheetWidth, sheetHeight]);
   const overlay = execution?.fraction != null;
   // While the machine draws, the whole path stays visible faintly beneath the acknowledged part.
   const pending = useMemo(() => draft && overlay ? trace(draft, 1).drawing : '', [draft, overlay]);
   const machineCursor = overlay ? execution!.position : null;
-  return <section className="preview-panel panel" aria-label="Drawing preview">
-    <div className="panel-toolbar"><div className="panel-title"><span className={`status-dot ${draft ? 'online' : ''}`} /><h2>Drawing preview</h2><span className="small-tag">{busy ? 'UPDATING' : execution ? 'EXECUTING' : draft ? 'SIMULATION' : 'EMPTY CANVAS'}</span></div><div className="preview-actions">
-      <button className={`icon-button ${showTravel ? 'selected' : ''}`} aria-label="Toggle travel paths" aria-pressed={showTravel} onClick={() => setShowTravel(!showTravel)} title="Pen-up travel paths"><Route size={17} /></button>
-      <button className={`icon-button ${grid ? 'selected' : ''}`} aria-label="Toggle preview grid" aria-pressed={grid} onClick={() => setGrid(!grid)}><Grid2X2 size={17} /></button>
-      <button className="icon-button" aria-label="Reset preview zoom" title="Fit drawing" onClick={() => setZoom(100)}><Maximize2 size={17} /></button>
-    </div></div>
-    <div className={`preview-stage ${grid ? 'show-grid' : ''}`} aria-busy={busy}>
-      <div className="canvas-meta"><span><span className="tiny-dot" />{draft ? `${draft.title.toUpperCase()} · REVISION ${draft.revision}` : 'PREVIEW WORKSPACE'}</span><span>mm</span></div>
-      <div className={`paper ${draft ? 'has-drawing' : ''}`} style={{ transform: `scale(${zoom / 100})` }}>
-        <span className="paper-corner top-left" /><span className="paper-corner bottom-right" />
-        {draft && paths ? <svg role="img" aria-label={`${draft.title} drawing path preview, simulation only`} viewBox={paths.viewBox} data-gcode-sha256={draft.gcode_sha256}>
-          <title>{draft.title} · exported path · machine position unmeasured</title>
-          <g className="preview-axes"><path d={`M${paths.left},0H${paths.right}M0,${-paths.top}V${-paths.bottom}`} /></g>
-          {pending && <path className="pending-path" d={pending} />}
-          {showTravel && <path data-testid="travel-path" className="travel-path" d={paths.travel} />}
-          <path data-testid="drawing-path" className="drawing-path" d={paths.drawing} />
-          <circle className="simulation-origin" cx="0" cy="0" r="1" vectorEffect="non-scaling-stroke" />
-          {playing && !execution && <circle className="playback-cursor" cx={paths.cursor[0]} cy={-paths.cursor[1]} r="1.2" />}
-          {machineCursor && <circle data-testid="machine-cursor" className="machine-cursor" cx={machineCursor[0]} cy={-machineCursor[1]} r="1.4"><title>Commanded machine position (not measured)</title></circle>}
-        </svg> : <div className="paper-empty"><div className="pen-emblem"><PenLine size={30} strokeWidth={1.25} /></div><h3>The page is yours.</h3><p>Start with a simple idea.<br />Your drawing will appear here.</p><span className="canvas-phase"><span /> OFFLINE DRAWING ENGINE READY</span></div>}
+  const ratio = paths?.ratio ?? (sheet ? sheet[0] / sheet[1] : 210 / 297);
+  const fit = () => { setZoom(100); setPan([0, 0]); };
+  const sheetName = paper.split('-')[0];
+
+  const grab = (event: PointerEvent<HTMLDivElement>) => {
+    if (tool !== 'pan' || event.button !== 0) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    drag.current = { x: event.clientX, y: event.clientY, from: pan };
+  };
+  const move = (event: PointerEvent<HTMLDivElement>) => {
+    if (!drag.current) return;
+    setPan([drag.current.from[0] + event.clientX - drag.current.x, drag.current.from[1] + event.clientY - drag.current.y]);
+  };
+  const release = () => { drag.current = null; };
+  const nudge = (event: KeyboardEvent<HTMLDivElement>) => {
+    const step = event.shiftKey ? 60 : 20;
+    const delta = ({ ArrowLeft: [step, 0], ArrowRight: [-step, 0], ArrowUp: [0, step], ArrowDown: [0, -step] } as Record<string, [number, number]>)[event.key];
+    if (tool !== 'pan' || !delta) return;
+    event.preventDefault(); setPan(([x, y]) => [x + delta[0], y + delta[1]]);
+  };
+
+  const caption = draft ? `${draft.preview.bounds.width_mm.toFixed(2)} × ${draft.preview.bounds.height_mm.toFixed(2)} mm drawing`
+    + (sheet ? ` · ${sheetName} ${mm(sheet[0])} × ${mm(sheet[1])} mm page, centred on (0, 0)` : ' · fit to path')
+    : sheet ? `Blank ${sheetName} page · ${mm(sheet[0])} × ${mm(sheet[1])} mm` : 'Blank page · fits your drawing';
+
+  return <section className="preview" aria-label="Drawing preview">
+    <div className={`stage ${grid ? 'show-grid' : ''} tool-${tool}`} aria-busy={busy} onPointerDown={grab} onPointerMove={move} onPointerUp={release} onPointerCancel={release}
+      onKeyDown={nudge} tabIndex={tool === 'pan' ? 0 : undefined} role={tool === 'pan' ? 'group' : undefined} aria-label={tool === 'pan' ? 'Canvas. Drag or use the arrow keys to pan.' : undefined}>
+      <div className="paper-frame" style={{ '--paper-ratio': ratio, transform: `translate(${pan[0]}px, ${pan[1]}px) scale(${zoom / 100})` } as CSSProperties}>
+        <div className={`paper ${draft ? 'has-drawing' : ''}`}>
+          {draft && paths ? <svg role="img" aria-label={`${draft.title} drawing path preview, simulation only`} viewBox={paths.viewBox} data-gcode-sha256={draft.gcode_sha256}>
+            <title>{draft.title} · exported path · machine position unmeasured</title>
+            <g className="preview-axes"><path d={`M${paths.left},0H${paths.right}M0,${-paths.top}V${-paths.bottom}`} /></g>
+            {pending && <path className="pending-path" d={pending} />}
+            {showTravel && <path data-testid="travel-path" className="travel-path" d={paths.travel} />}
+            <path data-testid="drawing-path" className="drawing-path" d={paths.drawing} />
+            <circle className="simulation-origin" cx="0" cy="0" r="1" vectorEffect="non-scaling-stroke" />
+            {playing && !execution && <circle className="playback-cursor" cx={paths.cursor[0]} cy={-paths.cursor[1]} r="1.2" />}
+            {machineCursor && <circle data-testid="machine-cursor" className="machine-cursor" cx={machineCursor[0]} cy={-machineCursor[1]} r="1.4"><title>Commanded machine position (not measured)</title></circle>}
+          </svg> : <div className="paper-empty">
+            <div className="pen-emblem"><PenLine size={26} strokeWidth={1.4} /></div>
+            <h3>The page is yours.</h3><p>Start with a simple idea.<br />Your drawing will appear here.</p>
+          </div>}
+          {busy && <div className="paper-busy"><span className="spinner" />{draft ? 'Updating the path…' : 'Drawing your idea…'}</div>}
+        </div>
+        <p className="paper-caption">{caption}</p>
       </div>
-      <div className="canvas-footer"><span>{draft ? `${draft.preview.bounds.width_mm.toFixed(2)} × ${draft.preview.bounds.height_mm.toFixed(2)} mm · fit to path` : 'Blank A4 page · 210 × 297 mm'}</span><div className="zoom-controls"><button aria-label="Zoom out" disabled={zoom <= 75} onClick={() => setZoom(Math.max(75, zoom - 25))}><Minus size={14} /></button><output aria-label="Preview zoom">{zoom}%</output><button aria-label="Zoom in" disabled={zoom >= 150} onClick={() => setZoom(Math.min(150, zoom + 25))}><Plus size={14} /></button></div></div>
+      {paths?.overflow && <p className="stage-warning"><TriangleAlert size={15} />The drawing extends past the {sheetName} page. The exported path is unchanged.</p>}
     </div>
-    <div className="preview-bottom"><span><ShieldCheck size={14} /> Draft preview · assumed start (0, 0)</span><div className="preview-run-actions">
-      <button className="playback-button" disabled={!draft || busy || !!execution} onClick={() => { if (progress >= 1) setProgress(0); setPlaying(!playing); }} aria-label={playing ? 'Pause simulation' : 'Play simulation'}>{playing ? <Pause size={14} /> : <Play size={14} />} Simulation</button>
-      <button className="execute-button" disabled={!execution && !!executeBlocked} title={execution ? 'Show the run on the machine' : executeBlocked || 'Draw this on the machine over USB'} onClick={execute}><Usb size={13} />{execution ? `Executing · ${execution.percent}%` : 'Execute'}</button>
+
+    <div className="tool-rail" role="toolbar" aria-label="Canvas tools" aria-orientation="vertical">
+      <button className={tool === 'select' ? 'active' : ''} aria-pressed={tool === 'select'} aria-label="Select tool" data-tip="Select" onClick={() => setTool('select')}><MousePointer2 size={20} /></button>
+      <button className={tool === 'pan' ? 'active' : ''} aria-pressed={tool === 'pan'} aria-label="Pan tool" data-tip="Pan · drag the page" onClick={() => setTool('pan')}><Hand size={20} /></button>
+      <button className={showTravel ? 'on' : ''} aria-pressed={showTravel} aria-label="Toggle travel paths" data-tip="Pen-up travel paths" onClick={() => setShowTravel(!showTravel)}><Route size={20} /></button>
+      <button className={grid ? 'on' : ''} aria-pressed={grid} aria-label="Toggle preview grid" data-tip="Dot grid" onClick={() => setGrid(!grid)}><Grid2X2 size={20} /></button>
+      <button aria-label="Reset preview zoom" data-tip="Fit to view" onClick={fit}><Scan size={20} /></button>
+    </div>
+
+    <div className="playback-bar">
+      <button className="play-button" disabled={!draft || busy || !!execution} onClick={() => { if (progress >= 1) setProgress(0); setPlaying(!playing); }} aria-label={playing ? 'Pause simulation' : 'Play simulation'}>
+        {playing ? <Pause size={15} /> : <Play size={15} />}<span>Simulation</span></button>
+      {draft && <><input aria-label="Simulation progress" type="range" min="0" max="100" disabled={!!execution} value={Math.round(shown * 100)} onChange={event => { setPlaying(false); setProgress(Number(event.target.value) / 100); }}
+        title={execution ? 'Commands acknowledged by the machine · commanded position, not measured' : 'Visual playback, not machine timing'} />
+        <span className="playback-value">{execution ? `${execution.percent}% acked` : `${Math.round(progress * 100)}%`}</span></>}
+      <span className="bar-divider" />
+      <button className="execute-button" disabled={!execution && !!executeBlocked} title={execution ? 'Show the run on the machine' : executeBlocked || 'Draw this on the machine over USB'} onClick={execute}><Usb size={15} />{execution ? `Executing · ${execution.percent}%` : 'Execute'}</button>
       {execution && <button className="execute-stop" disabled={execution.stopping} onClick={execution.stop} aria-label="Stop the machine"><Square size={12} />Stop</button>}
-    </div></div>
-    {draft && <div className="playback-controls"><input aria-label="Simulation progress" type="range" min="0" max="100" disabled={!!execution} value={Math.round(shown * 100)} onChange={event => { setPlaying(false); setProgress(Number(event.target.value) / 100); }} /><span>{execution ? `${execution.percent}% of commands acknowledged by the machine · commanded position, not measured` : `${Math.round(progress * 100)}% · visual playback, not machine timing`}</span></div>}
+    </div>
+
+    <div className="zoom-controls" role="group" aria-label="Zoom">
+      <button aria-label="Zoom out" disabled={zoom <= 50} onClick={() => setZoom(Math.max(50, zoom - 25))}><Minus size={17} /></button>
+      <output aria-label="Preview zoom">{zoom}%</output>
+      <button aria-label="Zoom in" disabled={zoom >= 200} onClick={() => setZoom(Math.min(200, zoom + 25))}><Plus size={17} /></button>
+    </div>
   </section>;
 }

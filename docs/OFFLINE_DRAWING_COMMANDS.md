@@ -55,7 +55,7 @@ The initial travel is included, assuming a simulation start of `(0,0)` mm. That 
 
 ## Keep a copy
 
-Choose **Draft JSON**, **SVG**, or **G-code** in the inspector. Downloads use the exact selected revision and never regenerate it. They have `UNVERIFIED` in their filenames; the HTTP response also reports `X-Picasso-Execution-Ready: false` and a SHA-256 checksum of the downloaded bytes.
+Choose **Export G-code** in the top bar, or open its menu (the arrow beside it) for **Draft JSON**, **SVG**, or **G-code**. Downloads use the exact selected revision and never regenerate it. They have `UNVERIFIED` in their filenames; the HTTP response also reports `X-Picasso-Execution-Ready: false` and a SHA-256 checksum of the downloaded bytes.
 
 - JSON includes the prompt/spec, transform, rounded geometry, execution preview, warnings, G-code and G-code SHA-256. It is the most complete record to retain. Import drawing can restore its validated geometry as a new imported draft.
 - SVG contains the pen-down path, correctly oriented for a screen, with dimensions/view box and unverified-draft metadata. Travel moves are retained in JSON/G-code rather than drawn into the artwork SVG.

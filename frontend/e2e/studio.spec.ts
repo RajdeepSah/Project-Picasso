@@ -13,6 +13,13 @@ async function command(page: Page, text: string) {
   return draft;
 }
 
+/** A control in the Export menu beside Export G-code, opening the menu when it is closed. */
+async function exportOption(page: Page, name: string) {
+  const more = page.getByRole('button', { name: 'More export options' });
+  if (await more.getAttribute('aria-expanded') !== 'true') await more.click();
+  return page.locator('#export-options').getByRole('button', { name });
+}
+
 async function revision(page: Page, action: () => Promise<unknown>) {
   const response = page.waitForResponse(response => response.url().endsWith('/revisions') && response.request().method() === 'POST');
   await action();
@@ -36,22 +43,23 @@ test('offline circle to resized mandala, regeneration, exact draft downloads and
   await command(page, 'Create a beautiful mandala with 12 petals, seed 7');
   const regenerated = await revision(page, () => page.getByRole('button', { name: 'Regenerate drawing' }).click());
   expect(regenerated.spec.seed).toBe(8);
+  await page.getByRole('button', { name: 'Advanced' }).click();
   await page.getByRole('checkbox', { name: 'Keep seed when regenerating' }).check();
   const retained = await revision(page, () => page.getByRole('button', { name: 'Regenerate drawing' }).click());
   expect(retained.gcode_sha256).toBe(regenerated.gcode_sha256);
   expect(retained.revision_id).not.toBe(regenerated.revision_id);
   await expect(page.getByRole('button', { name: /Voice input unavailable/ })).toBeDisabled();
-  await expect(page.getByRole('button', { name: /Prepare for drawing/ })).toBeDisabled();
+  await expect(await exportOption(page, 'Prepare for drawing')).toBeDisabled();
   const downloadJson = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Draft JSON' }).click();
+  await (await exportOption(page, 'Draft JSON')).click();
   const jsonFile = await downloadJson;
   expect(jsonFile.suggestedFilename()).toContain('UNVERIFIED.json');
   const saved = JSON.parse(await readFile((await jsonFile.path())!, 'utf8'));
   expect(saved.execution_ready).toBe(false);
   expect(saved.gcode_sha256).toBe(retained.gcode_sha256);
-  await expect(page.getByRole('button', { name: 'G-code', exact: true })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Export G-code', exact: true })).toBeEnabled();
   const downloadCode = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'G-code', exact: true }).click();
+  await page.getByRole('button', { name: 'Export G-code', exact: true }).click();
   const codeFile = await downloadCode;
   const bytes = await readFile((await codeFile.path())!);
   expect(createHash('sha256').update(bytes).digest('hex')).toBe(retained.gcode_sha256);
@@ -120,7 +128,7 @@ test('saved history reopens after reload and supplied mandala imports with expli
   await expect(page.getByText('Running locally')).toBeVisible();
   const original = await command(page, 'Draw a circle diameter 83');
   await page.reload();
-  await page.getByRole('button', { name: /Saved history/ }).click();
+  await page.getByRole('button', { name: 'History', exact: true }).click();
   await page.getByRole('textbox', { name: 'Search drawing history' }).fill('diameter 83');
   await page.getByRole('button', { name: 'Open Circle revision 1', exact: true }).click();
   await expect(page.getByRole('img', { name: /Circle drawing path/ })).toHaveAttribute('data-gcode-sha256', original.gcode_sha256);
@@ -145,7 +153,7 @@ test('prepared simulation exports only to an isolated directory with verified by
   await page.goto('/');
   await expect(page.getByText('Running locally')).toBeVisible();
   const draft = await command(page, 'Draw a circle diameter 40');
-  await page.getByRole('button', { name: 'Test export without hardware' }).click();
+  await (await exportOption(page, 'Test export without hardware')).click();
   const dialog = page.getByRole('dialog', { name: 'Try a verified test copy' });
   await dialog.getByRole('button', { name: 'Prepare simulation job' }).click();
   await expect(dialog.getByText(/Prepared job .*manual origin required/)).toBeVisible();
@@ -188,10 +196,10 @@ test('recording an unverified measured profile does not unlock physical preparat
   await dialog.getByRole('button', { name: 'Save & select unverified profile' }).click();
   await expect(dialog).not.toBeVisible();
   await page.getByRole('button', { name: 'Drawing', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Prepare for drawing' })).toBeDisabled();
+  await expect(await exportOption(page, 'Prepare for drawing')).toBeDisabled();
   const profiles = await (await page.request.get('/api/profiles')).json();
   expect(profiles.measured_profiles.find((profile: { label: string }) => profile.label === 'Browser fixture — unverified').verified).toBe(false);
-  await page.getByRole('button', { name: 'Test export without hardware' }).click();
+  await (await exportOption(page, 'Test export without hardware')).click();
   const simulation = page.getByRole('dialog', { name: 'Try a verified test copy' });
   await simulation.getByRole('button', { name: 'Prepare simulation job' }).click();
   await expect(simulation.getByText(/Prepared job .*manual origin required/)).toBeVisible();
@@ -240,7 +248,7 @@ test('measurements differing from both references verify only through the canoni
   await expect(dialog).not.toBeVisible();
 
   await page.getByRole('button', { name: 'Drawing', exact: true }).click();
-  await page.getByRole('button', { name: 'Prepare for drawing' }).click();
+  await (await exportOption(page, 'Prepare for drawing')).click();
   const job = page.getByRole('dialog', { name: 'Prepare for the SD workflow' });
   await job.getByRole('button', { name: 'Prepare physical job' }).click();
   await expect(job.getByText(/Machine check: canonical firmware shows/)).toContainText(/CRC [0-9a-f]{8}/);
@@ -282,7 +290,7 @@ test('a verified job streams over USB to the simulated firmware with acknowledge
   await expect(page.getByText('Machine connected')).toBeVisible({ timeout: 20000 });
 
   await page.getByRole('button', { name: 'Drawing', exact: true }).click();
-  await page.getByRole('button', { name: 'Prepare for drawing' }).click();
+  await (await exportOption(page, 'Prepare for drawing')).click();
   const dialog = page.getByRole('dialog', { name: 'Prepare for the SD workflow' });
   await dialog.getByRole('button', { name: 'Prepare physical job' }).click();
   await expect(dialog.getByText(/Prepared job/)).toBeVisible();
