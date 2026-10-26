@@ -2347,6 +2347,11 @@
     "SerialPortInfo": {
       "additionalProperties": false,
       "properties": {
+        "accessible": {
+          "default": true,
+          "title": "Accessible",
+          "type": "boolean"
+        },
         "description": {
           "title": "Description",
           "type": "string"

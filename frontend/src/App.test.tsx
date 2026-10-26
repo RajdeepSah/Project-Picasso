@@ -1,10 +1,10 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { vi, describe, it, expect } from 'vitest';
 import App from './App';
 import * as api from './api/client';
 import type { Studio } from './api/client';
-import type { DrawingDraft } from './api/contracts';
+import type { DrawingDraft, MachineState, PortsResponse, PreparedJob } from './api/contracts';
 import circle from './testing/circle.json';
 
 const fixture = circle as unknown as DrawingDraft;
@@ -89,5 +89,48 @@ describe('offline drawing studio', () => {
     expect(screen.getByRole('button', { name: 'Toggle preview grid' })).toHaveAttribute('aria-pressed', 'false');
     fireEvent.click(screen.getByRole('button', { name: 'Zoom in' }));
     expect(screen.getByRole('status', { name: 'Preview zoom' })).toHaveTextContent('125%');
+  });
+
+  it('offers Execute beside Simulation only for a settled drawing', async () => {
+    vi.spyOn(api, 'reviseDraft').mockReturnValue(new Promise(() => {}));
+    vi.spyOn(api, 'loadStudio').mockResolvedValue(studio);
+    render(<App />);
+    await screen.findByText('Running locally');
+    expect(screen.getByRole('button', { name: 'Execute' })).toBeDisabled();
+    cleanup();
+    await generateCircle();
+    expect(screen.getByRole('button', { name: 'Execute' })).toBeEnabled();
+    fireEvent.change(screen.getByRole('spinbutton', { name: 'Drawing width in millimetres' }), { target: { value: '140' } });
+    expect(screen.getByRole('button', { name: 'Execute' })).toBeDisabled();
+  });
+
+  it('opens the USB sheet, explains port permissions and asks for a verified profile first', async () => {
+    const ports: PortsResponse = { ports: [{ device: '/dev/ttyUSB0', description: 'USB Serial', hwid: '1A86:7523', likely_arduino: true, accessible: false }] };
+    vi.spyOn(api, 'fetchPorts').mockResolvedValue(ports);
+    const prepare = vi.spyOn(api, 'prepareJob');
+    // jsdom has no modal dialogs; opening is all the sheet needs.
+    Object.defineProperty(HTMLDialogElement.prototype, 'showModal', { configurable: true, value(this: HTMLDialogElement) { this.setAttribute('open', ''); } });
+    await generateCircle();
+    fireEvent.click(screen.getByRole('button', { name: 'Execute' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Draw it on the machine' });
+    expect(await within(sheet).findByText(/sudo usermod -aG dialout/)).toBeVisible();
+    expect(within(sheet).getByRole('button', { name: 'Record measurements' })).toBeVisible();
+    expect(within(sheet).getByRole('button', { name: 'Start drawing' })).toBeDisabled();
+    expect(prepare).not.toHaveBeenCalled();
+  });
+
+  it('shows acknowledged progress on the preview with an always-visible Stop', async () => {
+    const run = { id: 'run-1', job_id: 'job-1', title: 'Circle', port: '/dev/ttyUSB0', boot_id: '0000002a', origin_revision: 1, token: '0a0b0c0d',
+      total_commands: fixture.gcode.split('\n').filter(Boolean).length, acknowledged_seq: 2, state: 'streaming', message: 'Streaming.',
+      position_mm: [60, 0], started_at: '', updated_at: '' };
+    vi.spyOn(api, 'fetchMachine').mockResolvedValue({ connection: 'connected', message: '', run } as unknown as MachineState);
+    vi.spyOn(api, 'fetchJob').mockResolvedValue({ id: 'job-1', revision_id: fixture.revision_id } as unknown as PreparedJob);
+    const control = vi.spyOn(api, 'controlMachine').mockResolvedValue({ connection: 'connected', message: '' } as unknown as MachineState);
+    await generateCircle();
+    expect(await screen.findByRole('button', { name: /Executing · 3%/ })).toBeEnabled();
+    expect(await screen.findByTestId('machine-cursor')).toHaveAttribute('cx', '60');
+    expect(screen.getByRole('slider', { name: 'Simulation progress' })).toHaveValue('14');
+    fireEvent.click(screen.getByRole('button', { name: 'Stop the machine' }));
+    expect(control).toHaveBeenCalledWith('stop');
   });
 });

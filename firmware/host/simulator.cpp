@@ -264,7 +264,12 @@ static void report(bool timedOut) {
        << ",\"coils_energized\":[" << (sim::motors[0].pattern ? "true" : "false") << "," << (sim::motors[1].pattern ? "true" : "false") << "]"
        << ",\"pen_down\":" << (penDown ? "true" : "false")
        << ",\"min_gap_after_pen_up_ms\":" << sim::minGapUp << ",\"min_gap_after_pen_down_ms\":" << sim::minGapDown
+#if PICASSO_ENABLE_SD
        << ",\"validated\":{\"crc\":" << validatedCrc << ",\"lines\":" << validatedLines << ",\"moves\":" << validatedMoves << "}"
+#else
+       << ",\"validated\":null"
+#endif
+       << ",\"sd_enabled\":" << (PICASSO_ENABLE_SD ? "true" : "false")
        << ",\"beep_edges\":" << sim::beepEdges << ",\"bytes_served\":" << sim::served;
   json << ",\"key_presses_ms\":[";
   for (size_t i = 0; i < sim::keyPresses.size(); ++i) json << (i ? "," : "") << sim::keyPresses[i] / 1000.0;

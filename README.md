@@ -2,7 +2,7 @@
 
 A local application being developed to turn drawing commands into previewed, machine-compatible paths for an Arduino wall drawing machine.
 
-**Current milestone: Phase 6 software complete.** The studio connects explicitly to a USB port and streams a verified job one acknowledged command at a time, with pause, stop and a firmware host-loss watchdog (serial protocol v1, firmware 0.6.0). It builds on the Phase 5 canonical firmware and the Phase 4 history, import, preparation and verified SD export. All of this is tested against simulated devices only. **Still pending:** the Arduino CLI compile/memory report, real-card readback, physical commissioning and the hardware USB checks. AI and voice are Phases 7–8.
+**Current milestone: Phase 6 software complete.** Press **Execute** beside *Simulation* to draw the previewed drawing over USB: the studio streams a verified job one acknowledged command at a time, with pause, stop and a firmware host-loss watchdog (serial protocol v1, firmware 0.6.1). The SD card can stay in the Arduino. The UNO runs a USB-only build that fits its memory (87% flash, 64% SRAM). It builds on the Phase 5 canonical firmware and the Phase 4 history, import, preparation and verified SD export. All of this is tested against simulated devices only. **Still pending:** real-card readback, physical commissioning and the hardware USB checks. AI and voice are Phases 7–8.
 
 ## Install and launch
 
@@ -57,17 +57,43 @@ python3 scripts/setup.py --skip-install
 - Physical preparation stays disabled until the selected measured profile is verified. Microphone input remains planned for Phase 8.
 - **Canonical firmware** in `firmware/WallDrawingMachine/` keeps the original pins, libraries and step sequence. It adds a bounded strict parser, validation of the whole file and workspace before any motion, a deliberate per-job origin, cooperative pause/stop, pen settling both ways, coil holding and distinct completed/aborted/failed results. See [the firmware README](firmware/README.md).
 - **USB control**: list ports without opening them; connect explicitly; verify firmware, configuration ID, boot session, origin and position; then stream a verified physical job one acknowledged command at a time, with pause, resume, stop, live acknowledged progress and a validated *Go to origin*. Runs are recorded locally. Restarts and resets never resume. See the [serial protocol](docs/SERIAL_PROTOCOL.md).
+- **Execute** beside *Simulation*: one sheet connects the machine, checks the verified profile, the drawing's workspace fit and the keypad origin, asks you to confirm the area is clear, then draws over USB. The preview shows acknowledged progress, the commanded position and an always-visible **Stop**.
 - Machine measurements that differ from both reference sketches can be verified by generating `machine_config.h` from the profile, uploading it, and entering the configuration ID the machine displays. Prepared jobs show the CRC-32 the firmware displays after checking `main.nc`.
 
 Try **“Draw a beautiful mandala”**, **“Draw a butterfly”**, or **“Draw a circle diameter 100”**. You can also specify `120 mm wide`, `100 x 60 mm`, `12 petals`, `5 turns`, `symmetry 8`, `seed 7`, and `simple`/`standard`/`intricate`, where applicable. Unsupported or ambiguous commands explain the supported grammar. See [offline commands and draft workflow](docs/OFFLINE_DRAWING_COMMANDS.md).
 
-Draft previews and downloads remain **unverified for execution**. Physical preparation requires operator-recorded calibration, workspace/rope limits and pen/holding checks matching either a bundled legacy sketch or canonical firmware generated from that profile (proved by its configuration ID). The app checks geometry and file bytes; it does not measure carriage position or certify physical safety. Every SD job requires the recorded manual `(0,0)` origin procedure before starting it from the machine's menu. No application action starts the machine.
+Draft previews and downloads remain **unverified for execution**. Physical preparation requires operator-recorded calibration, workspace/rope limits and pen/holding checks matching either a bundled legacy sketch or canonical firmware generated from that profile (proved by its configuration ID). The app checks geometry and file bytes; it does not measure carriage position or certify physical safety. Every SD job requires the recorded manual `(0,0)` origin procedure before starting it from the machine's menu. The machine moves only through an explicitly started USB run (Execute → confirm → Start) or the keypad.
 
 To try Phase 4 without hardware: generate a drawing → **Test export without hardware** → prepare a simulation job → create the test directory → review replacement → export. The destination is `data/test-card/main.nc`, clearly labeled as a test. Physical-card discovery/export currently supports Linux/POSIX; the card must be mounted in the computer. Arduino USB does not expose its SPI card. See the [storage and commissioning guide](docs/STORAGE_AND_COMMISSIONING.md) for the physical workflow, backups and automatic-sync limits.
 
 History lives under `data/` and survives restarts. Its SQLite database and checksummed artifacts are local to this computer; stop the app before backing up the entire directory. The browser's eight recently viewed entries are shortcuts, not the history retention limit.
 
 ![Phase 6 drawing studio](docs/screenshots/phase-6-studio.png)
+
+## Draw from the studio over USB
+
+Setup, once per machine:
+
+1. **Linux port access:** run `sudo usermod -aG dialout $USER`, then log out and back in. Close the Arduino IDE Serial Monitor; only one program can hold the port.
+2. **Profile:** in **Machine → Record / edit measurements**, enter your measurements, choose *Picasso canonical firmware* and save.
+3. **Firmware:** generate the header, check that the build fits, then upload it with the motor supply off. See the [firmware README](firmware/README.md).
+
+   ```bash
+   python3 scripts/firmware.py config --profile <profile-id>   # writes machine_config.h
+   python3 scripts/firmware.py build --profile <profile-id>    # USB-only UNO build with memory report
+   ```
+
+   Upload from the Arduino IDE, which builds the USB-only firmware by default, or with the arduino-cli command in the firmware README.
+4. **Verify:** read the configuration ID on the machine's *Info* screen, enter it in the profile, tick the checks and mark the profile verified.
+
+Every drawing:
+
+1. Generate or open a drawing, then press **Execute** next to *Simulation*.
+2. Choose the Arduino's port (`/dev/ttyUSB0` for a CH340 UNO) and connect. Connecting resets an UNO, so then choose **Setup → Set origin** on the keypad with the pen at the origin.
+3. Tick *The drawing area is clear* and press **Start drawing**. Watch progress on the preview. **Stop** in the studio or ESC on the keypad always stops.
+4. Between drawings, use **Go to origin** in the sheet; nothing travels implicitly.
+
+![Executing over USB](docs/screenshots/phase-6-execute.png)
 
 ## Start here
 

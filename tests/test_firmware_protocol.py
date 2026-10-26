@@ -44,7 +44,7 @@ def test_handshake_boot_identity_and_status_never_move(build, tmp_path):
     (report,) = run(build, tmp_path, [*BOOT, "frame HELLO 1", "frame STATUS", "frame HELLO 2", "frame BOGUS", "wait 100", "report"])
     replies = frames(report)
     assert replies[0] == "BOOT 0000002a 1"
-    assert replies[1].startswith("HELLO 1 0.6.0 picasso-fw-v1 ") and replies[1].endswith(" 0000002a STREAM,PAUSE,STOP,HOME")
+    assert replies[1].startswith("HELLO 1 0.6.1 picasso-fw-v1 ") and replies[1].endswith(" 0000002a STREAM,PAUSE,STOP,HOME")
     assert replies[2] == "ST IDLE - 0000002a 0 UNSET 0.000 0.000 UP 0 0 NONE:NONE"
     assert replies[3:] == ["ERR HELLO VERSION 1", "ERR FRAME UNKNOWN"]
     assert report["steps"] == [0, 0] and len(report["servo_writes"]) == 1
@@ -142,3 +142,22 @@ def test_home_is_a_validated_pen_up_route_bound_to_the_session(build, tmp_path):
     assert "ERR HOME REFERENCE" in replies and "OK HOME" in replies
     assert "EVT COMPLETED HOME 1 0.000 0.000 NONE" in replies
     assert replies[-1].startswith(f"ST IDLE - {SESSION} VALID 0.000 0.000 UP")
+
+
+USB_SET_ORIGIN = ["key enter", "key enter", "key enter", "until main 3000"]  # Setup is the first item
+
+
+def test_usb_only_build_has_no_sd_menu_and_streams_a_job(usb_build, tmp_path):
+    """The variant built for an UNO: SD is compiled out, the protocol is unchanged."""
+    (menu, report) = run(usb_build, tmp_path, [
+        *BOOT, "report", "key enter", "key esc", "key down", "key enter", "wait 100", "key esc", *USB_SET_ORIGIN,
+        "frame HELLO 1", f"frame BEGIN 0a0b0c0d 0.000 0.000 {SESSION}", "wait 400",
+        "frame M 1 G0 Z5", "wait 100", "frame M 2 G0 X-5.000 Y-5.000 Z5", *keepalive(3000),
+        "frame END 0a0b0c0d", *keepalive(1000), "frame STATUS", "wait 50", "report"])
+    assert menu["display"] == ["> Setup", "  Info", "USB jobs only", "Origin: unset"]
+    assert menu["serial"][0][1].endswith(" SD OFF") and menu["sd_enabled"] is False
+    replies = frames(report)
+    assert any(reply.startswith("HELLO 1 0.6.1 picasso-fw-v1 ") and reply.endswith(" STREAM,PAUSE,STOP,HOME") for reply in replies)
+    assert "OK BEGIN 0a0b0c0d" in replies and "EVT COMPLETED USB:0a0b0c0d 2 -5.000 -5.000 NONE" in replies
+    assert replies[-1] == f"ST IDLE - {SESSION} VALID -5.000 -5.000 UP 2 2 COMPLETED:NONE"
+    assert report["outcome"] == "completed" and report["position"] == [-5, -5]

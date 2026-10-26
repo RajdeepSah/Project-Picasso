@@ -57,8 +57,10 @@ jobs:
         run: |
           arduino-cli core update-index
           arduino-cli core install arduino:avr@1.8.6
-      - name: Compile reference and synthetic-workspace configurations with memory report
+      - name: Compile USB-only UNO and USB+SD reference builds with memory report
         run: |
           .venv/bin/python scripts/firmware.py build --reference reference-350
           .venv/bin/python scripts/firmware.py build --reference reference-400
           .venv/bin/python scripts/firmware.py build --fixture
+          # The SD job path does not fit an UNO; keep it compiling on a larger reference board.
+          .venv/bin/python scripts/firmware.py build --fixture --with-sd --fqbn arduino:avr:mega

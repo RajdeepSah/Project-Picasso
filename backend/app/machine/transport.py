@@ -1,6 +1,7 @@
 """Byte transports for the serial protocol. Discovery lists ports without opening them."""
 
 from dataclasses import dataclass
+import errno
 import os
 import queue
 import subprocess
@@ -11,6 +12,8 @@ from .protocol import BAUD
 
 MAX_LINE = 256
 SIMULATED_PORT = "sim://picasso-firmware"
+PERMISSION_HINT = ("Permission denied. On Linux add your user to the port's group (sudo usermod -aG dialout $USER), "
+                   "then log out and back in. Close the Arduino IDE Serial Monitor, which also holds the port.")
 
 
 class TransportClosed(OSError):
@@ -24,6 +27,7 @@ class PortInfo:
     hwid: str
     likely_arduino: bool
     simulated: bool = False
+    accessible: bool = True  # this user may open it (checked without opening)
 
 
 # CH340 (vendor clone), FTDI and Arduino LLC/SRL USB IDs.
@@ -32,11 +36,17 @@ ARDUINO_VIDS = {0x1A86, 0x0403, 0x2341, 0x2A03}
 
 def list_ports(simulated=False) -> list[PortInfo]:
     from serial.tools import list_ports as serial_ports
-    ports = [PortInfo(port.device, port.description or port.device, port.hwid or "", port.vid in ARDUINO_VIDS)
+    ports = [PortInfo(port.device, port.description or port.device, port.hwid or "", port.vid in ARDUINO_VIDS,
+                      accessible=_accessible(port.device))
              for port in sorted(serial_ports.comports(), key=lambda item: item.device)]
     if simulated:
         ports.append(PortInfo(SIMULATED_PORT, "Simulated Picasso firmware (host simulation, not hardware)", "simulator", False, True))
     return ports
+
+
+def _accessible(device: str) -> bool:
+    # Windows COM names are not filesystem paths; only POSIX device nodes are checked.
+    return not os.path.exists(device) or os.access(device, os.R_OK | os.W_OK)
 
 
 class LineReader:
@@ -71,6 +81,8 @@ class SerialTransport:
         try:
             self.port = serial.Serial(device, BAUD, timeout=0.1, write_timeout=1, exclusive=True)
         except (ValueError, serial.SerialException) as exc:
+            if getattr(exc, "errno", None) == errno.EACCES:
+                raise TransportClosed(PERMISSION_HINT) from exc
             raise TransportClosed(str(exc)) from exc
         self.lines = LineReader()
         self.ready: list[bytes] = []

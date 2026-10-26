@@ -2,20 +2,14 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Check, FileDown, FlaskConical, RefreshCw, ShieldCheck, Usb, X } from 'lucide-react';
 import { armAutoSync, createTestTarget, exportJob, fetchJobs, fetchTargets, fetchTransfers, prepareJob, selectTarget, stageJob, startUsbRun } from '../api/client';
 import { HomeControl } from './MachinePanel';
-import { UsbRunCard, runActive, useMachine } from './UsbRunCard';
+import { UsbRunCard, runActive, usbChecks, useMachine } from './UsbRunCard';
 import type { CalibrationProfile, DrawingDraft, ExportRequest, PreparedJob, TargetsResponse, TransferRecord } from '../api/contracts';
 
 function UsbStep({ job, profile }: { job: PreparedJob | null; profile?: CalibrationProfile }) {
   const [machine, refresh] = useMachine(true);
   const [clear, setClear] = useState(false); const [busy, setBusy] = useState(false); const [message, setMessage] = useState('');
   const status = machine?.status; const hello = machine?.hello;
-  const start = job?.expected_start_mm ?? [0, 0];
-  const checks: [string, boolean][] = [
-    ['Connected to Picasso firmware (Machine tab)', machine?.connection === 'connected'],
-    ['Verified profile records canonical firmware with the machine\'s configuration ID', !!hello && profile?.firmware === 'picasso-canonical' && profile.firmware_config_id === hello.config_id],
-    ['Origin set on the machine\'s keypad', !!status && status.origin !== 'UNSET'],
-    [`Machine idle at the job start (${start[0].toFixed(1)}, ${start[1].toFixed(1)})`, !!status && status.state === 'IDLE' && status.position_mm[0] === start[0] && status.position_mm[1] === start[1]],
-  ];
+  const checks = usbChecks(machine, profile, job?.expected_start_mm ?? [0, 0], ' (Machine tab)');
   const ready = !!job && checks.every(([, ok]) => ok) && clear && !runActive(machine?.run);
   const begin = async () => {
     if (!job || !status || !hello) return;

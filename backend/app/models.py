@@ -142,6 +142,7 @@ class SerialPortInfo(Contract):
     hwid: str
     likely_arduino: bool
     simulated: bool = False
+    accessible: bool = True
 
 
 class PortsResponse(Contract):

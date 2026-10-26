@@ -2,7 +2,18 @@
 
 `firmware/WallDrawingMachine/` is the single maintained sketch for the wall drawing machine. It replaces neither reference copy: `Drawbot_C/02 arduino code/Walldraw/Walldraw.ino` (350 mm) and `SdCard/02 arduino code/Walldraw/Walldraw.ino` (400 mm) stay byte-for-byte unchanged, and the root `WallDrawingMachine.ino` remains the original **empty placeholder**. Open this folder, not the repository root, when you build or upload.
 
-Version **0.6.0**, SD dialect `picasso-fw-v1`, serial protocol **1** ([docs/SERIAL_PROTOCOL.md](../docs/SERIAL_PROTOCOL.md)). Nothing in the studio or the scripts uploads firmware. The studio opens a serial port only when the operator connects explicitly, and moves the machine only through an explicitly started, acknowledged USB run. Uploading is an explicit maintenance step, described under **Build and upload** below.
+Version **0.6.1**, SD dialect `picasso-fw-v1`, serial protocol **1** ([docs/SERIAL_PROTOCOL.md](../docs/SERIAL_PROTOCOL.md)). Nothing in the studio or the scripts uploads firmware. The studio opens a serial port only when the operator connects explicitly, and moves the machine only through an explicitly started, acknowledged USB run. Uploading is an explicit maintenance step, described under **Build and upload** below.
+
+## Builds: USB-only for the UNO
+
+An ATmega328P (UNO) cannot hold the SD library and the USB protocol together. `PICASSO_ENABLE_SD` in `picasso_config.h` selects the build:
+
+| Build | `PICASSO_ENABLE_SD` | Jobs | UNO flash | UNO SRAM |
+| --- | --- | --- | --- | --- |
+| **USB-only** (default) | `0` | Studio **Execute** over USB, test square, go to origin | 28,118 / 32,256 B (87%) | 1,317 / 2,048 B (64%), 731 B for the stack |
+| USB+SD | `1` (`--with-sd`) | Also *SD job* from `main.nc` | 38,878 B (120%), **does not fit** | 2,088 B (101%), **does not fit** |
+
+These figures are the fixture configuration, built with arduino-cli and `arduino:avr` 1.8.8. The SD card can stay in the slot; the USB-only build never touches it. Opening the sketch in the Arduino IDE and uploading also gives the USB-only build. The USB+SD build is for boards with more memory, and CI compiles it for `arduino:avr:mega`.
 
 ## What stays the same
 
@@ -63,7 +74,7 @@ python3 scripts/firmware.py config --reference reference-350
 The studio's machine dialog can also download the file (*Picasso canonical firmware → Download machine_config.h*). The header carries a 16-hex **configuration ID**: a SHA-256 fingerprint of exactly the compiled values (spacing, anchor height, spool, steps, pen angles, workspace, margin and rope limits). The machine shows it on its *Info* screen and in its boot serial line:
 
 ```text
-PICASSO FW 0.5.0 DIALECT picasso-fw-v1 CFG 7952f3f4e3fc5016 REGION SET ORIGIN UNSET
+PICASSO FW 0.6.1 DIALECT picasso-fw-v1 CFG 7952f3f4e3fc5016 REGION SET ORIGIN UNSET SD OFF
 ```
 
 To verify a profile whose values differ from both reference sketches:
@@ -81,10 +92,10 @@ There is no automatic upload. Use Arduino CLI 1.3.1 with the `arduino:avr@1.8.6`
 
 ```bash
 arduino-cli core install arduino:avr@1.8.6
-python3 scripts/firmware.py build --profile <profile-id> --fqbn <your-board-fqbn>
+python3 scripts/firmware.py build --profile <profile-id> --fqbn <your-board-fqbn>   # add --with-sd for a larger board
 ```
 
-The build compiles a temporary copy against the vendored libraries in `Drawbot_C/02 arduino code/Library` and prints flash and SRAM use. `--fqbn` defaults to `arduino:avr:uno`, a **reference** board: compiling for it does not establish the machine's actual board. On Linux the script adds `firmware/shims/`, because TinyStepper 1.0.0 includes `<arduino.h>` with a lowercase `a`. `--fixture` compiles a synthetic workspace for CI checks only and never writes into the sketch folder.
+The build compiles a temporary copy against the vendored libraries in `Drawbot_C/02 arduino code/Library` and prints flash and SRAM use. It **fails** when fewer than 384 bytes of SRAM remain for the stack. Set `ARDUINO_CLI` if arduino-cli is not on PATH (Arduino IDE 2 bundles one). `--fqbn` defaults to `arduino:avr:uno`, a **reference** board: compiling for it does not establish the machine's actual board. On Linux the script adds `firmware/shims/`, because TinyStepper 1.0.0 includes `<arduino.h>` with a lowercase `a`. `--fixture` compiles a synthetic workspace for CI checks only and never writes into the sketch folder.
 
 To upload, after confirming the board and port yourself, with the motors' supply off or the gondola supported:
 
@@ -102,7 +113,9 @@ Omit the `extra_flags` property and the copy on Windows and macOS. In the Arduin
 
 DOWN moves to the next item, ENTER selects and ESC goes back.
 
-- **SD job**: checks `main.nc` without moving, then shows `N moves OK` and `CRC xxxxxxxx`. Compare the CRC with the studio's prepared job. ENTER starts, but only when the origin was freshly confirmed. While running, ENTER pauses and resumes and ESC stops.
+The main menu is *Setup* and *Info* on the USB-only build, with `USB jobs only` underneath. USB+SD builds add *SD job* as the first item.
+
+- **SD job** (USB+SD builds only): checks `main.nc` without moving, then shows `N moves OK` and `CRC xxxxxxxx`. Compare the CRC with the studio's prepared job. ENTER starts, but only when the origin was freshly confirmed. While running, ENTER pauses and resumes and ESC stops.
 - **Setup**:
   - *Set origin*: confirm that the pen is at the physical origin and the ropes are taut.
   - *Jog ropes*: pen up, ±64 steps on one rope; this invalidates the origin.
@@ -110,7 +123,7 @@ DOWN moves to the next item, ENTER selects and ESC goes back.
   - *Pen test*.
   - *Test square*: 20 mm centred on the origin; needs a fresh origin.
   - *Release motors*: de-energizes the coils and invalidates the origin.
-- **Info**: firmware version, configuration ID and whether a workspace is compiled in.
+- **Info**: firmware version and build (`USB` or `USB+SD`), configuration ID and whether a workspace is compiled in.
 
 Serial output at 115200 baud mixes informational log lines (`PICASSO ...`) with protocol frames (`@...*CRC`). Protocol v1 lets a host stream a job one acknowledged command at a time after the same validation as SD jobs. The details:
 

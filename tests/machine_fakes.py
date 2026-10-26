@@ -78,7 +78,7 @@ class FakeDevice:
                 if self.hello_protocol != 1:
                     self.emit("ERR HELLO VERSION 1")
                 else:
-                    self.emit(f"HELLO 1 0.6.0 picasso-fw-v1 {self.config_id} {self.boot} STREAM,PAUSE,STOP,HOME")
+                    self.emit(f"HELLO 1 0.6.1 picasso-fw-v1 {self.config_id} {self.boot} STREAM,PAUSE,STOP,HOME")
             elif command == "STATUS":
                 self.emit(self.status_body())
             elif command == "BEGIN":

@@ -24,6 +24,15 @@ def build(tmp_path_factory, profile):
     return firmware_script.host_build(out, config)
 
 
+@pytest.fixture(scope="session")
+def usb_build(tmp_path_factory, profile):
+    """The USB-only variant (no SD job path) that is built for an UNO."""
+    out = tmp_path_factory.mktemp("firmware-host-usb")
+    config = out / "machine_config.h"
+    firmware_script.write_config(profile, "synthetic host-test", config)
+    return firmware_script.host_build(out, config, sd=False)
+
+
 @pytest.fixture(autouse=True)
 def isolated_app_storage(tmp_path, monkeypatch):
     monkeypatch.setenv('PICASSO_DATA_DIR', str(tmp_path / 'app-data'))

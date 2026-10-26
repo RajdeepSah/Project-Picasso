@@ -20,7 +20,7 @@ from threading import Event
 
 pytestmark = pytest.mark.skipif(shutil.which("g++") is None and shutil.which("c++") is None, reason="host C++ compiler unavailable")
 
-SET_ORIGIN = "key down\nkey enter\nkey enter\nkey enter\nuntil main 3000\n"
+SET_ORIGIN = "key enter\nkey enter\nkey enter\nuntil main 3000\n"  # USB-only main menu: Setup first
 TERMINAL = {"completed", "aborted", "failed", "fault", "interrupted"}
 SPEED = 4
 
@@ -82,8 +82,8 @@ def firmware_root():
 
 
 @pytest.fixture
-def bench(build, profile, tmp_path):
-    bench = Bench(build, profile, tmp_path)
+def bench(usb_build, profile, tmp_path):
+    bench = Bench(usb_build, profile, tmp_path)
     yield bench
     bench.controller.disconnect()
     for transport in bench.transports:

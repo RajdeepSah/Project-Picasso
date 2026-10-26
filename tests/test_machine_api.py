@@ -46,3 +46,33 @@ def test_only_listed_ports_can_be_opened(tmp_path):
         refused = client.post("/api/machine/connect", json={"port": "/etc/passwd"})
         assert refused.status_code == 404 and refused.json()["code"] == "PORT_NOT_LISTED"
         assert client.post("/api/machine/stop").json()["code"] == "NOT_CONNECTED"
+
+
+def test_ports_report_access_without_opening_and_permission_errors_explain_the_fix(tmp_path, monkeypatch):
+    import errno
+    import os
+    from types import SimpleNamespace
+
+    import pytest
+    import serial
+    from serial.tools import list_ports as serial_ports
+
+    from backend.app.machine import transport
+
+    denied = tmp_path / "ttyUSB9"
+    denied.write_bytes(b"")
+    denied.chmod(0)
+    if os.access(denied, os.R_OK):
+        pytest.skip("permission bits are not enforced for this user (root)")
+    listed = [SimpleNamespace(device=str(denied), description="USB Serial", hwid="USB VID:PID=1A86:7523", vid=0x1A86)]
+    monkeypatch.setattr(serial_ports, "comports", lambda: listed)
+    monkeypatch.setattr(serial, "Serial", lambda *args, **kwargs: pytest.fail("listing must never open a port"))
+    with connect(create_app(frontend_dir=tmp_path, simulated_device=True)) as client:
+        ports = client.get("/api/machine/ports").json()["ports"]
+    assert [(port["likely_arduino"], port["accessible"]) for port in ports] == [(True, False), (False, True)]
+
+    def refuse(*args, **kwargs):
+        raise serial.SerialException(errno.EACCES, f"could not open port {denied}: [Errno 13] Permission denied")
+    monkeypatch.setattr(serial, "Serial", refuse)
+    with pytest.raises(transport.TransportClosed, match="usermod -aG dialout"):
+        transport.SerialTransport(str(denied))

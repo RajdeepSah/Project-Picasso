@@ -71,11 +71,11 @@ Run *SD job* validation several times with the coils energized: after a complete
 
 Run these with the pen raised first, then with a small drawing:
 
-1. Select the board's port in **Machine → USB machine** and connect. The handshake must report the same configuration ID as the *Info* screen, and the boot ID must match the `@BOOT` frame. Record whether connecting reset the board: a new boot ID and `Origin: unset`.
-2. Set the origin on the keypad, prepare a small square and start it over USB. Every acknowledged command should match visible motion. Compare the final commanded position with the pen on the paper.
-3. Press **Pause** in the studio: the pen rises and settles. **Resume** continues the same line. Then press **Stop** during a long pen-down segment and measure, with slow-motion video, the time from the click to the pen clearing. Repeat with ESC on the keypad.
+1. Press **Execute** beside *Simulation*, or open **Machine → USB machine**, select the board's port and connect. The handshake must report the same configuration ID as the *Info* screen, and the boot ID must match the `@BOOT` frame. Record whether connecting reset the board: a new boot ID and `Origin: unset`.
+2. Set the origin on the keypad (*Setup → Set origin*), then **Execute** a small square: tick the area-clear confirmation and press *Start drawing*. Every acknowledged command should match visible motion. Compare the final commanded position with the pen on the paper.
+3. Press **Pause** in the studio: the pen rises and settles. **Resume** continues the same line. Then press **Stop** on the preview during a long pen-down segment and measure, with slow-motion video, the time from the click to the pen clearing. Repeat with ESC on the keypad.
 4. Pull the USB cable during a pen-down segment. The firmware must raise the pen and abort within about 3 s (`HOST_LOST`). The studio must show a fault or lost connection and must not resume after you reconnect.
-5. Start an SD job validation on the keypad, then try a USB start. The firmware must refuse (`MACHINE_BUSY`/`STATE`).
+5. With the keypad in any menu (for example *Setup*), try a USB start. The firmware must refuse (`MACHINE_BUSY`/`STATE`). On a USB+SD build, repeat during an SD job validation.
 
 Record the measured latencies and any reset-on-connect behaviour in the profile notes.
 

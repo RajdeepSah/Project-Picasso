@@ -1,6 +1,6 @@
 # Picasso serial protocol, version 1
 
-Status: specification for Phase 6. The canonical firmware 0.6.0 (`firmware/WallDrawingMachine/`) and the host controller (`backend/app/machine/`) implement it. Both sides were tested against simulators. **No physical board has run this protocol yet.**
+Status: specification for Phase 6. The canonical firmware 0.6.x (`firmware/WallDrawingMachine/`; on an UNO, the default USB-only build) and the host controller (`backend/app/machine/`) implement it. Both sides were tested against simulators. **No physical board has run this protocol yet.**
 
 ## Goals and non-goals
 
@@ -123,4 +123,4 @@ Run records (`UsbRun`) persist to the local database. They count *acknowledged* 
 - **Windows**: install the CH340 driver (vendor `CH341SER.EXE` in `Drawbot_C/02 arduino code/Driver`, or a current one from the manufacturer). Use the `COMn` port shown in Device Manager. Close the Arduino IDE's Serial Monitor, because ports are exclusive.
 - **macOS**: current macOS includes a CH34x driver (`/dev/cu.wchusbserial*`). Older systems need the vendor driver.
 - **"Busy" or "permission denied"**: another program owns the port. Close it and reconnect explicitly.
-- **No handshake**: the board runs the legacy sketch or older canonical firmware without the protocol, the wrong port was selected, or the board is still resetting. Upload firmware 0.6.0 or later (`firmware/README.md`). Uploading is always a separate, explicit maintenance step.
+- **No handshake**: the board runs the legacy sketch or older canonical firmware without the protocol, the wrong port was selected, or the board is still resetting. Upload firmware 0.6.0 or later; an UNO needs the USB-only build, which is the default (`firmware/README.md`). Uploading is always a separate, explicit maintenance step.

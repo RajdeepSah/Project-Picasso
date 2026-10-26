@@ -155,7 +155,7 @@ def test_firmware_geometry_agrees_with_backend_validation(build, profile):
 def test_reset_has_no_origin_and_jobs_need_a_fresh_confirmation(build, tmp_path, profile):
     boot, ready = simulate(build, tmp_path, ["boot", "report", "key enter", "until ready 60000", "key enter", "wait 300", "report"], card=SQUARE)
     assert boot["origin_valid"] is False and boot["display"][3] == "Origin: unset"
-    assert boot["serial"][0][1] == f"PICASSO FW {firmware.FIRMWARE_VERSION} DIALECT picasso-fw-v1 CFG {firmware.config_id(profile)} REGION SET ORIGIN UNSET"
+    assert boot["serial"][0][1] == f"PICASSO FW {firmware.FIRMWARE_VERSION} DIALECT picasso-fw-v1 CFG {firmware.config_id(profile)} REGION SET ORIGIN UNSET SD ON"
     assert ready["mode"] == "ready" and ready["display"][2] == "Set origin 1st"
     assert ready["display"][1] == f"CRC {firmware.gcode_crc32(SQUARE)}"
     assert ready["steps"] == [0, 0] and ready["motion_started"] is False
@@ -280,6 +280,6 @@ def test_reference_build_has_no_workspace_and_refuses_motion_jobs(tmp_path_facto
     script.write_config(profile, kind, out / "machine_config.h")
     reference = script.host_build(out, out / "machine_config.h")
     (result,) = simulate(reference, tmp_path, ["boot", "key enter", "report"], card=SQUARE)
-    assert result["serial"][0][1].endswith("REGION NONE ORIGIN UNSET")
+    assert result["serial"][0][1].endswith("REGION NONE ORIGIN UNSET SD ON")
     assert result["mode"] == "message" and result["display"][:2] == ["No workspace in", "machine config"]
     assert result["steps"] == [0, 0]

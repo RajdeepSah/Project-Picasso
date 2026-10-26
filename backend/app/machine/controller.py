@@ -122,7 +122,7 @@ class MachineController:
                     break
         if hello_tokens is None:
             self._close(generation, "disconnected", "No Picasso firmware answered on this port. It may run the legacy sketch or older firmware, or still be resetting.")
-            raise machine_error("NO_HANDSHAKE", "No Picasso protocol handshake. Upload canonical firmware 0.6.0+ or check the port.", 502)
+            raise machine_error("NO_HANDSHAKE", "No Picasso protocol handshake. Upload canonical firmware 0.6.0+ (the USB-only build on an UNO) or check the port.", 502)
         try:
             hello = protocol.parse_hello(hello_tokens) if hello_tokens[0] == "HELLO" else None
         except (protocol.FrameError, ValueError):

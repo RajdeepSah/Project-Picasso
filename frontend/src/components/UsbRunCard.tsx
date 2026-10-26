@@ -1,15 +1,26 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Pause, Play, Square } from 'lucide-react';
 import { controlMachine, fetchMachine } from '../api/client';
-import type { MachineState, UsbRun } from '../api/contracts';
+import type { CalibrationProfile, MachineState, UsbRun } from '../api/contracts';
 
 const active = new Set(['starting', 'streaming', 'pausing', 'paused', 'resuming', 'stopping']);
 export const runActive = (run?: UsbRun | null) => !!run && active.has(run.state);
 
+/** The controller's start preconditions, shown before the operator starts a run (it rechecks them). */
+export function usbChecks(machine: MachineState | null, profile: CalibrationProfile | undefined, start: [number, number], connectHint = ''): [string, boolean][] {
+  const status = machine?.status; const hello = machine?.hello;
+  return [
+    [`Connected to Picasso firmware${connectHint}`, machine?.connection === 'connected'],
+    ['Verified profile records canonical firmware with the machine\'s configuration ID', !!hello && profile?.firmware === 'picasso-canonical' && profile.firmware_config_id === hello.config_id],
+    ['Origin set on the machine\'s keypad', !!status && status.origin !== 'UNSET'],
+    [`Machine idle at the job start (${start[0].toFixed(1)}, ${start[1].toFixed(1)})`, !!status && status.state === 'IDLE' && status.position_mm[0] === start[0] && status.position_mm[1] === start[1]],
+  ];
+}
+
 /** Polls the local machine state; the service answers without waiting for the device. */
 export function useMachine(enabled = true): [MachineState | null, () => Promise<void>] {
   const [machine, setMachine] = useState<MachineState | null>(null);
-  const refresh = async () => { try { setMachine(await fetchMachine()); } catch { setMachine(null); } };
+  const refresh = useCallback(async () => { try { setMachine(await fetchMachine()); } catch { setMachine(null); } }, []);
   useEffect(() => {
     if (!enabled) return;
     const abort = new AbortController();

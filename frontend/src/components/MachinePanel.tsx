@@ -17,23 +17,34 @@ export function HomeControl({ machine, refresh }: { machine: MachineState; refre
     {message && <p className="muted-copy" role="status">{message}</p>}</div>;
 }
 
-export function MachinePanel({ machine, refresh, profile }: { machine: MachineState | null; refresh: () => Promise<void>; profile?: CalibrationProfile }) {
+/** Port choice and explicit connect. Listing never opens a port. */
+export function PortPicker({ refresh }: { refresh: () => Promise<void> }) {
   const [ports, setPorts] = useState<PortsResponse | null>(null);
   const [port, setPort] = useState(''); const [busy, setBusy] = useState(false); const [message, setMessage] = useState('');
   const loadPorts = () => fetchPorts().then(result => { setPorts(result); setPort(current => current || result.ports.find(item => item.likely_arduino)?.device || result.ports[0]?.device || ''); }).catch(error => setMessage(error.message));
   useEffect(() => { void loadPorts(); }, []);
+  const connect = async () => { setBusy(true); setMessage(''); try { await connectMachine(port); await refresh(); } catch (error) { setMessage(error instanceof Error ? error.message : 'Machine request failed.'); } finally { setBusy(false); } };
+  const selected = ports?.ports.find(item => item.device === port);
+  return <>
+    <div className="port-row"><select aria-label="Serial port" value={port} disabled={busy} onChange={event => setPort(event.target.value)}><option value="">{ports?.ports.length ? 'Select a port' : 'No ports found'}</option>{ports?.ports.map(item => <option key={item.device} value={item.device}>{item.simulated ? '⚠ ' : ''}{item.description}{item.simulated ? '' : ` · ${item.device}`}{item.accessible === false ? ' · no permission' : ''}</option>)}</select>
+      <button className="icon-button" aria-label="Refresh ports" disabled={busy} onClick={() => void loadPorts()}><RefreshCw size={14} /></button></div>
+    {selected?.accessible === false && <p className="form-error">This account cannot open {selected.device}. Run <code>sudo usermod -aG dialout $USER</code>, then log out and back in.</p>}
+    <button className="outline-button" disabled={busy || !port} onClick={() => void connect()}><Plug size={13} /> {busy ? 'Waiting for handshake…' : 'Connect'}</button>
+    <p className="muted-copy">Listing ports does not open them. Connecting opens only the selected port and sends read-only HELLO/STATUS frames; it never moves the machine.</p>
+    {ports?.error && <p className="muted-copy">{ports.error}</p>}
+    {message && <p className="form-error" role="alert">{message}</p>}
+  </>;
+}
+
+export function MachinePanel({ machine, refresh, profile }: { machine: MachineState | null; refresh: () => Promise<void>; profile?: CalibrationProfile }) {
+  const [busy, setBusy] = useState(false); const [message, setMessage] = useState('');
   const run = async (operation: () => Promise<unknown>) => { setBusy(true); setMessage(''); try { await operation(); await refresh(); } catch (error) { setMessage(error instanceof Error ? error.message : 'Machine request failed.'); } finally { setBusy(false); } };
   const connected = machine?.connection === 'connected';
   const status = machine?.status; const hello = machine?.hello;
   const configMatches = !!hello && !!profile?.firmware_config_id && profile.firmware_config_id === hello.config_id;
   return <section className="machine-panel" aria-labelledby="machine-panel-title">
     <div className="section-heading"><h3 id="machine-panel-title">USB machine</h3><span className={`small-tag connection-${machine?.connection ?? 'unknown'}`}>{labels[machine?.connection ?? ''] ?? 'Service offline'}</span></div>
-    {!connected ? <>
-      <div className="port-row"><select aria-label="Serial port" value={port} disabled={busy} onChange={event => setPort(event.target.value)}><option value="">{ports?.ports.length ? 'Select a port' : 'No ports found'}</option>{ports?.ports.map(item => <option key={item.device} value={item.device}>{item.simulated ? '⚠ ' : ''}{item.description}{item.simulated ? '' : ` · ${item.device}`}</option>)}</select>
-        <button className="icon-button" aria-label="Refresh ports" disabled={busy} onClick={() => void loadPorts()}><RefreshCw size={14} /></button></div>
-      <button className="outline-button" disabled={busy || !port} onClick={() => void run(() => connectMachine(port))}><Plug size={13} /> {busy ? 'Waiting for handshake…' : 'Connect'}</button>
-      <p className="muted-copy">Listing ports does not open them. Connecting opens only the selected port and sends read-only HELLO/STATUS frames; it never moves the machine.</p>
-    </> : <>
+    {!connected ? <PortPicker refresh={refresh} /> : <>
       <dl className="path-insights machine-details">
         <div><dt>Firmware</dt><dd>{hello?.firmware_version} · protocol {hello?.protocol}{machine?.simulated && machine.port?.startsWith('sim://') ? ' · simulated' : ''}</dd></div>
         <div><dt>Configuration</dt><dd className={configMatches ? 'match' : 'mismatch'}>{hello?.config_id} {configMatches ? '✓ profile' : '≠ profile'}</dd></div>

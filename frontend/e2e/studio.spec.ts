@@ -246,9 +246,8 @@ test('measurements differing from both references verify only through the canoni
   await expect(job.getByText(/Machine check: canonical firmware shows/)).toContainText(/CRC [0-9a-f]{8}/);
 });
 
-test('a verified job streams over USB to the simulated firmware with acknowledged progress', async ({ page }) => {
-  await page.goto('/');
-  await expect(page.getByText('Running locally')).toBeVisible();
+/** Saves and verifies a profile matching the simulator's compiled configuration; returns its configuration ID. */
+async function verifiedSimulatorProfile(page: Page) {
   const token = (await (await page.request.get('/api/session')).json()).write_token;
   const headers = { 'X-Picasso-Token': token };
   // Same values as the synthetic configuration compiled into the simulator.
@@ -262,6 +261,13 @@ test('a verified job streams over USB to the simulated firmware with acknowledge
   const verified = await page.request.put(`/api/profiles/${saved.id}`, { headers, data: { expected_revision: saved.revision, select_for_preparation: true,
     calibration: { ...calibration, firmware_config_id: identity, verified: true, firmware_matches_measurements: true, pen_lift_and_holding_tested: true, workspace_tested: true } } });
   expect(verified.ok()).toBe(true);
+  return identity as string;
+}
+
+test('a verified job streams over USB to the simulated firmware with acknowledged progress', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByText('Running locally')).toBeVisible();
+  const identity = await verifiedSimulatorProfile(page);
   await page.reload();
   await expect(page.getByText('Running locally')).toBeVisible();
   await command(page, 'Draw a circle diameter 40');
@@ -298,4 +304,55 @@ test('a verified job streams over USB to the simulated firmware with acknowledge
   await page.getByRole('button', { name: 'Machine', exact: true }).click();
   await page.getByRole('button', { name: 'Disconnect' }).click();
   await expect(panel.getByText('Not connected', { exact: true })).toBeVisible();
+});
+
+test('Execute beside Simulation connects, draws over USB, returns to origin and stops from the preview', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByText('Running locally')).toBeVisible();
+  await verifiedSimulatorProfile(page);
+  await page.reload();
+  await expect(page.getByText('Running locally')).toBeVisible();
+  await command(page, 'Draw a circle diameter 40');
+
+  const execute = page.getByRole('button', { name: 'Execute', exact: true });
+  await expect(page.getByRole('button', { name: 'Play simulation' })).toBeVisible();
+  await execute.click();
+  const sheet = page.getByRole('dialog', { name: 'Draw it on the machine' });
+  await expect(sheet.getByText(/Prepared job .* fits the recorded workspace/)).toBeVisible();
+  await sheet.getByRole('combobox', { name: 'Serial port' }).selectOption('sim://picasso-firmware');
+  await sheet.getByRole('button', { name: 'Connect' }).click();
+  await expect(sheet.getByText(/Picasso firmware 0\.6\.1 · configuration/)).toBeVisible({ timeout: 30000 });
+  await expect(sheet.locator('.usb-checks li.ok')).toHaveCount(4, { timeout: 10000 });
+  const start = sheet.getByRole('button', { name: 'Start drawing' });
+  await expect(start).toBeDisabled();
+  await sheet.getByRole('checkbox', { name: 'The drawing area is clear and I am watching the machine.' }).check();
+  await start.click();
+  await expect(sheet.getByLabel('USB run')).toBeVisible();
+  await sheet.getByRole('button', { name: 'Close execute' }).click();
+  const executing = page.getByRole('button', { name: /Executing · \d+%/ });
+  await expect(executing).toBeVisible();
+  await expect(page.getByTestId('machine-cursor')).toBeVisible({ timeout: 10000 });
+  await expect(page.getByText('Machine drawing')).toBeVisible();
+  await page.evaluate(async () => { await document.fonts.ready; });
+  await page.screenshot({ path: '../docs/screenshots/phase-6-execute.png', fullPage: true });
+  await executing.click();  // reopening the sheet shows the same run
+  const run = sheet.getByLabel('USB run');
+  await expect(run.getByText('COMPLETED', { exact: true })).toBeVisible({ timeout: 60000 });
+  await expect(page.getByRole('button', { name: 'Stop the machine' })).not.toBeVisible();
+
+  // The circle ends away from (0,0): the next run needs an explicit, confirmed Go to origin.
+  await expect(start).toBeDisabled();
+  await sheet.getByRole('checkbox', { name: /straight pen-up route .* to \(0,0\) is clear/ }).check();
+  await sheet.getByRole('button', { name: 'Go to origin' }).click();
+  await expect(sheet.locator('.usb-checks li.ok')).toHaveCount(4, { timeout: 30000 });
+  await sheet.getByRole('checkbox', { name: 'The drawing area is clear and I am watching the machine.' }).check();
+  await start.click();
+  await expect(page.getByRole('button', { name: /Executing · \d+%/ })).toBeVisible();
+  await sheet.getByRole('button', { name: 'Close execute' }).click();
+  await page.getByRole('button', { name: 'Stop the machine' }).click();
+  await expect(page.getByRole('button', { name: 'Stop the machine' })).not.toBeVisible({ timeout: 15000 });
+  await expect(execute).toBeEnabled();
+  await expect.poll(async () => (await (await page.request.get('/api/machine')).json()).recent_runs[0].state, { timeout: 15000 }).toBe('aborted');
+  const token = (await (await page.request.get('/api/session')).json()).write_token;
+  await page.request.post('/api/machine/disconnect', { headers: { 'X-Picasso-Token': token } });
 });

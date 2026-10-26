@@ -4,7 +4,7 @@
 #ifndef PICASSO_CONFIG_H
 #define PICASSO_CONFIG_H
 
-#define PICASSO_FIRMWARE_VERSION "0.6.0"
+#define PICASSO_FIRMWARE_VERSION "0.6.1"
 #define PICASSO_DIALECT "picasso-fw-v1"
 #define PICASSO_PROTOCOL_VERSION 1
 
@@ -72,5 +72,13 @@
 
 // SD bytes processed per loop() pass, bounding keypad service latency.
 #define PICASSO_READ_BYTES_PER_LOOP 32
+
+// SD jobs (main.nc on the card). An ATmega328P (UNO) cannot hold the SD
+// library and the USB protocol together: 0 (default) builds the USB-only
+// firmware that fits, 1 adds the SD job menu for boards with more memory
+// (scripts/firmware.py build --with-sd).
+#ifndef PICASSO_ENABLE_SD
+#define PICASSO_ENABLE_SD 0
+#endif
 
 #endif

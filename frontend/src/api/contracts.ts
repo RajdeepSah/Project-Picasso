@@ -337,6 +337,7 @@ export type ExpectedRevision1 = string;
 export type ProfileId1 = string;
 export type SchemaVersion41 = 1;
 export type Error = string | null;
+export type Accessible = boolean;
 export type Description = string;
 export type Device = string;
 export type Hwid = string;
@@ -824,6 +825,7 @@ export interface PortsResponse {
   schema_version?: SchemaVersion43;
 }
 export interface SerialPortInfo {
+  accessible?: Accessible;
   description: Description;
   device: Device;
   hwid: Hwid;

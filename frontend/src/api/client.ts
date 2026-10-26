@@ -68,6 +68,7 @@ export const saveCalibration = (payload: CalibrationSaveRequest, id?: string) =>
 export const selectCalibration = (profile: CalibrationProfile) => mutate<ProfilesResponse>('/api/profiles/select', { profile_id: profile.id, expected_revision: profile.revision }, freshSignal());
 export const prepareJob = (revision_id: string, mode: 'simulation' | 'physical', profile?: CalibrationProfile) => mutate<PreparedJob>('/api/jobs/prepare', { revision_id, mode, profile_id: mode === 'physical' ? profile?.id : undefined, profile_revision: mode === 'physical' ? profile?.revision : undefined }, freshSignal());
 export const fetchJobs = (id: string, signal: AbortSignal) => get<PreparedJob[]>(`/api/jobs?revision_id=${encodeURIComponent(id)}`, signal);
+export const fetchJob = (id: string, signal: AbortSignal) => get<PreparedJob>(`/api/jobs/${encodeURIComponent(id)}`, signal);
 export const fetchTargets = (signal = freshSignal()) => get<TargetsResponse>('/api/storage/targets', signal);
 export const createTestTarget = () => mutate<StorageTarget>('/api/storage/test-target', {}, freshSignal());
 export const selectTarget = (target_id: string) => mutate<TargetsResponse>('/api/storage/select', { target_id }, freshSignal());

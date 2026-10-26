@@ -3,7 +3,7 @@
 
   python3 scripts/firmware.py config --profile <measured-id> | --reference reference-350
   python3 scripts/firmware.py host-test
-  python3 scripts/firmware.py build [--fqbn arduino:avr:uno] (--profile ID | --reference ID)
+  python3 scripts/firmware.py build [--fqbn arduino:avr:uno] [--with-sd] (--profile ID | --reference ID)
 
 Nothing here uploads firmware, opens a serial port or moves the machine.
 Upload is a separate, explicit operator step documented in firmware/README.md.
@@ -12,6 +12,7 @@ Upload is a separate, explicit operator step documented in firmware/README.md.
 import argparse
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -28,6 +29,9 @@ LIBRARIES = ROOT / "Drawbot_C" / "02 arduino code" / "Library"
 TINYSTEPPER = LIBRARIES / "TinyStepper_28BYJ_48" / "src"
 DEFAULT_FQBN = "arduino:avr:uno"
 CORE = "arduino:avr@1.8.6"
+# SRAM that must remain for the stack. arduino-cli only rejects builds above
+# 100%, but the sketch needs room for its call frames and serial buffers.
+MIN_FREE_SRAM = 384
 
 
 def load_profile(profile_id=None, reference=None, data_dir=None):
@@ -70,8 +74,11 @@ def compiler():
     return found
 
 
-def host_build(out_dir: Path, config: Path) -> dict:
-    """Compile core tests, the parser/geometry tool and the simulator on the host."""
+def host_build(out_dir: Path, config: Path, sd=True) -> dict:
+    """Compile core tests, the parser/geometry tool and the simulator on the host.
+
+    sd selects the SD job path (PICASSO_ENABLE_SD); False mirrors the UNO build.
+    """
     cxx = compiler()
     strict = [cxx, "-std=gnu++11", "-O1", "-Wall", "-Wextra", "-Werror"]
     core = str(SKETCH / "picasso_core.cpp")
@@ -84,7 +91,7 @@ def host_build(out_dir: Path, config: Path) -> dict:
         [cxx, "-std=gnu++11", "-O1", "-w", "-I", str(HOST / "stubs"), "-I", str(SHIMS), "-I", str(TINYSTEPPER),
          "-c", str(TINYSTEPPER / "TinyStepper_28BYJ_48.cpp"), "-o", str(out_dir / "tinystepper.o")],
         strict + ["-I", str(HOST / "stubs"), "-I", str(SHIMS), "-I", str(SKETCH), "-I", str(TINYSTEPPER),
-                  f'-DPICASSO_MACHINE_CONFIG="{config.resolve()}"', str(HOST / "simulator.cpp"), core,
+                  f'-DPICASSO_MACHINE_CONFIG="{config.resolve()}"', f"-DPICASSO_ENABLE_SD={int(sd)}", str(HOST / "simulator.cpp"), core,
                   str(out_dir / "tinystepper.o"), "-o", str(binaries["simulator"])],
     ]
     for command in commands:
@@ -94,7 +101,21 @@ def host_build(out_dir: Path, config: Path) -> dict:
     return binaries
 
 
-def arduino_build(fqbn: str, profile, kind: str) -> int:
+def sram_headroom(report: str) -> int:
+    """Exit status for arduino-cli's memory report: fail when the stack would be starved."""
+    match = re.search(r"leaving (-?\d+) bytes for local variables", report)
+    if not match:
+        print("No SRAM report found; review memory use before uploading.", file=sys.stderr)
+        return 0
+    free = int(match.group(1))
+    if free < MIN_FREE_SRAM:
+        print(f"Only {free} bytes of SRAM remain for the stack (minimum {MIN_FREE_SRAM}). Do not upload this build.", file=sys.stderr)
+        return 3
+    print(f"SRAM headroom: {free} bytes free for the stack (minimum {MIN_FREE_SRAM}).")
+    return 0
+
+
+def arduino_build(fqbn: str, profile, kind: str, sd=False) -> int:
     cli = os.environ.get("ARDUINO_CLI") or shutil.which("arduino-cli")
     if not cli:
         print("arduino-cli was not found. Install it and the core with:\n"
@@ -105,12 +126,18 @@ def arduino_build(fqbn: str, profile, kind: str) -> int:
         shutil.copytree(SKETCH, sketch, ignore=shutil.ignore_patterns("machine_config.h"))
         identity = write_config(profile, kind, sketch / "machine_config.h")
         command = [cli, "compile", "--fqbn", fqbn, "--libraries", str(LIBRARIES), "--warnings", "all"]
+        flags = [f"-DPICASSO_ENABLE_SD={int(sd)}"]
         if sys.platform.startswith("linux"):
             shims = Path(temporary) / "shims"
             shutil.copytree(SHIMS, shims)
-            command += ["--build-property", f"compiler.cpp.extra_flags=-I{shims}"]
-        print(f"Compiling {profile.id} ({kind}) configuration {identity} for {fqbn}. No upload is performed.")
-        return subprocess.run(command + [str(sketch)]).returncode
+            flags.insert(0, f"-I{shims}")
+        command += ["--build-property", f"compiler.cpp.extra_flags={' '.join(flags)}"]
+        variant = "USB+SD" if sd else "USB-only"
+        print(f"Compiling {profile.id} ({kind}) configuration {identity} as the {variant} build for {fqbn}. No upload is performed.")
+        result = subprocess.run(command + [str(sketch)], capture_output=True, text=True)
+        sys.stdout.write(result.stdout)
+        sys.stderr.write(result.stderr)
+        return result.returncode or sram_headroom(result.stdout)
 
 
 def main(argv=None):
@@ -127,6 +154,8 @@ def main(argv=None):
     commands.choices["config"].add_argument("--output", type=Path, default=SKETCH / "machine_config.h")
     commands.choices["build"].add_argument("--fqbn", default=DEFAULT_FQBN,
                                            help="exact board identifier; UNO is a reference build, not the confirmed board")
+    commands.choices["build"].add_argument("--with-sd", action="store_true",
+                                           help="include SD jobs; too large for an UNO, which gets the USB-only build")
     commands.add_parser("host-test")
     args = parser.parse_args(argv)
 
@@ -152,7 +181,7 @@ def main(argv=None):
         print(f"Wrote {args.output} for {profile.id} ({kind}); configuration ID {identity}.")
         print("Build and upload it explicitly, then compare the ID on the machine's Info screen. Generation does not verify hardware.")
         return 0
-    return arduino_build(args.fqbn, profile, kind)
+    return arduino_build(args.fqbn, profile, kind, sd=args.with_sd)
 
 
 if __name__ == "__main__":

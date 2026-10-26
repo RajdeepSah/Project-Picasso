@@ -7,17 +7,28 @@
 // between bounded motion slices. SD jobs are validated completely (syntax,
 // workspace and rope limits) before any motion. A host can stream a job over
 // USB with serial protocol v1 (docs/SERIAL_PROTOCOL.md): one acknowledged
-// command at a time, never executed twice. See firmware/README.md.
+// command at a time, never executed twice. The SD job path is compiled only
+// with PICASSO_ENABLE_SD (picasso_config.h): an UNO cannot hold both.
+// See firmware/README.md.
+
+#include "picasso_config.h"
 
 #include <TinyStepper_28BYJ_48.h>
 #include <Servo.h>
+#if PICASSO_ENABLE_SD
 #include <SD.h>
+#endif
 #include <U8x8lib.h>
 #include <EEPROM.h>
 #include <string.h>
 
-#include "picasso_config.h"
 #include "picasso_core.h"
+
+#if PICASSO_ENABLE_SD
+#define PICASSO_BUILD " USB+SD"
+#else
+#define PICASSO_BUILD " USB"
+#endif
 
 #if defined(PICASSO_MACHINE_CONFIG)
 #include PICASSO_MACHINE_CONFIG
@@ -42,7 +53,9 @@ U8X8_SSD1306_128X64_NONAME_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);
 TinyStepper_28BYJ_48 m1;  // left motor
 TinyStepper_28BYJ_48 m2;  // right motor
 Servo pen;
+#if PICASSO_ENABLE_SD
 File jobFile;
+#endif
 
 static picasso::Geometry geometry;
 
@@ -232,11 +245,15 @@ static Mode messageReturn = MODE_MAIN;
 static uint8_t cursor = 0;
 static Confirm confirming = CONFIRM_ORIGIN;
 
-static const uint8_t kMainItems = 3;
+#if PICASSO_ENABLE_SD
+static const uint8_t kMainSd = 0, kMainSetup = 1, kMainInfo = 2, kMainItems = 3;
+#else
+static const uint8_t kMainSetup = 0, kMainInfo = 1, kMainItems = 2;
+#endif
 static const uint8_t kSetupItems = 6;
 
-// Job state shared by SD jobs and built-in programs.
-static JobKind jobKind = JOB_SD;
+// Job state shared by SD, USB and built-in jobs.
+static JobKind jobKind = JOB_SQUARE;
 static Phase phase = EX_FETCH;
 static Phase pausedFrom = EX_FETCH;
 static bool pauseRequested = false, stopRequested = false, resumePenDown = false;
@@ -248,11 +265,13 @@ static picasso::Status failure = picasso::OK;
 static bool motionStarted = false;
 static uint32_t failedLine = 0;
 
-static picasso::LineReader reader;
 static picasso::JobChecker checker;
 static picasso::Command current;
+#if PICASSO_ENABLE_SD
+static picasso::LineReader reader;
 static uint32_t fileSize = 0, bytesRead = 0, crc = picasso::kCrcInitial;
 static uint32_t validatedCrc = 0, validatedLines = 0, validatedMoves = 0;
+#endif
 
 static picasso::Command program[8];
 static uint8_t programLength = 0, programIndex = 0;
@@ -478,9 +497,13 @@ static void sendEvent(PGM_P event) {
 static void enterMain() {
   mode = MODE_MAIN;
   clearText();
-  textP(0, cursor == 0 ? PSTR("> SD job") : PSTR("  SD job"));
-  textP(1, cursor == 1 ? PSTR("> Setup") : PSTR("  Setup"));
-  textP(2, cursor == 2 ? PSTR("> Info") : PSTR("  Info"));
+#if PICASSO_ENABLE_SD
+  textP(0, cursor == kMainSd ? PSTR("> SD job") : PSTR("  SD job"));
+#else
+  textP(2, PSTR("USB jobs only"));
+#endif
+  textP(kMainSetup, cursor == kMainSetup ? PSTR("> Setup") : PSTR("  Setup"));
+  textP(kMainInfo, cursor == kMainInfo ? PSTR("> Info") : PSTR("  Info"));
   originText(3);
   render();
 }
@@ -523,7 +546,7 @@ static void showMessage(PGM_P first, PGM_P second, Mode back) {
 static void enterInfo() {
   mode = MODE_INFO;
   clearText();
-  textP(0, PSTR("FW " PICASSO_FIRMWARE_VERSION));
+  textP(0, PSTR("FW " PICASSO_FIRMWARE_VERSION PICASSO_BUILD));
   textP(1, PSTR("CFG ID"));
   textP(2, PSTR(PICASSO_CONFIG_ID));
   textP(3, geometry.hasRegion ? PSTR("Region: set") : PSTR("Region: none"));
@@ -593,11 +616,13 @@ static void enterResult() {
   char number[11];
   if (outcome == OUTCOME_COMPLETED) {
     textP(0, PSTR("COMPLETED"));
+#if PICASSO_ENABLE_SD
     if (jobKind == JOB_SD) {
       formatHex(number, validatedCrc);
       textP(1, PSTR("CRC "));
       appendRam(1, number);
     }
+#endif
   } else {
     textP(0, outcome == OUTCOME_ABORTED ? PSTR("ABORTED") : PSTR("FAILED"));
     char text[16];
@@ -621,9 +646,11 @@ static void enterResult() {
 }
 
 static void closeJob() {
+#if PICASSO_ENABLE_SD
   if (jobKind != JOB_SD) return;
   if (jobFile) jobFile.close();
   SD.end();
+#endif
 }
 
 // Failure before any motion: validation, card or file errors.
@@ -711,13 +738,16 @@ static void endExecution(Outcome result, Reason why, picasso::Status status) {
   outcome = result;
   reason = why;
   failure = status;
+#if PICASSO_ENABLE_SD
   if (jobKind == JOB_SD && result != OUTCOME_COMPLETED) failedLine = reader.lineNumber();
+#endif
   if (jobKind == JOB_USB && result != OUTCOME_COMPLETED) failedLine = usbReceived;  // sequence number
   commandPen(false);  // raise first; the display update can take tens of ms
   phase = EX_ENDING;
   logEvent(result == OUTCOME_ABORTED ? F("STOPPING") : result == OUTCOME_FAILED ? F("FAILING") : F("FINISHING"));
 }
 
+#if PICASSO_ENABLE_SD
 static Fetch fetchSdCommand() {
   for (uint8_t n = 0; n < PICASSO_READ_BYTES_PER_LOOP; ++n) {
     picasso::LineReader::Result result;
@@ -756,6 +786,7 @@ static Fetch fetchSdCommand() {
   }
   return FETCH_BUSY;
 }
+#endif
 
 // The first reason wins: keypad, host STOP or the host-loss watchdog.
 static void requestStop(Reason why) {
@@ -773,7 +804,9 @@ static void commandDone() {
 }
 
 static Fetch fetchCommand() {
+#if PICASSO_ENABLE_SD
   if (jobKind == JOB_SD) return fetchSdCommand();
+#endif
   if (jobKind == JOB_USB) {
     if (!usbPending) return FETCH_BUSY;  // END from the host completes the job
     usbPending = false;
@@ -901,6 +934,7 @@ static void serviceExecution(Key key) {
 }
 
 // ---------------------------------------------------------------- SD jobs
+#if PICASSO_ENABLE_SD
 static void startSdValidation() {
   jobKind = JOB_SD;
   if (!geometry.hasRegion) {
@@ -1010,6 +1044,7 @@ static void startSdRun() {
   checker.begin(geometry, 0, 0);
   startExecution(JOB_SD);
 }
+#endif
 
 // ------------------------------------------------------- built-in programs
 static void programMove(uint8_t g, float x, float y) {
@@ -1125,8 +1160,13 @@ static void handleMenuKey(Key key) {
         cursor = (cursor + 1) % kMainItems;
         enterMain();
       } else if (key == KEY_ENTER) {
-        if (cursor == 0) startSdValidation();
-        else if (cursor == 1) {
+#if PICASSO_ENABLE_SD
+        if (cursor == kMainSd) {
+          startSdValidation();
+          return;
+        }
+#endif
+        if (cursor == kMainSetup) {
           cursor = 0;
           enterSetup();
         } else enterInfo();
@@ -1137,7 +1177,7 @@ static void handleMenuKey(Key key) {
         cursor = (cursor + 1) % kSetupItems;
         enterSetup();
       } else if (key == KEY_ESC) {
-        cursor = 1;
+        cursor = kMainSetup;
         enterMain();
       } else if (key == KEY_ENTER) {
         switch (cursor) {
@@ -1182,6 +1222,7 @@ static void handleMenuKey(Key key) {
         enterSetup();
       }
       return;
+#if PICASSO_ENABLE_SD
     case MODE_READY:
       if (key == KEY_ENTER && originFresh && posX == 0 && posY == 0) startSdRun();
       else if (key == KEY_ESC) {
@@ -1189,6 +1230,7 @@ static void handleMenuKey(Key key) {
         enterMain();
       }
       return;
+#endif
     case MODE_INFO:
     case MODE_RESULT:
       cursor = 0;
@@ -1473,7 +1515,8 @@ void setup() {
 
   // Informational log line; protocol frames start with '@' (docs/SERIAL_PROTOCOL.md).
   Serial.print(F("PICASSO FW " PICASSO_FIRMWARE_VERSION " DIALECT " PICASSO_DIALECT " CFG " PICASSO_CONFIG_ID));
-  Serial.println(geometry.hasRegion ? F(" REGION SET ORIGIN UNSET") : F(" REGION NONE ORIGIN UNSET"));
+  Serial.print(geometry.hasRegion ? F(" REGION SET ORIGIN UNSET") : F(" REGION NONE ORIGIN UNSET"));
+  Serial.println(PICASSO_ENABLE_SD ? F(" SD ON") : F(" SD OFF"));
 
   clearText();
   textP(0, PSTR("Picasso " PICASSO_FIRMWARE_VERSION));
@@ -1494,7 +1537,9 @@ void loop() {
   Key key = pollKey();
   switch (mode) {
     case MODE_EXECUTING: serviceExecution(key); break;
+#if PICASSO_ENABLE_SD
     case MODE_VALIDATING: serviceValidation(key); break;
+#endif
     case MODE_JOG: serviceJog(key); break;
     default: handleMenuKey(key); break;
   }

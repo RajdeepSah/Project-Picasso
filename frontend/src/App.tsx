@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { ArrowRight, ArrowUp, BookOpen, Check, ChevronDown, CircleHelp, Cpu, FileCode2, FileUp, History,
   Layers, Mic, Monitor, Plus, Settings2, ShieldCheck, Sparkles, SquarePen, Usb, X } from 'lucide-react';
-import { downloadDraft, fetchDraft, loadStudio, reviseDraft, selectCalibration, submitCommand, type Studio } from './api/client';
+import { controlMachine, downloadDraft, fetchDraft, fetchJob, loadStudio, reviseDraft, selectCalibration, submitCommand, type Studio } from './api/client';
 import type { DrawingDraft } from './api/contracts';
 import { Brand } from './components/Brand';
 import { HistoryPanel } from './components/HistoryPanel';
@@ -9,8 +9,9 @@ import { ImportDialog } from './components/ImportDialog';
 import { CalibrationDialog } from './components/CalibrationDialog';
 import { JobDialog } from './components/JobDialog';
 import { MachinePanel } from './components/MachinePanel';
-import { useMachine } from './components/UsbRunCard';
-import { DrawingPreview } from './components/DrawingPreview';
+import { ExecuteDialog } from './components/ExecuteDialog';
+import { runActive, useMachine } from './components/UsbRunCard';
+import { DrawingPreview, executedFraction, type Execution } from './components/DrawingPreview';
 import { DrawingInspector, emptyEdits, fieldsFor, revisionPayload, type Edits } from './components/DrawingInspector';
 
 const examples = ['Draw a circle', 'Draw a butterfly', 'Create a beautiful mandala'];
@@ -24,8 +25,8 @@ function Dialog({ kind, studio, close }: { kind: 'guide' | 'settings'; studio: S
     {kind === 'guide' ? <><p>Generate or import a drawing, refine its paths, and reopen it from saved history.</p>
       <ol className="guide-steps"><li><span>01</span><div><strong>Describe one drawing</strong><p>Try a circle, ellipse, rectangle, spiral, butterfly, mandala or geometric pattern. Add “120 mm wide”, “12 petals”, “seed 7”, or “intricate”.</p></div></li>
         <li><span>02</span><div><strong>Make it your own</strong><p>Adjust size, rotation, center, detail and seed. Controls update the path automatically. Playback is a visual simulation, not machine timing.</p></div></li>
-        <li><span>03</span><div><strong>Keep a draft</strong><p>Download JSON, SVG or restricted G-code. Revisions save automatically. Record measurements before preparing a physical job, or try isolated test-directory export.</p></div></li></ol>
-      <div className="notice"><ShieldCheck size={18} /><p>Machine calibration is unverified. Draft downloads cannot authorize physical drawing. No hardware command is sent.</p></div>
+        <li><span>03</span><div><strong>Draw it or keep it</strong><p>Execute streams the drawing to the machine over USB once it is connected, a verified profile is selected and the origin is set on the keypad. Or download JSON, SVG or restricted G-code; revisions save automatically.</p></div></li></ol>
+      <div className="notice"><ShieldCheck size={18} /><p>Nothing is sent to the machine until you connect explicitly and start a run. Draft downloads cannot authorize physical drawing.</p></div>
     </> : <><p>Drawings are generated on your computer. No account, API key or network service is required.</p><dl className="settings-list">
       <div><dt>Application</dt><dd>{studio?.health.version ?? 'Service offline'}</dd></div><div><dt>Python</dt><dd>{studio?.health.python_version ?? 'Unavailable'}</dd></div>
       <div><dt>Current milestone</dt><dd>Phase 6 · Acknowledged USB control</dd></div><div><dt>Local SD mirror</dt><dd>SdCard/ · unchanged</dd></div><div><dt>Machine profile</dt><dd>Not selected or verified</dd></div></dl>
@@ -53,11 +54,21 @@ export default function App() {
   const [fields, setFields] = useState<Edits>(emptyEdits);
   const [aspectLocked, setAspectLocked] = useState(true);
   const [seedLocked, setSeedLocked] = useState(false);
+  const [executeOpen, setExecuteOpen] = useState(false);
+  const [executing, setExecuting] = useState<{ jobId: string; revisionId: string } | null>(null);
   const input = useRef<HTMLTextAreaElement>(null);
   const controller = useRef<AbortController | null>(null);
   const ticket = useRef(0);
   const lastAttempt = useRef('');
-  const [machine, refreshMachine] = useMachine(inspector === 'machine');
+  // A local snapshot without device I/O, so Execute, Stop and the footer stay current.
+  const [machine, refreshMachine] = useMachine(true);
+  const run = machine?.run;
+  useEffect(() => {  // after a reload, find which revision an active run belongs to
+    if (!run || !runActive(run) || executing?.jobId === run.job_id) return;
+    const abort = new AbortController();
+    fetchJob(run.job_id, abort.signal).then(job => setExecuting({ jobId: job.id, revisionId: job.revision_id })).catch(() => {});
+    return () => abort.abort();
+  }, [run?.job_id, run?.state, executing?.jobId]);
 
   useEffect(() => {
     const abort = new AbortController();
@@ -124,6 +135,17 @@ export default function App() {
   };
   const selectedReference = studio?.profiles.profiles.find(profile => profile.id === referenceId);
   const selectedMeasured = studio?.profiles.measured_profiles?.find(profile => profile.id === studio.profiles.active_profile_id);
+  const execution = useMemo((): Execution | null => {
+    if (!run || !runActive(run)) return null;
+    const acknowledged = run.acknowledged_seq ?? 0;
+    const shown = draft && executing?.jobId === run.job_id && executing.revisionId === draft.revision_id;
+    return { fraction: shown ? executedFraction(draft, acknowledged) : null, position: run.position_mm ?? null,
+      percent: run.total_commands ? Math.round(acknowledged / run.total_commands * 100) : 0, stopping: run.state === 'stopping',
+      stop: () => void controlMachine('stop').then(refreshMachine).catch(error => setFeedback(error.message)) };
+  }, [run, draft, executing, refreshMachine]);
+  const machineState = machine?.connection ?? studio?.status.machine.state;
+  const executeBlocked = !draft ? 'Generate or open a drawing first' : !studio ? 'The local service is offline'
+    : busy ? 'Wait for the drawing to update' : adjustment.dirty ? 'Wait for your adjustments to save' : '';
   const openSaved = (id: string) => { setView('studio'); void perform(signal => fetchDraft(id, signal), 'Opened from saved history with artifact checksums verified.'); };
   const refreshStudio = () => setRetry(value => value + 1);
 
@@ -138,16 +160,18 @@ export default function App() {
       <main id="workspace" className="main-content"><div className="page-heading"><div><p className="eyebrow">IDEAS IN. ART OUT.</p><h1>{view === 'studio' ? 'Your imagination, one line at a time.' : 'Ideas worth another look.'}</h1><p>{view === 'studio' ? 'Create offline, refine the paths, and prepare a verified file copy.' : 'Saved on this computer. Search and reopen any drawing revision.'}</p></div><button className="subtle-button import-button" disabled={!studio || busy} onClick={() => setExtra('import')}><FileUp size={16} />Import drawing</button><button className="subtle-button guide-button" onClick={() => setDialog('guide')}><BookOpen size={16} /> Quick guide <ArrowRight size={15} /></button></div>
         {!loading && !studio && <div className="connection-error" role="alert"><Monitor size={20} /><div><strong>The local service is offline</strong><p>Keep the Picasso launcher running, then reconnect. Your command stays in the composer.</p></div><button className="subtle-button" onClick={() => { setLoading(true); setRetry(value => value + 1); }}>Reconnect</button></div>}
         {view === 'history' ? <HistoryPanel open={openSaved} /> : <>
-          <div className="workspace-columns"><DrawingPreview draft={draft} busy={busy} grid={grid} setGrid={setGrid} zoom={zoom} setZoom={setZoom} />
+          <div className="workspace-columns"><DrawingPreview draft={draft} busy={busy} grid={grid} setGrid={setGrid} zoom={zoom} setZoom={setZoom} execute={() => setExecuteOpen(true)} executeBlocked={executeBlocked} execution={execution} />
             <aside className="inspector panel" aria-label="Drawing and machine inspector"><div className="inspector-tabs"><button className={inspector === 'drawing' ? 'active' : ''} aria-pressed={inspector === 'drawing'} onClick={() => setInspector('drawing')}><Settings2 size={15} /> Drawing</button><button className={inspector === 'machine' ? 'active' : ''} aria-pressed={inspector === 'machine'} onClick={() => setInspector('machine')}><Cpu size={15} /> Machine</button></div>
               {inspector === 'drawing' ? <DrawingInspector draft={draft} fields={fields} change={change} busy={busy} available={!!studio} dirty={adjustment.dirty} aspectLocked={aspectLocked} setAspectLocked={setAspectLocked} seedLocked={seedLocked} setSeedLocked={setSeedLocked} regenerate={regenerate} download={format => void download(format)} physicalReady={!!selectedMeasured?.verified} prepare={() => setExtra('physical-export')} testExport={() => setExtra('test-export')} /> : <div className="inspector-body"><MachinePanel machine={machine} refresh={refreshMachine} profile={selectedMeasured} /><div className="inspector-rule" /><div className="section-heading"><h3>Reference profiles</h3><span className="small-tag">READ ONLY</span></div><p className="muted-copy">Inspect bundled source values or record your actual measurements.</p><button className="outline-button" onClick={() => setExtra('calibration')}>Record / edit measurements</button>{!!studio?.profiles.measured_profiles?.length && <label className="reference-label">Profile for preparation<select aria-label="Measured profile for preparation" value={studio.profiles.active_profile_id ?? ''} onChange={event => { const profile = studio.profiles.measured_profiles?.find(item => item.id === event.target.value); if (profile) void selectCalibration(profile).then(refreshStudio).catch(error => setFeedback(error.message)); }}><option value="" disabled>Select a measured profile</option>{studio.profiles.measured_profiles.map(profile => <option key={profile.id} value={profile.id}>{profile.label} · {profile.verified ? 'verified by operator' : 'unverified'}</option>)}</select></label>}<label className="reference-label">Source reference<div className="select-wrap"><select value={referenceId} onChange={event => setReferenceId(event.target.value)} disabled={!studio} aria-label="Inspect reference profile"><option value="reference-350">Drawbot · 350 mm</option><option value="reference-400">SD copy · 400 mm</option></select><ChevronDown size={15} /></div></label><div className="profile-badge"><ShieldCheck size={14} /> Unverified reference</div><dl className="path-insights profile-details"><div><dt>Motor spacing</dt><dd>{selectedReference ? `${selectedReference.separation_mm} mm` : '—'}</dd></div><div><dt>Spool diameter</dt><dd>{selectedReference ? `${selectedReference.spool_diameter_mm} mm` : '—'}</dd></div><div><dt>Steps / turn</dt><dd>{selectedReference?.steps_per_turn ?? '—'}</dd></div><div><dt>Board</dt><dd>Unconfirmed</dd></div><div><dt>Allowed workspace</dt><dd>Not established</dd></div><div><dt>Firmware config</dt><dd>{studio?.profiles.firmware?.config_ids?.[referenceId] ?? '—'} · jog-only</dd></div></dl><div className="notice profile-notice"><Cpu size={18} /><p>{selectedReference?.notes ?? 'Connect to inspect source references.'}</p></div><p className="insight-caption">Viewing a reference does not activate it or change firmware.</p></div>}
             </aside></div>
           <section className="composer-section" aria-labelledby="composer-title"><div className="composer-heading"><h2 id="composer-title"><Sparkles size={17} /> What would you like to draw?</h2><span>OFFLINE DRAWING COMMAND</span></div><form onSubmit={onSubmit} className="composer"><label className="sr-only" htmlFor="drawing-command">Drawing command</label><textarea ref={input} id="drawing-command" value={prompt} maxLength={2000} rows={2} onChange={event => setPrompt(event.target.value)} onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); command(); } }} placeholder="Describe a circle, butterfly, mandala, or geometric pattern…" aria-describedby="command-hint" /><div className="composer-bottom"><span id="command-hint"><span className="composer-dot" />{busy ? 'Building the exported path…' : studio ? 'Offline engine · no API key needed' : loading ? 'Connecting to local service…' : 'Local service offline'}</span><div className="composer-actions">{busy && <button type="button" className="cancel-generation" onClick={() => { cancel(); setFeedback('Cancelled. The previous draft is retained.'); }}>Cancel</button>}<span title="Voice input arrives in Phase 8"><button type="button" disabled className="microphone-button" aria-label="Voice input unavailable until Phase 8"><Mic size={19} /></button></span><span className="action-divider" /><button className="submit-command" type="submit" aria-label="Submit drawing command" disabled={!prompt.trim() || !studio || busy}>{busy ? <span className="spinner" /> : <ArrowUp size={19} />}</button></div></div></form><div className="command-feedback" role="status" aria-live="polite">{feedback && <><CircleHelp size={16} /><span>{feedback}</span></>}</div><div className="example-commands"><span>A LITTLE INSPIRATION</span>{examples.map(text => <button key={text} onClick={() => draftCommand(text)}>{text}<ArrowRight size={12} /></button>)}</div></section>
         </>}
-        <footer className="workspace-footer"><div className="footer-statuses"><span title={studio?.status.machine.reason ?? 'Machine control unavailable'}><Usb size={14} /><span className={`status-dot ${studio?.status.machine.state === 'connected' ? 'online' : ''}`} />{({ connected: 'Machine connected', connecting: 'Machine connecting', lost: 'Machine connection lost', incompatible: 'Incompatible firmware' } as Record<string, string>)[studio?.status.machine.state ?? ''] ?? 'Machine not connected'}</span><span title={studio?.status.storage.reason ?? 'SD export unavailable'}><FileCode2 size={14} /><span className="status-dot" />{studio?.status.storage.state === 'test_directory' ? 'Test directory selected' : studio?.status.storage.state === 'ready' ? 'SD target mounted' : studio?.status.storage.state === 'unmounted' ? 'SD target unavailable' : 'SD not configured'}</span></div><span><Check size={13} />Local first. Made for your machine.</span></footer>
+        <footer className="workspace-footer"><div className="footer-statuses"><span title={machine?.message ?? studio?.status.machine.reason ?? 'Machine control unavailable'}><Usb size={14} /><span className={`status-dot ${machineState === 'connected' ? 'online' : ''}`} />{runActive(run) ? 'Machine drawing' : ({ connected: 'Machine connected', connecting: 'Machine connecting', lost: 'Machine connection lost', incompatible: 'Incompatible firmware' } as Record<string, string>)[machineState ?? ''] ?? 'Machine not connected'}</span><span title={studio?.status.storage.reason ?? 'SD export unavailable'}><FileCode2 size={14} /><span className="status-dot" />{studio?.status.storage.state === 'test_directory' ? 'Test directory selected' : studio?.status.storage.state === 'ready' ? 'SD target mounted' : studio?.status.storage.state === 'unmounted' ? 'SD target unavailable' : 'SD not configured'}</span></div><span><Check size={13} />Local first. Made for your machine.</span></footer>
       </main></div>{dialog && <Dialog kind={dialog} studio={studio} close={() => setDialog(null)} />}
     {extra === 'import' && <ImportDialog close={() => setExtra(null)} imported={result => { cancel(); accept(result); setView('studio'); setFeedback('Imported and saved a new revision. Review its origin, fit and normalized paths.'); setExtra(null); }} />}
     {extra === 'calibration' && studio && <CalibrationDialog profiles={studio.profiles} close={() => setExtra(null)} saved={() => { setExtra(null); refreshStudio(); setFeedback('Measured profile saved and selected for software preparation. No firmware changed.'); }} />}
+    {executeOpen && draft && <ExecuteDialog draft={draft} profile={selectedMeasured} machine={machine} refresh={refreshMachine} executingJobId={executing?.jobId} close={() => setExecuteOpen(false)}
+      calibrate={() => { setExecuteOpen(false); setInspector('machine'); setExtra('calibration'); }} started={job => setExecuting({ jobId: job.id, revisionId: job.revision_id })} />}
     {(extra === 'test-export' || extra === 'physical-export') && draft && <JobDialog draft={draft} mode={extra === 'test-export' ? 'simulation' : 'physical'} profile={selectedMeasured} close={() => setExtra(null)} updated={refreshStudio} />}
   </div>;
 }

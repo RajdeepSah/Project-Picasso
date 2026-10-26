@@ -121,6 +121,44 @@ Completed on Linux with Python 3.14.4, Node 22.22.1, npm 9.2.0, g++ 15.2.0 and p
 - **5 component tests and 9 Chromium journeys pass.** The new journey connects to the simulated firmware, sees the configuration match and confirmed origin, prepares a physical job, passes all 4 checks and starts over USB. It watches the run reach `COMPLETED` with every command acknowledged, then disconnects.
 - Contract drift check, typecheck, production build, the original-file manifest (`PASS`) and `git diff --check` all pass.
 
+## Addendum: Execute over USB and the UNO build (firmware 0.6.1)
+
+**Why.** The SD card is wired to the Arduino, so moving it to the computer for every drawing is the slow path. The goal is to generate, preview and draw from the studio.
+
+**Finding.** Compiled for `arduino:avr:uno`, firmware 0.6.0 needs **38,878 / 32,256 B flash (120%)** and **2,088 / 2,048 B SRAM (101%)**. It could not be uploaded to an UNO. The committed 0.5.0 was also over, at 101% flash. A probe sketch puts the SD library alone at about 8.7 KB of flash and 676 B of SRAM.
+
+**Changes.**
+
+- **Firmware 0.6.1.**
+  - `PICASSO_ENABLE_SD`, default `0`, compiles out the SD job path, and with it the SD library, file state and line reader.
+  - The **USB-only** UNO build uses **28,118 B flash (87%)** and **1,317 B SRAM (64%)**, leaving 731 B for the stack.
+  - Protocol v1, HELLO capabilities and configuration IDs are unchanged.
+  - The main menu becomes *Setup*/*Info*. The Info screen and boot line state the build (`USB`/`USB+SD`, `SD OFF|ON`).
+- **Build tooling.**
+  - `scripts/firmware.py build --with-sd` selects the SD build.
+  - Every Arduino build fails with less than 384 B of SRAM headroom.
+  - CI builds the USB-only UNO configurations, plus USB+SD for `arduino:avr:mega`.
+  - Host tests build both variants. The simulated device and the USB end-to-end tests run the USB-only build.
+- **Port access.**
+  - Listed ports report `accessible`, checked without opening them.
+  - An `EACCES` open error explains the `dialout` fix.
+- **Studio.**
+  - An **Execute** button sits beside *Simulation*. Its sheet connects to the port and shows the verified profile, then prepares and checks the drawing automatically.
+  - It lists the four start checks, offers *Go to origin* and asks for the area-clear confirmation **on every run**.
+  - During a run, the preview shows acknowledged progress over a faint full path, the commanded position, and an always-visible **Stop**.
+  - The footer follows the 1 s machine snapshot.
+
+**Validation.**
+
+| Area | Result |
+| --- | --- |
+| Python tests | **162** pass. New: the USB-only firmware variant, and port access and permission mapping. |
+| Component tests | **8** pass, 3 new. |
+| Chromium journeys | **10** pass. The new journey runs Execute → connect in the sheet → COMPLETED → Go to origin → second run → Stop from the preview → `aborted`. |
+| Firmware compile | USB-only UNO compiles for fixture, `reference-350` and `reference-400`. USB+SD compiles for Mega. |
+
+No board was flashed, and no motor moved.
+
 ## Not performed and pending
 
 - **Hardware USB checks** (commissioning guide §10), with only the simulated firmware tested so far:
@@ -130,7 +168,7 @@ Completed on Linux with Python 3.14.4, Node 22.22.1, npm 9.2.0, g++ 15.2.0 and p
   - measured pause and stop latency from the studio and from the keypad;
   - cable pull leading to `HOST_LOST`;
   - SD/USB exclusion.
-- **Arduino CLI compile and flash/SRAM report** (carried over from Phase 5). The protocol adds a 97-byte frame buffer and session state to an SRAM budget already estimated as tight. CI compiles it; the report must be reviewed before uploading.
+- **Flashing the USB-only build to the actual board.** The compile and memory report now exist; see the addendum. The build was made with the local `arduino:avr` 1.8.8 core, and CI pins 1.8.6.
 - **Phase 4 and Phase 5 hardware checks**, which remain pending.
 
 ## Known limits
@@ -139,10 +177,11 @@ Completed on Linux with Python 3.14.4, Node 22.22.1, npm 9.2.0, g++ 15.2.0 and p
 - **Watchdog and simulation speed.** The 3 s watchdog requires the host's 0.5 s polling. A heavily loaded computer that stalls for more than 3 s stops the job, which is the safe outcome.
 - **Serial buffer.** The ATmega328P hardware receive buffer is 64 bytes. A long frame arriving during a display redraw can be lost; the CRC and the `STATUS` recovery handle that without duplicate execution.
 - **Jobs and positions.** One job runs at a time. Resuming a faulted run is intentionally unsupported: re-reference the origin and prepare again. A job's start must equal the current commanded position; only (0,0) starts are prepared today, so use *Go to origin* between jobs.
+- **UNO and SD jobs.** The UNO build has no SD job menu. Drawing over USB replaces it, and the card can stay in the slot unused.
 - **Platforms.** Serial discovery uses pySerial on Linux, macOS and Windows, but only Linux was exercised, and only with no real ports present.
 
 ## Handoff to Phase 7
 
 The USB path accepts only validated, frozen jobs. Phase 7 AI interpretation must keep producing schema-checked drawing specifications that go through the same preparation pipeline, and must never emit G-code or protocol frames directly.
 
-Screenshots: [studio](screenshots/phase-6-studio.png), [mobile](screenshots/phase-6-mobile.png), [test export](screenshots/phase-6-test-export.png), [firmware profile](screenshots/phase-6-firmware-profile.png), [USB run](screenshots/phase-6-usb-run.png).
+Screenshots: [studio](screenshots/phase-6-studio.png), [mobile](screenshots/phase-6-mobile.png), [test export](screenshots/phase-6-test-export.png), [firmware profile](screenshots/phase-6-firmware-profile.png), [USB run](screenshots/phase-6-usb-run.png), [Execute](screenshots/phase-6-execute.png).

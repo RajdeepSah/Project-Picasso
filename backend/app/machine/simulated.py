@@ -15,7 +15,8 @@ import threading
 from .transport import ProcessTransport
 
 ROOT = Path(__file__).resolve().parents[3]
-SET_ORIGIN = "key down\nkey enter\nkey enter\nkey enter\nuntil main 3000\n"
+# Setup > Set origin > confirm, on the USB-only main menu (Setup is the first item).
+SET_ORIGIN = "key enter\nkey enter\nkey enter\nuntil main 3000\n"
 _lock = threading.Lock()
 
 
@@ -35,13 +36,13 @@ def build_simulator(cache: Path) -> Path:
     script = _script()
     sources = sorted([*(ROOT / "firmware").rglob("*.cpp"), *(ROOT / "firmware").rglob("*.h"), *(ROOT / "firmware").rglob("*.ino")])
     digest = hashlib.sha256(b"".join(path.read_bytes() for path in sources)).hexdigest()[:16]
-    folder = cache / f"simulator-{digest}"
+    folder = cache / f"simulator-usb-{digest}"  # the USB-only build an UNO runs
     with _lock:
         if not (folder / "simulator").is_file():
             folder.mkdir(parents=True, exist_ok=True)
             config = folder / "machine_config.h"
             script.write_config(script.host_test_profile(), "synthetic host-simulation", config)
-            script.host_build(folder, config)
+            script.host_build(folder, config, sd=False)
     return folder / "simulator"
 
 
