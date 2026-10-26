@@ -91,7 +91,7 @@ def test_firmware_parser_accepts_every_backend_export_exactly(build, drafts, pro
 
 def test_imported_sample_is_reexported_into_the_firmware_dialect(build, drafts):
     source = (ROOT / "SdCard" / "01 Test GCode" / "mandala_11x14.gcode").read_text()
-    draft = drafts.import_drawing(ImportRequest(filename="mandala_11x14.gcode", content=source, dialect="linear-mm",
+    draft = drafts.import_drawing(ImportRequest(filename="mandala_11x14.gcode", content=source,
                                                 center_on_origin=True, fit_width_mm=120), Event())
     results = tool_parse(build, draft.gcode.encode())
     assert results[-1] == "EOF" and all(" OK G" in line for line in results[:-1])

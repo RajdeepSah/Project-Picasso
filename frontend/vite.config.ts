@@ -9,5 +9,5 @@ export default defineConfig({
     strictPort: true,
     proxy: { '/api': { target: process.env.PICASSO_API_URL ?? 'http://127.0.0.1:8000', changeOrigin: true } },
   },
-  test: { environment: 'jsdom', setupFiles: ['./src/test-setup.ts'], include: ['src/**/*.test.tsx'] },
+  test: { environment: 'jsdom', setupFiles: ['./src/test-setup.ts'], include: ['src/**/*.test.{ts,tsx}'] },
 });

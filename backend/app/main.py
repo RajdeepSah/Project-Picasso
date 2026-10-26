@@ -130,7 +130,7 @@ def create_app(*, frontend_dir: Path | None = None, instance_id: str | None = No
             message = 'Check the measured profile, bounds, rope limits and required verification checks. '
             message += exc.errors()[0]['msg'].removeprefix('Value error, ')
         elif request.url.path == '/api/drawings/import':
-            message = 'Check the drawing file format, file size and positive finite fit dimensions.'
+            message = 'Choose a G-code file or an image of at most 8 MB.'
         else:
             message = 'Check your command and drawing parameters. Commands need 1–2000 characters; dimensions must be positive and finite, and parameters must apply to the chosen shape.'
         return JSONResponse(status_code=422, content=ApiError(

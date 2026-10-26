@@ -153,7 +153,7 @@ export type ExporterVersion = "picasso-legacy-v1.0";
 export type Gcode = string;
 export type GcodeSha256 = string;
 export type ContentSha256 = string;
-export type Dialect2 = "picasso" | "linear-mm" | "picasso-json";
+export type Dialect2 = "picasso" | "linear-mm" | "picasso-json" | "image";
 export type Filename = string;
 export type InputStrokes = Stroke[];
 export type Notes1 = string[];
@@ -207,10 +207,11 @@ export type SchemaVersion24 = 1;
 export type SeedLocked = boolean;
 export type CenterOnOrigin = boolean;
 export type Content = string;
-export type Dialect3 = "picasso" | "linear-mm" | "picasso-json";
+export type Detail1 = "low" | "medium" | "high";
 export type Filename1 = string;
 export type FitHeightMm = number | null;
 export type FitWidthMm = number | null;
+export type Kind = "gcode" | "image";
 export type SchemaVersion25 = 1;
 export type CreatedAt = string;
 export type DrawingId1 = string;
@@ -293,7 +294,7 @@ export type CurrentMainSha256 = string | null;
 export type Filesystem = string;
 export type Id3 = string;
 export type Instance = string;
-export type Kind = "physical_card" | "test_directory";
+export type Kind1 = "physical_card" | "test_directory";
 export type Label3 = string;
 export type Path = string;
 export type Reason4 = string;
@@ -350,7 +351,7 @@ export type Connection = "disconnected" | "connecting" | "connected" | "incompat
 export type BootId = string;
 export type Capabilities = string[];
 export type ConfigId = string;
-export type Dialect4 = string;
+export type Dialect3 = string;
 export type FirmwareVersion = string;
 export type Protocol = number;
 export type SchemaVersion44 = 1;
@@ -655,10 +656,11 @@ export interface RevisionRequest {
 export interface ImportRequest {
   center_on_origin?: CenterOnOrigin;
   content: Content;
-  dialect?: Dialect3;
+  detail?: Detail1;
   filename: Filename1;
   fit_height_mm?: FitHeightMm;
   fit_width_mm?: FitWidthMm;
+  kind?: Kind;
   schema_version?: SchemaVersion25;
 }
 export interface HistoryResponse {
@@ -761,7 +763,7 @@ export interface StorageTarget {
   filesystem: Filesystem;
   id: Id3;
   instance: Instance;
-  kind: Kind;
+  kind: Kind1;
   label: Label3;
   path: Path;
   reason: Reason4;
@@ -849,7 +851,7 @@ export interface DeviceHello {
   boot_id: BootId;
   capabilities: Capabilities;
   config_id: ConfigId;
-  dialect: Dialect4;
+  dialect: Dialect3;
   firmware_version: FirmwareVersion;
   protocol: Protocol;
   schema_version?: SchemaVersion44;

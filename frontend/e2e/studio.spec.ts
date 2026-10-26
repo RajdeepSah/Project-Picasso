@@ -20,6 +20,21 @@ async function exportOption(page: Page, name: string) {
   return page.locator('#export-options').getByRole('button', { name });
 }
 
+async function importFile(page: Page, kind: 'Image' | 'G-code', path: string, detail?: 'Low' | 'Medium' | 'High') {
+  await page.getByRole('button', { name: 'Import drawing', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Import a drawing' });
+  await dialog.getByRole('radio', { name: kind }).click();
+  await dialog.getByLabel('Drawing file', { exact: true }).setInputFiles(path);
+  if (detail) await dialog.getByText(detail, { exact: true }).click();
+  const response = page.waitForResponse(response => response.url().endsWith('/api/drawings/import') && response.request().method() === 'POST');
+  await dialog.getByRole('button', { name: 'Import', exact: true }).click();
+  const result = await response;
+  expect(result.status()).toBe(200);
+  const draft = await result.json();
+  await expect(page.getByRole('img', { name: /Imported drawing path/ })).toHaveAttribute('data-gcode-sha256', draft.gcode_sha256);
+  return draft;
+}
+
 async function revision(page: Page, action: () => Promise<unknown>) {
   const response = page.waitForResponse(response => response.url().endsWith('/revisions') && response.request().method() === 'POST');
   await action();
@@ -75,6 +90,8 @@ test('offline circle to resized mandala, regeneration, exact draft downloads and
   await expect(page.getByRole('button', { name: 'Pause simulation' })).toBeEnabled();
   await page.getByRole('button', { name: 'Pause simulation' }).click();
   await page.getByRole('slider', { name: 'Simulation progress' }).fill('100');
+  await page.getByRole('combobox', { name: 'Simulation speed' }).selectOption('20');
+  await expect(page.getByTitle(/At 20× the preview takes/)).toBeVisible();
   await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
   await expect(page.getByRole('status', { name: 'Preview zoom', exact: true })).toHaveText('125%');
   await page.getByRole('button', { name: 'Reset preview zoom' }).click();
@@ -123,7 +140,7 @@ test('offline API is visible and reconnect preserves the command', async ({ page
   await expect(page.getByRole('textbox', { name: 'Drawing command' })).toHaveValue('Draw a butterfly');
 });
 
-test('saved history reopens after reload and supplied mandala imports with explicit centering', async ({ page }) => {
+test('saved history reopens after reload and supplied mandala G-code imports at its own coordinates', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByText('Running locally')).toBeVisible();
   const original = await command(page, 'Draw a circle diameter 83');
@@ -132,21 +149,28 @@ test('saved history reopens after reload and supplied mandala imports with expli
   await page.getByRole('textbox', { name: 'Search drawing history' }).fill('diameter 83');
   await page.getByRole('button', { name: 'Open Circle revision 1', exact: true }).click();
   await expect(page.getByRole('img', { name: /Circle drawing path/ })).toHaveAttribute('data-gcode-sha256', original.gcode_sha256);
-  await page.getByRole('button', { name: 'Import drawing', exact: true }).click();
-  const dialog = page.getByRole('dialog', { name: 'Import a drawing' });
-  await dialog.getByLabel('Drawing file', { exact: true }).setInputFiles('../SdCard/01 Test GCode/mandala_11x14.gcode');
-  await dialog.getByRole('checkbox', { name: 'Center drawing at (0,0) explicitly' }).check();
-  await dialog.getByRole('spinbutton', { name: 'Import fit width' }).fill('120');
-  const importedResponse = page.waitForResponse(response => response.url().endsWith('/api/drawings/import') && response.request().method() === 'POST');
-  await dialog.getByRole('button', { name: 'Import & save drawing' }).click();
-  const response = await importedResponse;
-  expect(response.status()).toBe(200);
-  const imported = await response.json();
+  const imported = await importFile(page, 'G-code', '../SdCard/01 Test GCode/mandala_11x14.gcode');
+  expect(imported.import_source.dialect).toBe('linear-mm');
   expect(imported.import_source.original_bounds.width_mm).toBe(252);
-  expect(imported.transform.offset_x_mm).toBe(0);
-  await expect(page.getByRole('img', { name: /Imported drawing path/ })).toHaveAttribute('data-gcode-sha256', imported.gcode_sha256);
-  await expect(page.getByTestId('actual-bounds')).toHaveText('120.00 × 120.00 mm');
+  expect(imported.transform.offset_x_mm).toBe(139.7);
+  await expect(page.getByTestId('actual-bounds')).toHaveText('252.00 × 252.00 mm');
   await expect(page.getByRole('button', { name: 'Regenerate drawing' })).toBeDisabled();
+});
+
+test('a picture imports as traced, centred line art that plays in the simulation', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByText('Running locally')).toBeVisible();
+  const imported = await importFile(page, 'Image', '../SdCard/01 Test GCode/banana/banana.jpg', 'Low');
+  expect(imported.import_source.dialect).toBe('image');
+  expect(imported.spec.detail).toBe('sparse');
+  expect(imported.transform.offset_x_mm).toBe(0);
+  // Fitted inside 85% of the default A4 portrait page.
+  expect(imported.preview.bounds.width_mm).toBeLessThanOrEqual(178.5 + .001);
+  expect(imported.preview.bounds.height_mm).toBeLessThanOrEqual(252.45 + .001);
+  await expect(page.getByRole('status').filter({ hasText: 'Imported banana.jpg' })).toBeVisible();
+  await page.getByRole('button', { name: 'Play simulation' }).click();
+  await expect(page.getByRole('button', { name: 'Pause simulation' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Execute', exact: true })).toBeEnabled();
 });
 
 test('prepared simulation exports only to an isolated directory with verified bytes and opt-in sync', async ({ page }) => {

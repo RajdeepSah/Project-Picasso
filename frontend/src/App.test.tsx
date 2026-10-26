@@ -136,4 +136,18 @@ describe('offline drawing studio', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Stop the machine' }));
     expect(control).toHaveBeenCalledWith('stop');
   });
+
+  it('estimates playback time from the path and rescales only the preview with the speed', async () => {
+    const control = vi.spyOn(api, 'controlMachine');
+    await generateCircle();
+    // 437 mm at the nominal 19 mm/s plus one lower and one lift.
+    expect(screen.getByText('0:24')).toBeVisible();
+    fireEvent.change(screen.getByRole('combobox', { name: 'Simulation speed' }), { target: { value: '2' } });
+    expect(screen.getByText('0:12')).toBeVisible();
+    fireEvent.change(screen.getByRole('combobox', { name: 'Simulation speed' }), { target: { value: '0.5' } });
+    expect(screen.getByText('0:48')).toBeVisible();
+    expect(window.localStorage.getItem('picasso.simulationSpeed')).toBe('0.5');
+    expect(control).not.toHaveBeenCalled();
+    window.localStorage.removeItem('picasso.simulationSpeed');
+  });
 });

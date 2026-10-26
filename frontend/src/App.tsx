@@ -31,7 +31,7 @@ function Dialog({ kind, studio, close }: { kind: 'guide' | 'settings'; studio: S
     <h2 id="dialog-title">{kind === 'guide' ? 'From an idea to a line.' : 'Your local studio.'}</h2>
     {kind === 'guide' ? <><p>Generate or import a drawing, refine its paths, and reopen it from saved history.</p>
       <ol className="guide-steps"><li><span>01</span><div><strong>Describe one drawing</strong><p>Try a circle, ellipse, rectangle, spiral, butterfly, mandala or geometric pattern. Add “120 mm wide”, “12 petals”, “seed 7”, or “intricate”.</p></div></li>
-        <li><span>02</span><div><strong>Make it your own</strong><p>Adjust size, detail and paper, or open Advanced for rotation, center and seed. Controls update the path automatically. Playback is a visual simulation, not machine timing.</p></div></li>
+        <li><span>02</span><div><strong>Make it your own</strong><p>Adjust size, detail and paper, or open Advanced for rotation, center and seed. Controls update the path automatically. Playback estimates machine time from the firmware's step timing; its speed control changes only the preview, never the machine.</p></div></li>
         <li><span>03</span><div><strong>Draw it or keep it</strong><p>Execute streams the drawing to the machine over USB once it is connected, a verified profile is selected and the origin is set on the keypad. Or export G-code, JSON or SVG; revisions save automatically.</p></div></li></ol>
       <div className="notice"><ShieldCheck size={18} /><p>Nothing is sent to the machine until you connect explicitly and start a run. Draft downloads cannot authorize physical drawing.</p></div>
     </> : <><p>Drawings are generated on your computer. No account, API key or network service is required.</p><dl className="settings-list">
@@ -191,7 +191,7 @@ export default function App() {
             <label className="paper-pill"><span className="sr-only">Paper size</span><select value={paper} onChange={event => setPaper(event.target.value as PaperId)}>{paperOptions.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}</select><ChevronDown size={16} /></label>
           </div>
           {!loading && !studio && <div className="connection-error" role="alert"><WifiOff size={19} /><div><strong>The local service is offline</strong><p>Keep the Picasso launcher running, then reconnect. Your command stays in the composer.</p></div><button className="subtle-button" onClick={reconnect}>Reconnect</button></div>}
-          <DrawingPreview draft={draft} busy={busy} paper={paper} grid={grid} setGrid={setGrid} zoom={zoom} setZoom={setZoom} execute={() => setExecuteOpen(true)} executeBlocked={executeBlocked} execution={execution} />
+          <DrawingPreview draft={draft} busy={busy} paper={paper} grid={grid} setGrid={setGrid} zoom={zoom} setZoom={setZoom} execute={() => setExecuteOpen(true)} executeBlocked={executeBlocked} execution={execution} geometry={selectedMeasured ?? selectedReference ?? null} />
           <section className="composer" aria-labelledby="composer-title">
             <div className="composer-head"><h2 id="composer-title">What would you like to draw?</h2><span id="command-hint" className={feedback ? 'sr-only' : `composer-hint ${service}`}>{hint}</span>
               <div className={`command-feedback ${tone}`} role="status" aria-live="polite">{feedback && <>{tone === 'error' ? <CircleAlert size={15} /> : <CircleCheck size={15} />}<span>{feedback}</span><button className="feedback-dismiss" aria-label="Dismiss message" onClick={() => setFeedback('')}><X size={13} /></button></>}</div></div>
@@ -230,7 +230,7 @@ export default function App() {
     </main>
     {help('floating-help')}
     {dialog && <Dialog kind={dialog} studio={studio} close={() => setDialog(null)} />}
-    {extra === 'import' && <ImportDialog close={() => setExtra(null)} imported={result => { cancel(); accept(result); setView('studio'); say('Imported and saved a new revision. Review its origin, fit and normalized paths.'); setExtra(null); }} />}
+    {extra === 'import' && <ImportDialog paper={paper} close={() => setExtra(null)} imported={result => { cancel(); accept(result); setView('studio'); setZoom(100); say(`Imported ${result.import_source?.filename ?? 'drawing'} · ${result.preview.strokes} ${result.preview.strokes === 1 ? 'path' : 'paths'}. Saved locally.`); setExtra(null); }} />}
     {extra === 'calibration' && studio && <CalibrationDialog profiles={studio.profiles} close={() => setExtra(null)} saved={() => { setExtra(null); refreshStudio(); say('Measured profile saved and selected for software preparation. No firmware changed.'); }} />}
     {executeOpen && draft && <ExecuteDialog draft={draft} profile={selectedMeasured} machine={machine} refresh={refreshMachine} executingJobId={executing?.jobId} close={() => setExecuteOpen(false)}
       calibrate={() => { setExecuteOpen(false); setInspector('machine'); setExtra('calibration'); }} started={job => setExecuting({ jobId: job.id, revisionId: job.revision_id })} />}

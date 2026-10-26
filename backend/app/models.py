@@ -311,7 +311,7 @@ class DrawingDraft(Contract):
 class ImportedSource(Contract):
     filename: str
     content_sha256: str
-    dialect: Literal["picasso", "linear-mm", "picasso-json"]
+    dialect: Literal["picasso", "linear-mm", "picasso-json", "image"]
     original_bounds: DrawingBounds
     input_strokes: list[Stroke]
     notes: list[str]
@@ -319,8 +319,10 @@ class ImportedSource(Contract):
 
 class ImportRequest(Contract):
     filename: str = Field(min_length=1, max_length=120)
-    content: str = Field(min_length=1, max_length=8_000_000)
-    dialect: Literal["picasso", "linear-mm", "picasso-json"] = "linear-mm"
+    # G-code (or a Picasso JSON draft) as text; an image as base64 of at most 8 MB.
+    content: str = Field(min_length=1, max_length=10_700_000)
+    kind: Literal["gcode", "image"] = "gcode"
+    detail: Literal["low", "medium", "high"] = "medium"
     center_on_origin: bool = False
     fit_width_mm: PositiveMm | None = None
     fit_height_mm: PositiveMm | None = None

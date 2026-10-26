@@ -47,7 +47,7 @@ python3 scripts/setup.py --skip-install
 - Live size/aspect lock, rotation, placement, detail, seed and generator-specific controls; seed locking and regeneration.
 - SVG preview derived from the exact exported G-code, with zoom/grid, travel toggle, simulation playback, actual bounds, path distances and pen lifts.
 - Durable immutable revisions, searchable history with thumbnails, integrity checks/repair, and JSON/SVG/restricted G-code downloads.
-- Import existing absolute-mm linear G-code or Picasso JSON, with explicit centering/fitting and original-bounds provenance.
+- Import an image (PNG, JPG, WEBP, BMP or TIFF): OpenCV traces it into travel-ordered line art at Low, Medium or High detail, fitted to the page. Or import existing absolute-mm linear G-code (format detected automatically), which keeps its own coordinates and original-bounds provenance.
 - Inspect both source references and record/edit actual machine measurements; no physical profile is selected or verified automatically.
 - Freeze a drawing into a prepared job; validate its full path and initial travel against the verified measured profile.
 - Back up and stage local `SdCard/main.nc`, or copy to an explicitly selected mounted FAT card with checksum readback.

@@ -118,9 +118,9 @@ def test_json_draft_reimport_is_new_verified_geometry_but_never_execution_ready(
     service = DraftService()
     from backend.app.models import GenerateRequest
     draft = service.generate(GenerateRequest(prompt='Draw a butterfly'), Event())
-    imported = service.import_drawing(ImportRequest(filename='draft.json',content=draft.model_dump_json(),dialect='picasso-json'),Event())
+    imported = service.import_drawing(ImportRequest(filename='draft.json',content=draft.model_dump_json()),Event())
     assert imported.revision_id != draft.revision_id and imported.spec.generator == 'imported'
     assert imported.gcode_sha256 == draft.gcode_sha256
     assert imported.execution_ready is False
     corrupted = json.loads(draft.model_dump_json()); corrupted['gcode'] += 'G1 X999 Y999\n'
-    with pytest.raises(DrawingError): service.import_drawing(ImportRequest(filename='bad.json',content=json.dumps(corrupted),dialect='picasso-json'),Event())
+    with pytest.raises(DrawingError): service.import_drawing(ImportRequest(filename='bad.json',content=json.dumps(corrupted)),Event())

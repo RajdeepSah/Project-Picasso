@@ -142,7 +142,7 @@ Paths below are planned contracts; add endpoints only in their assigned phase.
 
 Use stable error codes (`PROFILE_UNVERIFIED`, `PATH_OUT_OF_BOUNDS`, `UNSUPPORTED_COMMAND`, `TARGET_REMOVED`, `PROTOCOL_MISMATCH`, `ORIGIN_UNKNOWN`) and human-readable explanations. Hardware endpoints have no operational stubs that report success. Before implementation they are absent or explicitly unavailable.
 
-The implemented engine lives in `backend/app/drawing/`: command resolver, analytic-circle/cubic geometry, strict dialect codec, declared linear importer and draft service. `models.py` supplies shared contracts. `backend/app/storage/` separates SQLite/artifact recovery, measured-profile/preparation validation, mount discovery, and managed publication/automatic export.
+The implemented engine lives in `backend/app/drawing/`: command resolver, analytic-circle/cubic geometry, strict dialect codec, linear G-code importer, OpenCV image tracer (`vectorize.py`) and draft service. `models.py` supplies shared contracts. `backend/app/storage/` separates SQLite/artifact recovery, measured-profile/preparation validation, mount discovery, and managed publication/automatic export.
 
 Phase 4 stores immutable draft JSON, exact G-code and SVG in `data/artifacts/<id>/`, with SQLite schema version 1 metadata, hash manifests and compressed exact recovery copies. Save stages files before publishing/committing; startup quarantines uncommitted directories and marks unfinished transfers interrupted. Artifact reads verify every file even when a draft is cached. The 16-draft/32 MB cache and eight browser shortcuts do not evict persistent history. History is searchable and paginated; profiles preserve prior revisions and prepared jobs freeze their calibration snapshot.
 

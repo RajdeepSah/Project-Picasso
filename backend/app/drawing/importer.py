@@ -1,8 +1,11 @@
-"""Declared linear absolute-mm import, followed by canonical regeneration."""
+"""Linear absolute-mm G-code and traced-image import, followed by canonical regeneration."""
 
+import base64
+import binascii
 import hashlib
 import math
 import re
+import threading
 
 from ..models import DrawingBounds, DrawingDraft, ImportRequest, ImportedSource, Stroke
 from .errors import DrawingError
@@ -117,10 +120,29 @@ def parsed_paths(code):
     return linear_paths(code)
 
 
-def import_source(request: ImportRequest) -> ImportedSource:
-    notes = ["Pen state is mapped from Z sign; pen-up travel routes are regenerated between strokes.",
-             "Feed rates do not control this machine and are omitted from the regenerated export."]
-    if request.dialect == 'picasso-json':
+def image_paths(request: ImportRequest, cancel):
+    from .vectorize import image_strokes  # OpenCV loads on the first image import, not at startup
+    try:
+        data = base64.b64decode(request.content, validate=True)
+    except (binascii.Error, ValueError) as exc:
+        raise DrawingError("INVALID_IMPORT", "The image upload was damaged. Choose the file again.") from exc
+    return image_strokes(data, request.detail, cancel), hashlib.sha256(data).hexdigest()
+
+
+def import_source(request: ImportRequest, cancel=None) -> ImportedSource:
+    content_sha256 = hashlib.sha256(request.content.encode()).hexdigest()
+    if request.kind == 'image':
+        strokes, content_sha256 = image_paths(request, cancel or threading.Event())
+        dialect = 'image'
+        notes = [f"Traced with OpenCV at {request.detail} detail and ordered to shorten pen-up travel."]
+    elif request.content.lstrip().startswith('{'):
+        dialect = 'picasso-json'
+    else:
+        dialect = 'linear-mm'  # also reads canonical Picasso output, which is linear absolute-mm
+    if dialect != 'image':
+        notes = ["Pen state is mapped from Z sign; pen-up travel routes are regenerated between strokes.",
+                 "Feed rates do not control this machine and are omitted from the regenerated export."]
+    if dialect == 'picasso-json':
         try:
             draft = DrawingDraft.model_validate_json(request.content)
             if hashlib.sha256(draft.gcode.encode('ascii')).hexdigest() != draft.gcode_sha256:
@@ -131,10 +153,7 @@ def import_source(request: ImportRequest) -> ImportedSource:
         except (ValueError, DrawingError) as exc:
             raise DrawingError("INVALID_IMPORT", "This is not an intact supported Picasso draft. JSON preview/readiness claims are never trusted.") from exc
         notes.append("JSON was revalidated from its G-code and imported as a new unverified drawing.")
-    elif request.dialect == 'picasso':
-        strokes = parsed_paths(request.content)
-        notes.append("Strict canonical dialect validated before normalization.")
-    else:
+    elif dialect == 'linear-mm':
         strokes = linear_paths(request.content)
         notes.append("Comments and the exact recognized Youzhihui branding banner were removed; modal XY and absolute-mm setup were resolved. Other unrecognized text is rejected.")
     validate_strokes(strokes)
@@ -144,5 +163,5 @@ def import_source(request: ImportRequest) -> ImportedSource:
     cx, cy = (min(xs)+max(xs))/2, (min(ys)+max(ys))/2
     normalized = [Stroke(points=[(x-cx, y-cy) for x,y in stroke], closed=stroke[0] == stroke[-1]) for stroke in strokes]
     filename = request.filename.replace('\\', '/').split('/')[-1]
-    return ImportedSource(filename=filename, content_sha256=hashlib.sha256(request.content.encode()).hexdigest(),
-                          dialect=request.dialect, original_bounds=bounds, input_strokes=normalized, notes=notes)
+    return ImportedSource(filename=filename, content_sha256=content_sha256,
+                          dialect=dialect, original_bounds=bounds, input_strokes=normalized, notes=notes)

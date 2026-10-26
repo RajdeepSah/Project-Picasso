@@ -1592,19 +1592,19 @@
           "type": "boolean"
         },
         "content": {
-          "maxLength": 8000000,
+          "maxLength": 10700000,
           "minLength": 1,
           "title": "Content",
           "type": "string"
         },
-        "dialect": {
-          "default": "linear-mm",
+        "detail": {
+          "default": "medium",
           "enum": [
-            "picasso",
-            "linear-mm",
-            "picasso-json"
+            "low",
+            "medium",
+            "high"
           ],
-          "title": "Dialect",
+          "title": "Detail",
           "type": "string"
         },
         "filename": {
@@ -1641,6 +1641,15 @@
           "default": null,
           "title": "Fit Width Mm"
         },
+        "kind": {
+          "default": "gcode",
+          "enum": [
+            "gcode",
+            "image"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
         "schema_version": {
           "const": 1,
           "default": 1,
@@ -1666,7 +1675,8 @@
           "enum": [
             "picasso",
             "linear-mm",
-            "picasso-json"
+            "picasso-json",
+            "image"
           ],
           "title": "Dialect",
           "type": "string"

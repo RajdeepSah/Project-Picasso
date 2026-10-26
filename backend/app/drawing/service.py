@@ -4,6 +4,7 @@ from collections import OrderedDict
 from dataclasses import dataclass
 import hashlib
 import json
+import math
 import threading
 import uuid
 
@@ -20,6 +21,8 @@ WARNINGS = [
     "Draft downloads are unverified, not prepared jobs. Do not execute them until calibration and pen settling are verified.",
     "Draft revisions live in memory and are lost on restart. Download JSON to retain a copy; durable history arrives in Phase 4.",
 ]
+IMAGE_SIZE_MM = 180  # default fit box for a traced image when the caller gives none
+IMAGE_DETAIL = {"low": "sparse", "medium": "standard", "high": "dense"}
 
 
 @dataclass(frozen=True)
@@ -87,20 +90,24 @@ class DraftService:
         return self._build(spec, request.transform or parent.transform, parent.prompt, cancel, parent, parent.import_source)
 
     def import_drawing(self, request: ImportRequest, cancel: threading.Event) -> DrawingDraft:
-        source = normalize_import(request)
+        source = normalize_import(request, cancel)
+        image = source.dialect == "image"
         box = source.original_bounds
         width, height = max(box.width_mm, .001), max(box.height_mm, .001)
-        if request.fit_width_mm is not None:
-            height *= request.fit_width_mm / width; width = request.fit_width_mm
-        if request.fit_height_mm is not None:
-            if request.fit_width_mm is None:
-                width *= request.fit_height_mm / height
-            height = request.fit_height_mm
+        fit_width, fit_height = request.fit_width_mm, request.fit_height_mm
+        if image and fit_width is None and fit_height is None:
+            fit_width = fit_height = IMAGE_SIZE_MM  # traced pixels have no physical size
+        # Scale uniformly so the drawing fits inside every requested dimension.
+        scale = min(fit_width / width if fit_width else math.inf, fit_height / height if fit_height else math.inf)
+        if math.isfinite(scale):
+            width, height = max(round(width * scale, 3), .001), max(round(height * scale, 3), .001)
         if max(width, height) > 2000:
             raise DrawingError("IMPORT_TOO_LARGE", "Fit the imported drawing to dimensions no larger than 2000 mm.")
-        spec = DrawingSpec(generator="imported", dimensions=Dimensions(width_mm=width, height_mm=height))
-        transform = DrawingTransform(offset_x_mm=0 if request.center_on_origin else (box.min_x_mm+box.max_x_mm)/2,
-                                     offset_y_mm=0 if request.center_on_origin else (box.min_y_mm+box.max_y_mm)/2)
+        spec = DrawingSpec(generator="imported", dimensions=Dimensions(width_mm=width, height_mm=height),
+                           detail=IMAGE_DETAIL[request.detail] if image else "standard")
+        centered = request.center_on_origin or image
+        transform = DrawingTransform(offset_x_mm=0 if centered else (box.min_x_mm+box.max_x_mm)/2,
+                                     offset_y_mm=0 if centered else (box.min_y_mm+box.max_y_mm)/2)
         return self._build(spec, transform, f"Imported {source.filename}", cancel, import_source=source)
 
     def _build(self, spec, transform, prompt, cancel, parent=None, import_source=None) -> DrawingDraft:
