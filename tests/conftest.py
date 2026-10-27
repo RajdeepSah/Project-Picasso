@@ -42,3 +42,7 @@ def isolated_app_storage(tmp_path, monkeypatch):
     monkeypatch.setenv('PICASSO_MIRROR_DIR', str(mirror))
     # Voice is unavailable unless a test injects a recognizer or opts into the installed model.
     monkeypatch.setenv('PICASSO_VOICE_MODEL_DIR', str(tmp_path / 'no-speech-model'))
+    # AI is unconfigured unless a test injects an image service: a developer's real key or .env is never used.
+    for name in ('OPENAI_API_KEY', 'PICASSO_OPENAI_IMAGE_MODEL', 'PICASSO_AI'):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv('PICASSO_ENV_FILE', str(tmp_path / 'no-env-file'))

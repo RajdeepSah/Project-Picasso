@@ -34,28 +34,27 @@ from .storage.repository import Repository
 from .storage.preparation import JobManager, ProfileManager
 from .storage.exporter import ExportManager
 from .voice import DEFAULT_MODEL_DIR, VoiceService
+from .ai import ImageService
 
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def capabilities(voice: Capability) -> CapabilitiesResponse:
-    def planned(phase: int, reason: str) -> Capability:
-        return Capability(available=False, phase=phase, reason=reason)
+def capabilities(voice: Capability, ai: Capability) -> CapabilitiesResponse:
     return CapabilitiesResponse(
         dashboard=Capability(available=True, phase=2, reason="Local studio and service are available."),
-        generation=Capability(available=True, phase=3, reason="Deterministic offline drawing commands are available."),
+        generation=Capability(available=True, phase=3, reason="Deterministic offline drawing commands are available without a network or API key."),
         history=Capability(available=True, phase=4, reason="Drawings and revisions are saved to local SQLite and checksummed artifacts."),
         gcode_export=Capability(available=True, phase=3, reason="Draft downloads and immutable profile-based preparation are available."),
         sd_export=Capability(available=True, phase=4, reason="Verified managed filesystem export is available. Physical cards require operator-recorded calibration and explicit volume selection; test exports use an isolated directory."),
         firmware=Capability(available=True, phase=5, reason="Canonical firmware source and profile-generated configuration are available. Building, uploading and commissioning are explicit operator steps; no board is contacted."),
         serial_control=Capability(available=True, phase=6, reason="Explicit USB connection to Picasso firmware 0.6+ with acknowledged one-command streaming, pause and stop. Hardware execution remains unverified until commissioning."),
-        ai=planned(7, "Optional AI interpretation arrives in Phase 7."),
+        ai=ai,
         voice=voice,
     )
 
 
-def create_app(*, frontend_dir: Path | None = None, instance_id: str | None = None, data_dir: Path | None = None, mirror_dir: Path | None = None, target_provider=None, machine_transport=None, simulated_device: bool | None = None, voice_service: VoiceService | None = None) -> FastAPI:
+def create_app(*, frontend_dir: Path | None = None, instance_id: str | None = None, data_dir: Path | None = None, mirror_dir: Path | None = None, target_provider=None, machine_transport=None, simulated_device: bool | None = None, voice_service: VoiceService | None = None, image_service: ImageService | None = None) -> FastAPI:
     build_dir = frontend_dir if frontend_dir is not None else ROOT / "frontend" / "dist"
     run_id = instance_id or os.environ.get("PICASSO_INSTANCE_ID") or uuid.uuid4().hex
     storage_root = data_dir or Path(os.environ.get('PICASSO_DATA_DIR', ROOT / 'data'))
@@ -63,13 +62,14 @@ def create_app(*, frontend_dir: Path | None = None, instance_id: str | None = No
     write_token = secrets.token_urlsafe(32)
     simulated = os.environ.get('PICASSO_SIMULATED_DEVICE') == '1' if simulated_device is None else simulated_device
     voice = voice_service or VoiceService(Path(os.environ.get('PICASSO_VOICE_MODEL_DIR', DEFAULT_MODEL_DIR)))
+    images = image_service or ImageService.from_environment()  # the key stays in this process
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         # Invalid/missing configuration is a startup error, never healthy defaults.
         app.state.profiles = load_reference_profiles(ROOT)
         app.state.repository = Repository(storage_root)
-        app.state.drafts = DraftService(repository=app.state.repository)
+        app.state.drafts = DraftService(repository=app.state.repository, images=images)
         app.state.profile_manager = ProfileManager(app.state.repository, app.state.profiles)
         app.state.jobs = JobManager(app.state.repository, app.state.drafts, app.state.profile_manager)
         app.state.storage = ExportManager(app.state.repository, app.state.jobs, mirror_root, target_provider)
@@ -159,7 +159,7 @@ def create_app(*, frontend_dir: Path | None = None, instance_id: str | None = No
 
     @app.get("/api/capabilities", response_model=CapabilitiesResponse)
     def get_capabilities():
-        return capabilities(voice.capability())
+        return capabilities(voice.capability(), images.capability())
 
     @app.get("/api/profiles", response_model=ProfilesResponse)
     def get_profiles():

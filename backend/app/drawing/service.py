@@ -13,7 +13,7 @@ from .commands import resolve_command
 from .errors import DrawingError
 from .gcode import encode, parse, verify_roundtrip
 from .geometry import Budget, TOLERANCE, generate_geometry
-from .importer import import_source as normalize_import
+from .importer import ai_image_source, import_source as normalize_import
 
 WARNINGS = [
     "Simulation only. No physical machine profile or workspace is verified.",
@@ -23,6 +23,7 @@ WARNINGS = [
 ]
 IMAGE_SIZE_MM = 180  # default fit box for a traced image when the caller gives none
 IMAGE_DETAIL = {"low": "sparse", "medium": "standard", "high": "dense"}
+AI_SETUP_HINT = "Requests beyond these shapes can be drawn with OpenAI line art once OPENAI_API_KEY is set in .env."
 
 
 @dataclass(frozen=True)
@@ -52,13 +53,14 @@ def svg_bytes(draft: DrawingDraft) -> bytes:
 
 
 class DraftService:
-    def __init__(self, *, max_drafts=16, max_bytes=32_000_000, repository=None):
+    def __init__(self, *, max_drafts=16, max_bytes=32_000_000, repository=None, images=None):
         self._items: OrderedDict[str, StoredDraft] = OrderedDict()
         self._lock = threading.Lock()
         self._workers = threading.BoundedSemaphore(2)
         self.max_drafts = max_drafts
         self.max_bytes = max_bytes
         self.repository = repository
+        self.images = images  # optional ImageService; offline drawing never needs it
 
     def get(self, revision_id: str) -> DrawingDraft:
         return DrawingDraft.model_validate_json(self.export(revision_id).json_bytes)
@@ -75,26 +77,47 @@ class DraftService:
             return self._items[revision_id]
 
     def generate(self, request: GenerateRequest, cancel: threading.Event) -> DrawingDraft:
-        spec = resolve_command(request.prompt)
-        return self._build(spec, DrawingTransform(), request.prompt, cancel)
+        """Offline shapes first: they are instant, free and exact. Only a request the grammar cannot
+        draw at all goes to the AI, and only in auto/ai mode with a configured key."""
+        if request.mode != "ai":
+            try:
+                spec = resolve_command(request.prompt, IMAGE_DETAIL[request.detail] if request.detail else "standard")
+            except DrawingError as error:
+                if request.mode == "offline" or error.code != "UNSUPPORTED_COMMAND":
+                    raise  # a known shape with a bad value is the operator's to fix, not the AI's
+                if self.images is None or not self.images.available():
+                    raise DrawingError(error.code, f"{error.message} {AI_SETUP_HINT}") from error
+            else:
+                return self._build(spec, DrawingTransform(), request.prompt, cancel)
+        if self.images is None:
+            raise DrawingError("AI_UNAVAILABLE", "AI drawing is not configured. " + AI_SETUP_HINT, 503)
+        detail = request.detail or "medium"
+        image = self.images.generate(request.prompt, detail, cancel)
+        source = ai_image_source(image.data, image.provenance, cancel)
+        return self._place(source, request.fit_width_mm, request.fit_height_mm, True, detail, request.prompt, cancel, title=_ai_title(request.prompt))
 
     def revise(self, revision_id: str, request: RevisionRequest, cancel: threading.Event) -> DrawingDraft:
         parent = self.get(revision_id)
         if parent.spec.generator == 'imported' and request.regenerate:
+            if parent.import_source and parent.import_source.dialect == "ai-image":
+                raise DrawingError("UNSUPPORTED_REGENERATION", "AI drawings can be resized or transformed. Submit the command again to request a new AI image.")
             raise DrawingError("UNSUPPORTED_REGENERATION", "Imported paths can be resized or transformed; regeneration applies to generated drawings only.")
         spec = (request.spec or parent.spec).model_copy(deep=True)
         if request.regenerate and not request.seed_locked:
             spec.seed = (spec.seed + 1) % 4294967296
         if spec.generator != parent.spec.generator:
             raise DrawingError("INVALID_REVISION", "Use a new command to change drawing generators.")
-        return self._build(spec, request.transform or parent.transform, parent.prompt, cancel, parent, parent.import_source)
+        return self._build(spec, request.transform or parent.transform, parent.prompt, cancel, parent, parent.import_source,
+                           parent.title if parent.spec.generator == 'imported' else None)
 
     def import_drawing(self, request: ImportRequest, cancel: threading.Event) -> DrawingDraft:
         source = normalize_import(request, cancel)
-        image = source.dialect == "image"
+        return self._place(source, request.fit_width_mm, request.fit_height_mm, request.center_on_origin, request.detail, f"Imported {source.filename}", cancel)
+
+    def _place(self, source, fit_width, fit_height, center, detail, prompt, cancel, title=None) -> DrawingDraft:
+        image = source.dialect in ("image", "ai-image")
         box = source.original_bounds
         width, height = max(box.width_mm, .001), max(box.height_mm, .001)
-        fit_width, fit_height = request.fit_width_mm, request.fit_height_mm
         if image and fit_width is None and fit_height is None:
             fit_width = fit_height = IMAGE_SIZE_MM  # traced pixels have no physical size
         # Scale uniformly so the drawing fits inside every requested dimension.
@@ -104,13 +127,13 @@ class DraftService:
         if max(width, height) > 2000:
             raise DrawingError("IMPORT_TOO_LARGE", "Fit the imported drawing to dimensions no larger than 2000 mm.")
         spec = DrawingSpec(generator="imported", dimensions=Dimensions(width_mm=width, height_mm=height),
-                           detail=IMAGE_DETAIL[request.detail] if image else "standard")
-        centered = request.center_on_origin or image
+                           detail=IMAGE_DETAIL[detail] if image else "standard")
+        centered = center or image
         transform = DrawingTransform(offset_x_mm=0 if centered else (box.min_x_mm+box.max_x_mm)/2,
                                      offset_y_mm=0 if centered else (box.min_y_mm+box.max_y_mm)/2)
-        return self._build(spec, transform, f"Imported {source.filename}", cancel, import_source=source)
+        return self._build(spec, transform, prompt, cancel, import_source=source, title=title)
 
-    def _build(self, spec, transform, prompt, cancel, parent=None, import_source=None) -> DrawingDraft:
+    def _build(self, spec, transform, prompt, cancel, parent=None, import_source=None, title=None) -> DrawingDraft:
         if not self._workers.acquire(blocking=False):
             raise DrawingError("GENERATION_BUSY", "Two drawings are already being generated. Try again shortly.", 429)
         try:
@@ -119,9 +142,10 @@ class DraftService:
             code = encode(geometry)
             preview = parse(code, budget=budget)
             verify_roundtrip(geometry, preview)
-            title = spec.generator.title()
-            if spec.generator == "circle" and spec.dimensions.width_mm != spec.dimensions.height_mm:
-                title = "Ellipse"
+            if title is None:
+                title = spec.generator.title()
+                if spec.generator == "circle" and spec.dimensions.width_mm != spec.dimensions.height_mm:
+                    title = "Ellipse"
             draft = DrawingDraft(
                 drawing_id=parent.drawing_id if parent else uuid.uuid4().hex,
                 revision_id=uuid.uuid4().hex, parent_revision_id=parent.revision_id if parent else None,
@@ -147,3 +171,13 @@ class DraftService:
             return draft
         finally:
             self._workers.release()
+
+
+def _ai_title(prompt: str) -> str:
+    """"Draw a cat on a skateboard" → "Cat on a skateboard"; the full prompt stays in history."""
+    words = prompt.split()
+    while len(words) > 1 and words[0].lower().strip(",:") in {"draw", "create", "make", "sketch", "please", "me", "a", "an", "the"}:
+        words.pop(0)
+    title = " ".join(words).rstrip(".!?")
+    title = title[:1].upper() + title[1:]
+    return title if len(title) <= 48 else title[:47].rstrip() + "…"

@@ -243,8 +243,18 @@ class ApiError(Contract):
     phase: int | None = None
 
 
+DetailLevel = Literal["low", "medium", "high"]
+
+
 class GenerateRequest(Contract):
     prompt: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)]
+    # auto: offline shapes first, AI line art only for requests they cannot draw (when configured).
+    mode: Literal["auto", "offline", "ai"] = "auto"
+    # Default detail; a detail word in the command itself ("intricate") takes precedence offline.
+    detail: DetailLevel | None = None
+    # AI drawings are traced from pixels and fitted inside this box, like imported images.
+    fit_width_mm: PositiveMm | None = None
+    fit_height_mm: PositiveMm | None = None
 
 
 class DrawingTransform(Contract):
@@ -308,13 +318,25 @@ class DrawingDraft(Contract):
     import_source: "ImportedSource | None" = None
 
 
+class AiProvenance(Contract):
+    """Which provider request produced an AI drawing's source image. Never contains credentials."""
+    provider: Literal["openai"] = "openai"
+    model: str
+    quality: DetailLevel
+    size: str
+    prompt: str
+    image_sha256: str
+    elapsed_s: Annotated[float, Field(ge=0, allow_inf_nan=False)]
+
+
 class ImportedSource(Contract):
     filename: str
     content_sha256: str
-    dialect: Literal["picasso", "linear-mm", "picasso-json", "image"]
+    dialect: Literal["picasso", "linear-mm", "picasso-json", "image", "ai-image"]
     original_bounds: DrawingBounds
     input_strokes: list[Stroke]
     notes: list[str]
+    ai: AiProvenance | None = None
 
 
 class ImportRequest(Contract):
@@ -322,7 +344,7 @@ class ImportRequest(Contract):
     # G-code (or a Picasso JSON draft) as text; an image as base64 of at most 8 MB.
     content: str = Field(min_length=1, max_length=10_700_000)
     kind: Literal["gcode", "image"] = "gcode"
-    detail: Literal["low", "medium", "high"] = "medium"
+    detail: DetailLevel = "medium"
     center_on_origin: bool = False
     fit_width_mm: PositiveMm | None = None
     fit_height_mm: PositiveMm | None = None

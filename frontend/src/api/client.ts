@@ -1,5 +1,5 @@
 import type { ApiError, AutoSyncRequest, AutoSyncState, CalibrationProfile, CalibrationSaveRequest, CapabilitiesResponse, Capability,
-  DrawingDraft, ExportRequest, HealthResponse, HistoryResponse, HomeRequest, ImportRequest, MachineState, PortsResponse, PreparedJob,
+  DrawingDraft, ExportRequest, GenerateRequest, HealthResponse, HistoryResponse, HomeRequest, ImportRequest, MachineState, PortsResponse, PreparedJob,
   ProfilesResponse, RevisionRequest, SessionResponse, StageRequest, StorageTarget, StudioStatus, TargetsResponse, TransferRecord,
   UsbRun, UsbStartRequest, VoiceTranscript } from './contracts';
 
@@ -60,8 +60,10 @@ export const warmVoice = () => mutate<Capability>('/api/voice/warm', {}, freshSi
 export const transcribeAudio = (audio: Blob, signal: AbortSignal) =>
   send<VoiceTranscript>('/api/voice/transcribe', audio, audio.type || 'application/octet-stream', signal, 'POST', 60000, 'Speech could not be transcribed. Type the command instead.');
 
-export function submitCommand(prompt: string, signal: AbortSignal): Promise<DrawingDraft> {
-  return mutate('/api/drawings/generate', { prompt }, signal);
+export type CommandOptions = Omit<GenerateRequest, 'prompt' | 'schema_version'>;
+// Offline shapes return at once; an AI drawing waits for the provider (up to three minutes at High detail).
+export function submitCommand(prompt: string, signal: AbortSignal, options: CommandOptions = {}): Promise<DrawingDraft> {
+  return send('/api/drawings/generate', JSON.stringify({ prompt, ...options }), 'application/json', signal, 'POST', 200000, 'The drawing could not be generated. Please try again.');
 }
 
 export function reviseDraft(id: string, payload: RevisionRequest, signal: AbortSignal): Promise<DrawingDraft> {

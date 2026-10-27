@@ -31,7 +31,7 @@ async function generateCircle() {
 describe('offline drawing studio', () => {
   it('submits a real drawing command and displays exported paths without enabling hardware', async () => {
     const submit = await generateCircle();
-    expect(submit).toHaveBeenCalledWith('Draw a circle', expect.any(AbortSignal));
+    expect(submit).toHaveBeenCalledWith('Draw a circle', expect.any(AbortSignal), expect.objectContaining({ mode: 'auto', detail: 'medium' }));
     expect(screen.getByTestId('drawing-path')).toHaveAttribute('d', expect.stringContaining('M'));
     expect(screen.getByTestId('actual-bounds')).toHaveTextContent('120.00 × 120.00 mm');
     expect(screen.getByRole('button', { name: /Voice input unavailable/ })).toBeDisabled();
@@ -149,5 +149,35 @@ describe('offline drawing studio', () => {
     expect(window.localStorage.getItem('picasso.simulationSpeed')).toBe('0.5');
     expect(control).not.toHaveBeenCalled();
     window.localStorage.removeItem('picasso.simulationSpeed');
+  });
+
+  it('sends the chosen detail, keeps AI unavailable without a key and remembers the choice', async () => {
+    const submit = await generateCircle();
+    expect(screen.getByRole('option', { name: 'AI image' })).toBeDisabled();
+    expect(screen.getByRole('option', { name: 'Auto · offline' })).toBeInTheDocument();
+    fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Command detail' })).getByRole('radio', { name: 'High' }));
+    fireEvent.change(screen.getByRole('combobox', { name: 'Drawing engine' }), { target: { value: 'offline' } });
+    fireEvent.keyDown(screen.getByRole('textbox', { name: 'Drawing command' }), { key: 'Enter' });
+    await waitFor(() => expect(submit).toHaveBeenLastCalledWith('Draw a circle', expect.any(AbortSignal), expect.objectContaining({ mode: 'offline', detail: 'high' })));
+    expect(window.localStorage.getItem('picasso.detail')).toBe('high');
+    window.localStorage.removeItem('picasso.detail'); window.localStorage.removeItem('picasso.route');
+  });
+
+  it('routes to AI when configured and reports traced AI line art', async () => {
+    const ai = { ...studio, capabilities: { ...studio.capabilities, ai: { available: true, phase: 7, reason: 'OpenAI ready.' } } };
+    vi.spyOn(api, 'loadStudio').mockResolvedValue(ai);
+    const traced = { ...structuredClone(fixture), title: 'Cat on a skateboard', spec: { ...fixture.spec, generator: 'imported' as const },
+      import_source: { filename: 'AI image (gpt-image-2.5-flare)', content_sha256: 'x', dialect: 'ai-image' as const, original_bounds: fixture.preview.bounds, input_strokes: [], notes: [],
+        ai: { model: 'gpt-image-2.5-flare', quality: 'medium' as const, size: '1024x1024', prompt: 'p', image_sha256: 'x', elapsed_s: 9 } } };
+    const submit = vi.spyOn(api, 'submitCommand').mockResolvedValue(traced);
+    render(<App />);
+    await screen.findByText('Shapes offline · other requests via OpenAI');
+    fireEvent.change(screen.getByRole('combobox', { name: 'Drawing engine' }), { target: { value: 'ai' } });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Drawing command' }), { target: { value: 'Draw a cat on a skateboard' } });
+    fireEvent.keyDown(screen.getByRole('textbox', { name: 'Drawing command' }), { key: 'Enter' });
+    await screen.findByText(/AI line art from gpt-image-2\.5-flare, traced on this computer/);
+    expect(submit).toHaveBeenCalledWith('Draw a cat on a skateboard', expect.any(AbortSignal), expect.objectContaining({ mode: 'ai', fit_width_mm: expect.any(Number) }));
+    expect(screen.getByRole('button', { name: /Regenerate/ })).toBeDisabled();
+    window.localStorage.removeItem('picasso.route');
   });
 });

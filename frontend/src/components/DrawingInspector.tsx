@@ -43,6 +43,7 @@ export function DrawingInspector({ draft, fields, change, busy, available, dirty
 }) {
   const [advanced, setAdvanced] = useState(false);
   const imported = draft?.spec.generator === 'imported';
+  const ai = draft?.import_source?.ai;
   const strokes = draft?.preview.strokes ?? 0;
   return <div className="inspector-body drawing-controls">
     <h2 className="inspector-title">Make it yours</h2>
@@ -84,7 +85,7 @@ export function DrawingInspector({ draft, fields, change, busy, available, dirty
           <div><dt>Travel distance</dt><dd>{draft ? `${draft.preview.travel_distance_mm.toFixed(1)} mm` : '—'}</dd></div>
           <div><dt>Strokes / pen lifts</dt><dd>{draft ? `${draft.preview.strokes} / ${draft.preview.pen_lifts}` : '—'}</dd></div></dl>
         <p className="insight-caption">{draft ? `Revision ${draft.revision} · SHA-256 ${draft.gcode_sha256.slice(0, 12)} · curve tolerance ${draft.chord_tolerance_mm} mm` : 'Metrics and preview come from the final G-code.'}</p>
-        {draft?.import_source && <details className="import-provenance"><summary>Imported source: {draft.import_source.filename}</summary><p>Original bounds: {draft.import_source.original_bounds.width_mm.toFixed(2)} × {draft.import_source.original_bounds.height_mm.toFixed(2)} mm.</p>{draft.import_source.notes.map(note => <p key={note}>{note}</p>)}</details>}
+        {draft?.import_source && <details className="import-provenance"><summary>{ai ? `AI source: OpenAI ${ai.model}` : `Imported source: ${draft.import_source.filename}`}</summary><p>Original bounds: {draft.import_source.original_bounds.width_mm.toFixed(2)} × {draft.import_source.original_bounds.height_mm.toFixed(2)} mm.</p>{draft.import_source.notes.map(note => <p key={note}>{note}</p>)}</details>}
       </div>
     </div>
 
@@ -93,6 +94,6 @@ export function DrawingInspector({ draft, fields, change, busy, available, dirty
       <div><dt><Spline size={22} strokeWidth={1.6} /><span className="sr-only">Line length</span></dt><dd>{draft ? `${length(draft.preview.drawing_distance_mm)} of line` : 'Line length appears here'}</dd></div>
     </dl>
     <button className="regenerate-button" disabled={!draft || busy || !available || dirty || imported} onClick={regenerate}
-      title={imported ? 'Imported drawings keep their original paths' : seedLocked ? 'Rebuild with the same seed' : 'Try a new variation'}><RefreshCw size={20} />Regenerate<span className="sr-only"> drawing</span></button>
+      title={ai ? 'Submit the command again for a new AI image' : imported ? 'Imported drawings keep their original paths' : seedLocked ? 'Rebuild with the same seed' : 'Try a new variation'}><RefreshCw size={20} />Regenerate<span className="sr-only"> drawing</span></button>
   </div>;
 }

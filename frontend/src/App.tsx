@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { ArrowRight, ArrowUp, ChevronDown, CircleAlert, CircleCheck, CircleHelp, Cpu, HardDrive, PenLine, Printer, Settings, ShieldCheck, Upload, WifiOff, X } from 'lucide-react';
-import { controlMachine, downloadDraft, fetchDraft, fetchJob, loadStudio, reviseDraft, selectCalibration, submitCommand, type Studio } from './api/client';
+import { controlMachine, downloadDraft, fetchDraft, fetchJob, loadStudio, reviseDraft, selectCalibration, submitCommand, type CommandOptions, type Studio } from './api/client';
 import type { DrawingDraft } from './api/contracts';
 import { Brand } from './components/Brand';
 import { HistoryPanel } from './components/HistoryPanel';
@@ -13,16 +13,28 @@ import { DocumentMenu } from './components/DocumentMenu';
 import { VoiceButton } from './components/VoiceButton';
 import { ExportMenu, type DownloadFormat } from './components/ExportMenu';
 import { runActive, useMachine } from './components/UsbRunCard';
-import { DrawingPreview, executedFraction, isPaper, paperOptions, type Execution, type PaperId } from './components/DrawingPreview';
+import { DrawingPreview, executedFraction, isPaper, paperOptions, paperSize, type Execution, type PaperId } from './components/DrawingPreview';
 import { DrawingInspector, emptyEdits, fieldsFor, revisionPayload, type Edits } from './components/DrawingInspector';
 
 const examples = [['Mandala', 'Create a beautiful mandala'], ['Geometric', 'Draw a geometric pattern'], ['Butterfly', 'Draw a butterfly'], ['Circle', 'Draw a circle']];
 const views = [['studio', 'Studio'], ['gallery', 'Gallery'], ['history', 'History']] as const;
 const machineLabels: Record<string, string> = { connected: 'Machine connected', connecting: 'Machine connecting', lost: 'Machine connection lost', incompatible: 'Incompatible firmware' };
+type Route = NonNullable<CommandOptions['mode']>;
+type Detail = NonNullable<CommandOptions['detail']>;
+const routes: [Route, string, string][] = [
+  ['auto', 'Auto', 'Shapes are drawn offline; anything else becomes AI line art'],
+  ['offline', 'Offline only', 'Never uses the network or the API key'],
+  ['ai', 'AI image', 'Always asks OpenAI for line art, then traces it locally'],
+];
+const commandDetails: [Detail, string][] = [['low', 'Low'], ['medium', 'Medium'], ['high', 'High']];
 
 function storedPaper(): PaperId {
   try { const value = window.localStorage.getItem('picasso.paper'); return isPaper(value) ? value : 'A4-portrait'; } catch { return 'A4-portrait'; }
 }
+function stored<T extends string>(key: string, allowed: readonly T[], fallback: T): T {
+  try { const value = window.localStorage.getItem(key) as T | null; return value && allowed.includes(value) ? value : fallback; } catch { return fallback; }
+}
+function remember(key: string, value: string) { try { window.localStorage.setItem(key, value); } catch { /* preference only */ } }
 
 function Dialog({ kind, studio, close }: { kind: 'guide' | 'settings'; studio: Studio | null; close: () => void }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -31,13 +43,13 @@ function Dialog({ kind, studio, close }: { kind: 'guide' | 'settings'; studio: S
     <div className="dialog-top"><span className="eyebrow">PROJECT PICASSO</span><button className="icon-button" onClick={close} aria-label="Close dialog"><X size={18} /></button></div>
     <h2 id="dialog-title">{kind === 'guide' ? 'From an idea to a line.' : 'Your local studio.'}</h2>
     {kind === 'guide' ? <><p>Generate or import a drawing, refine its paths, and reopen it from saved history.</p>
-      <ol className="guide-steps"><li><span>01</span><div><strong>Describe one drawing</strong><p>Try a circle, ellipse, rectangle, spiral, butterfly, mandala or geometric pattern. Add “120 mm wide”, “12 petals”, “seed 7”, or “intricate”.</p></div></li>
+      <ol className="guide-steps"><li><span>01</span><div><strong>Describe one drawing</strong><p>Type or say it. A circle, ellipse, rectangle, spiral, butterfly, mandala or geometric pattern is drawn offline; add “120 mm wide”, “12 petals” or “seed 7”. With an OpenAI key set up, anything else becomes AI line art traced on this computer. Low, Medium and High set the detail.</p></div></li>
         <li><span>02</span><div><strong>Make it your own</strong><p>Adjust size, detail and paper, or open Advanced for rotation, center and seed. Controls update the path automatically. Playback estimates machine time from the firmware's step timing; its speed control changes only the preview, never the machine.</p></div></li>
         <li><span>03</span><div><strong>Draw it or keep it</strong><p>Execute streams the drawing to the machine over USB once it is connected, a verified profile is selected and the origin is set on the keypad. Or export G-code, JSON or SVG; revisions save automatically.</p></div></li></ol>
       <div className="notice"><ShieldCheck size={18} /><p>Nothing is sent to the machine until you connect explicitly and start a run. Draft downloads cannot authorize physical drawing.</p></div>
-    </> : <><p>Drawings are generated on your computer. No account, API key or network service is required.</p><dl className="settings-list">
+    </> : <><p>Drawings are generated on your computer. No account, API key or network service is required; an optional OpenAI key adds AI line art for requests the offline shapes cannot draw.</p><dl className="settings-list">
       <div><dt>Application</dt><dd>{studio?.health.version ?? 'Service offline'}</dd></div><div><dt>Python</dt><dd>{studio?.health.python_version ?? 'Unavailable'}</dd></div>
-      <div><dt>Current milestone</dt><dd>Phase 6 · Acknowledged USB control</dd></div><div><dt>Local SD mirror</dt><dd>SdCard/ · unchanged</dd></div><div><dt>Machine profile</dt><dd>Not selected or verified</dd></div><div><dt>Voice input</dt><dd>{studio?.capabilities.voice.available ? 'Offline · Faster-Whisper small' : 'Speech model not installed'}</dd></div></dl>
+      <div><dt>Current milestone</dt><dd>Phase 6 · Acknowledged USB control</dd></div><div><dt>Local SD mirror</dt><dd>SdCard/ · unchanged</dd></div><div><dt>Machine profile</dt><dd>Not selected or verified</dd></div><div><dt>Voice input</dt><dd>{studio?.capabilities.voice.available ? 'Offline · Faster-Whisper small' : 'Speech model not installed'}</dd></div><div><dt>AI drawing</dt><dd title={studio?.capabilities.ai.reason}>{studio?.capabilities.ai.available ? 'OpenAI · used only on request' : 'Not set up · offline only'}</dd></div></dl>
       <div className="notice"><Cpu size={18} /><p>Revisions are stored in local history. Back up the data folder with the app stopped to retain the database, artifacts, profiles and recovery copies together.</p></div></>}
     <button className="primary-button dialog-done" onClick={close}>Back to the studio <ArrowRight size={16} /></button>
   </dialog>;
@@ -57,6 +69,8 @@ export default function App() {
   const [grid, setGrid] = useState(true);
   const [zoom, setZoom] = useState(100);
   const [paper, setPaperState] = useState<PaperId>(storedPaper);
+  const [route, setRouteState] = useState<Route>(() => stored('picasso.route', ['auto', 'offline', 'ai'], 'auto'));
+  const [detail, setDetailState] = useState<Detail>(() => stored('picasso.detail', ['low', 'medium', 'high'], 'medium'));
   const [dialog, setDialog] = useState<'guide' | 'settings' | null>(null);
   const [extra, setExtra] = useState<'import' | 'calibration' | 'test-export' | 'physical-export' | null>(null);
   const [draft, setDraft] = useState<DrawingDraft | null>(null);
@@ -71,7 +85,11 @@ export default function App() {
   const ticket = useRef(0);
   const lastAttempt = useRef('');
   const say = useCallback((text: string, kind: 'info' | 'error' = 'info') => { setFeedback(text); setTone(kind); }, []);
-  const setPaper = (value: PaperId) => { setPaperState(value); try { window.localStorage.setItem('picasso.paper', value); } catch { /* preference only */ } };
+  const setPaper = (value: PaperId) => { setPaperState(value); remember('picasso.paper', value); };
+  const setRoute = (value: Route) => { setRouteState(value); remember('picasso.route', value); };
+  const setDetail = (value: Detail) => { setDetailState(value); remember('picasso.detail', value); };
+  const aiAvailable = !!studio?.capabilities.ai.available;
+  const activeRoute: Route = route === 'ai' && !aiAvailable ? 'auto' : route;  // AI needs a configured key
   // A local snapshot without device I/O, so Execute, Stop and the machine status stay current.
   const [machine, refreshMachine] = useMachine(true);
   const run = machine?.run;
@@ -95,10 +113,10 @@ export default function App() {
     setDraft(result); setFields(fieldsFor(result));
     setSession(current => [result, ...current.filter(item => item.revision_id !== result.revision_id)].slice(0, 8));
   }, []);
-  const perform = useCallback(async (operation: (signal: AbortSignal) => Promise<DrawingDraft>, message: string) => {
+  const perform = useCallback(async (operation: (signal: AbortSignal) => Promise<DrawingDraft>, message: string | ((result: DrawingDraft) => string)) => {
     controller.current?.abort(); const version = ++ticket.current; const abort = new AbortController(); controller.current = abort;
     setBusy(true); setFeedback('');
-    try { const result = await operation(abort.signal); if (ticket.current === version) { accept(result); say(`${result.title} · revision ${result.revision}. ${message}`); } }
+    try { const result = await operation(abort.signal); if (ticket.current === version) { accept(result); say(`${result.title} · revision ${result.revision}. ${typeof message === 'string' ? message : message(result)}`); } }
     catch (error) { if (!abort.signal.aborted && ticket.current === version) say(error instanceof Error ? error.message : 'The drawing could not be updated.', 'error'); }
     finally { if (ticket.current === version) setBusy(false); }
   }, [accept, say]);
@@ -131,7 +149,16 @@ export default function App() {
       return next;
     });
   };
-  const command = () => { if (!prompt.trim() || busy || !studio) return; setView('studio'); setZoom(100); void perform(signal => submitCommand(prompt.trim(), signal), 'Simulation only; machine profile unverified.'); };
+  const command = () => {
+    if (!prompt.trim() || busy || !studio) return;
+    setView('studio'); setZoom(100);
+    // AI line art is fitted to the page like an imported image; offline shapes keep their own size.
+    const page = paperSize(paper);
+    const options: CommandOptions = { mode: activeRoute, detail, fit_width_mm: page ? page[0] * .85 : null, fit_height_mm: page ? page[1] * .85 : null };
+    void perform(signal => submitCommand(prompt.trim(), signal, options), result => result.import_source?.ai
+      ? `AI line art from ${result.import_source.ai.model}, traced on this computer. Review the preview before executing.`
+      : 'Simulation only; machine profile unverified.');
+  };
   const onSubmit = (event: FormEvent) => { event.preventDefault(); command(); };
   const draftCommand = (text: string) => { setView('studio'); setPrompt(text); setFeedback(''); input.current?.focus(); };
   // Spoken words are inserted at the cursor (replacing any selection) for review; they are never submitted automatically.
@@ -178,7 +205,9 @@ export default function App() {
   const machineLabel = runActive(run) ? 'Machine drawing' : machineLabels[machineState ?? ''] ?? 'Machine not connected';
   const storage = studio?.status.storage.state === 'test_directory' ? 'Test directory selected' : studio?.status.storage.state === 'ready' ? 'SD target mounted'
     : studio?.status.storage.state === 'unmounted' ? 'SD target unavailable' : 'SD not configured';
-  const hint = busy ? 'Building the exported path…' : studio ? 'Offline engine · no API key needed' : loading ? 'Connecting to local service…' : 'Local service offline';
+  const hint = busy ? (activeRoute === 'ai' ? 'Generating AI line art, then tracing it locally…' : activeRoute === 'auto' && aiAvailable ? 'Building the drawing… AI requests take up to a minute' : 'Building the exported path…')
+    : !studio ? (loading ? 'Connecting to local service…' : 'Local service offline')
+    : activeRoute === 'offline' || !aiAvailable ? 'Offline engine · no API key needed' : activeRoute === 'ai' ? 'AI line art · sent to OpenAI' : 'Shapes offline · other requests via OpenAI';
   const help = (className: string) => <button className={`help-button ${className}`} aria-label="Open getting started guide" onClick={() => setDialog('guide')}><CircleHelp size={className === 'floating-help' ? 32 : 22} strokeWidth={1.5} /></button>;
 
   return <div className={`app-shell view-${view}`}><a className="skip-link" href="#workspace">Skip to workspace</a>
@@ -207,12 +236,21 @@ export default function App() {
               <div className={`command-feedback ${tone}`} role="status" aria-live="polite">{feedback && <>{tone === 'error' ? <CircleAlert size={15} /> : <CircleCheck size={15} />}<span>{feedback}</span><button className="feedback-dismiss" aria-label="Dismiss message" onClick={() => setFeedback('')}><X size={13} /></button></>}</div></div>
             <form onSubmit={onSubmit} className="composer-form">
               <div className="composer-field"><label className="sr-only" htmlFor="drawing-command">Drawing command</label>
-                <textarea ref={input} id="drawing-command" value={prompt} maxLength={2000} rows={1} onChange={event => setPrompt(event.target.value)} onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); command(); } }} placeholder="Describe a circle, butterfly, mandala, or geometric pattern…" aria-describedby="command-hint" />
+                <textarea ref={input} id="drawing-command" value={prompt} maxLength={2000} rows={1} onChange={event => setPrompt(event.target.value)} onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); command(); } }} placeholder={aiAvailable && activeRoute !== 'offline' ? 'Describe a shape, or anything else for AI line art…' : 'Describe a circle, butterfly, mandala, or geometric pattern…'} aria-describedby="command-hint" />
                 <VoiceButton available={!!studio?.capabilities.voice.available} reason={studio ? studio.capabilities.voice.reason : 'The local service is offline.'} transcript={dictate} say={say} /></div>
               {busy && <button type="button" className="cancel-generation" onClick={() => { cancel(); say('Cancelled. The previous draft is retained.'); }}>Cancel</button>}
               <button className="submit-command" type="submit" aria-label="Submit drawing command" disabled={!prompt.trim() || !studio || busy}>{busy ? <span className="spinner" /> : <ArrowUp size={22} />}</button>
             </form>
-            <div className="example-commands" role="group" aria-label="Example drawings">{examples.map(([label, text]) => <button key={label} title={text} onClick={() => draftCommand(text)}>{label}</button>)}</div>
+            <div className="composer-footer">
+              <div className="example-commands" role="group" aria-label="Example drawings">{examples.map(([label, text]) => <button key={label} title={text} onClick={() => draftCommand(text)}>{label}</button>)}</div>
+              <div className="command-options">
+                <div className="pill-segmented" role="radiogroup" aria-label="Command detail">{commandDetails.map(([value, label]) =>
+                  <button key={value} type="button" role="radio" aria-checked={detail === value} disabled={busy} onClick={() => setDetail(value)}>{label}</button>)}</div>
+                <label className="route-pill" title={aiAvailable ? routes.find(([value]) => value === activeRoute)?.[2] : studio?.capabilities.ai.reason}><span className="sr-only">Drawing engine</span>
+                  <select value={activeRoute} disabled={busy} onChange={event => setRoute(event.target.value as Route)}>{routes.map(([value, label]) =>
+                    <option key={value} value={value} disabled={value === 'ai' && !aiAvailable}>{value === 'auto' && !aiAvailable ? 'Auto · offline' : label}</option>)}</select><ChevronDown size={14} /></label>
+              </div>
+            </div>
           </section>
         </section>
 

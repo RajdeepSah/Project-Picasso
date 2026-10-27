@@ -2,7 +2,7 @@
 
 A local application being developed to turn drawing commands into previewed, machine-compatible paths for an Arduino wall drawing machine.
 
-**Current milestone: Phase 6 software complete.** Press **Execute** beside *Simulation* to draw the previewed drawing over USB: the studio streams a verified job one acknowledged command at a time, with pause, stop and a firmware host-loss watchdog (serial protocol v1, firmware 0.6.1). The SD card can stay in the Arduino. The UNO runs a USB-only build that fits its memory (87% flash, 64% SRAM). It builds on the Phase 5 canonical firmware and the Phase 4 history, import, preparation and verified SD export. All of this is tested against simulated devices only. **Still pending:** real-card readback, physical commissioning and the hardware USB checks. **Voice input** (offline Faster-Whisper) is available early from Phase 8; optional AI interpretation is Phase 7.
+**Current milestone: Phase 6 software complete.** Press **Execute** beside *Simulation* to draw the previewed drawing over USB: the studio streams a verified job one acknowledged command at a time, with pause, stop and a firmware host-loss watchdog (serial protocol v1, firmware 0.6.1). The SD card can stay in the Arduino. The UNO runs a USB-only build that fits its memory (87% flash, 64% SRAM). It builds on the Phase 5 canonical firmware and the Phase 4 history, import, preparation and verified SD export. All of this is tested against simulated devices only. **Still pending:** real-card readback, physical commissioning and the hardware USB checks. **Voice input** (offline Faster-Whisper) is available early from Phase 8. **Optional AI line art** (Phase 7): requests the offline shapes cannot draw are sent to the OpenAI Image API and the returned picture is traced locally. See [AI drawing](#ai-drawing-optional).
 
 ## Install and launch
 
@@ -22,7 +22,7 @@ Then launch with one command:
 python3 scripts/picasso.py
 ```
 
-The launcher opens **http://127.0.0.1:8000** after the backend is ready. Keep the terminal running; **Ctrl+C** stops the service. It binds only to the local computer. No Arduino, SD card, AI key or cloud account is required. After setup, the app and its fonts load without internet access.
+The launcher opens **http://127.0.0.1:8000** after the backend is ready. Keep the terminal running; **Ctrl+C** stops the service. It binds only to the local computer. No Arduino, SD card, AI key or cloud account is required; an OpenAI key only adds [AI drawing](#ai-drawing-optional). After setup, the app and its fonts load without internet access.
 
 Useful options:
 
@@ -56,6 +56,7 @@ python3 scripts/setup.py --skip-install
 - Getting-started and studio-information dialogs, keyboard submission, and an application error boundary.
 - Physical preparation stays disabled until the selected measured profile is verified.
 - **Voice input:** click the microphone, say *“Draw a butterfly”*, and the words appear in the command box. See [Voice input](#voice-input).
+- **Optional AI drawing:** with an OpenAI key, *“Draw a cat on a skateboard”* becomes AI line art, traced locally at Low, Medium or High detail into the same preview, simulation and Execute pipeline. See [AI drawing](#ai-drawing-optional).
 - **Canonical firmware** in `firmware/WallDrawingMachine/` keeps the original pins, libraries and step sequence. It adds a bounded strict parser, validation of the whole file and workspace before any motion, a deliberate per-job origin, cooperative pause/stop, pen settling both ways, coil holding and distinct completed/aborted/failed results. See [the firmware README](firmware/README.md).
 - **USB control**: list ports without opening them; connect explicitly; verify firmware, configuration ID, boot session, origin and position; then stream a verified physical job one acknowledged command at a time, with pause, resume, stop, live acknowledged progress and a validated *Go to origin*. Runs are recorded locally. Restarts and resets never resume. See the [serial protocol](docs/SERIAL_PROTOCOL.md).
 - **Execute** beside *Simulation*: one sheet connects the machine, checks the verified profile, the drawing's workspace fit and the keypad origin, asks you to confirm the area is clear, then draws over USB. The preview shows acknowledged progress, the commanded position and an always-visible **Stop**.
@@ -80,6 +81,27 @@ History lives under `data/` and survives restarts. Its SQLite database and check
 Voice only fills the command box. It never generates a drawing, prepares a job or moves the machine; those keep their own explicit controls. Speech is recognized on this computer by Faster-Whisper *small* (CPU, int8): audio goes only to the local service, is not stored, and no network is used after setup. The model loads in the background when you first press the microphone, so the first command takes a moment longer. Spoken units are converted to the command grammar (“millimeters” → `mm`, “100 by 60” → `100 x 60`).
 
 A model at a different location can be used with `PICASSO_VOICE_MODEL_DIR`. To install the model later: `.venv/bin/python -m backend.app.voice download`; to check it: `.venv/bin/python -m backend.app.voice check`. The browser must support `MediaRecorder` (current Chrome, Edge, Firefox and Safari); microphone access works on `127.0.0.1`/`localhost` without HTTPS. Tested on Linux with Chromium; real-microphone tests on other browsers/operating systems are pending.
+
+## AI drawing (optional)
+
+Commands are routed by cost and speed:
+
+| Request | Engine | Network | Cost |
+| --- | --- | --- | --- |
+| Circle, ellipse, rectangle, spiral, butterfly, mandala, geometric pattern | Offline Python generators | None | Free |
+| Anything else (*“a lighthouse on a cliff”*) | OpenAI Image API → OpenCV trace on this computer | One request | Billed to your key |
+| Speech | Faster-Whisper on this computer | None | Free |
+
+To enable it, copy `.env.example` to `.env` (git-ignored), set `OPENAI_API_KEY`, and restart the launcher. The default model is `gpt-image-2.5-flare`, OpenAI's fast everyday image model; set `PICASSO_OPENAI_IMAGE_MODEL` to change it, or `PICASSO_AI=off` to disable AI even with a key present. A real environment variable takes precedence over `.env`.
+
+Below the command box, choose the detail and the engine:
+
+- **Low / Medium / High** sets the offline generator detail (a word in the command, such as “intricate”, still wins). For AI it sets both OpenAI's rendering quality (time and cost) and the tracing level.
+- **Auto** (default) draws supported shapes offline and sends only commands the offline grammar cannot draw at all to OpenAI. A supported shape with a bad value (“2 petals”) is reported, not sent. **Offline only** never uses the network. **AI image** always asks OpenAI.
+
+What is sent: the command text inside a fixed line-art style instruction. Only an image comes back. It is traced into paths by the same OpenCV code as **Import → Image**, then regenerated, bounded and validated like every drawing; provider output is never executed. The drawing is fitted to 85% of the selected paper, saved in history with its model, quality, prompt and image checksum (never the key), and stays a draft: it is never prepared or drawn until you press **Execute** and confirm. AI drawings can be resized, rotated and moved locally for free; for a different picture, submit the command again. One AI request runs at a time; **Cancel** returns at once, but OpenAI may still bill a request it has already received.
+
+The key is read only by the local backend. It is never sent to the browser, logged, written to history or included in error messages. Errors (invalid key, no quota, rate limit, content policy, timeout, offline) explain themselves, and offline shapes keep working.
 
 ## Draw from the studio over USB
 
@@ -171,7 +193,7 @@ The running application exposes its full schema at **http://127.0.0.1:8000/docs*
 - `GET /api/health`, `/api/capabilities`, `/api/status`: independent application, machine and storage state.
 - `GET /api/profiles`: source references, saved measured profiles and active selection.
 - `GET /api/drawings?query=mandala&offset=0&limit=20`: searchable persistent history.
-- `POST /api/drawings/generate`, `POST /api/drawings/import`: generate/import and save a draft.
+- `POST /api/drawings/generate` (`{prompt, mode: auto|offline|ai, detail: low|medium|high, fit_width_mm, fit_height_mm}`), `POST /api/drawings/import`: generate/import and save a draft. Only `auto`/`ai` with a configured key can contact OpenAI.
 - `POST /api/drawings/{revision_id}/revisions`: save an immutable adjustment/regeneration.
 - `POST /api/voice/transcribe` (raw recorded audio body) → `{text, duration_s, processing_s}`; `POST /api/voice/warm` loads the speech model in the background. Text only; nothing is generated.
 - `GET /api/drawings/{revision_id}` and `/export?format=json|svg|gcode`: retrieve exact saved artifacts.
@@ -234,4 +256,4 @@ The maintained sketch is `firmware/WallDrawingMachine/WallDrawingMachine.ino`; t
 
 The implemented stack is React + TypeScript + Vite with Python + FastAPI/Pydantic, standard-library geometry/export, SQLite plus immutable files, and C++11 Arduino firmware with a host test harness. USB access uses pySerial 3.5.
 
-Pending hardware acceptance: the Arduino CLI compile and memory report on the actual board, real-card readback (Phase 4) and the [commissioning checks](docs/FIRMWARE_COMMISSIONING.md). Pending hardware acceptance also includes the Phase 6 USB checks (commissioning guide §10). Next: Phase 7, optional AI interpretation, then the rest of Phase 8 (release polish and real-microphone tests across browsers).
+Pending hardware acceptance: the Arduino CLI compile and memory report on the actual board, real-card readback (Phase 4) and the [commissioning checks](docs/FIRMWARE_COMMISSIONING.md). Pending hardware acceptance also includes the Phase 6 USB checks (commissioning guide §10). Next: the rest of Phase 7 (a documented prompt set checked against the real provider, follow-up adjustments such as “make it smaller”), then the rest of Phase 8 (release polish and real-microphone tests across browsers). AI tests use a mocked provider only.

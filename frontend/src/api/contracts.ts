@@ -145,6 +145,10 @@ export type Code = string;
 export type Message = string;
 export type Phase2 = number | null;
 export type SchemaVersion16 = 1;
+export type Detail1 = ("low" | "medium" | "high") | null;
+export type FitHeightMm = number | null;
+export type FitWidthMm = number | null;
+export type Mode = "auto" | "offline" | "ai";
 export type Prompt = string;
 export type SchemaVersion17 = 1;
 export type ChordToleranceMm = number;
@@ -153,8 +157,16 @@ export type ExecutionReady = false;
 export type ExporterVersion = "picasso-legacy-v1.0";
 export type Gcode = string;
 export type GcodeSha256 = string;
+export type ElapsedS = number;
+export type ImageSha256 = string;
+export type Model = string;
+export type Prompt1 = string;
+export type Provider = "openai";
+export type Quality = "low" | "medium" | "high";
+export type SchemaVersion18 = 1;
+export type Size = string;
 export type ContentSha256 = string;
-export type Dialect2 = "picasso" | "linear-mm" | "picasso-json" | "image";
+export type Dialect2 = "picasso" | "linear-mm" | "picasso-json" | "image" | "ai-image";
 export type Filename = string;
 export type InputStrokes = Stroke[];
 export type Notes1 = string[];
@@ -163,9 +175,9 @@ export type MaxXMm1 = number;
 export type MaxYMm1 = number;
 export type MinXMm1 = number;
 export type MinYMm1 = number;
-export type SchemaVersion18 = 1;
-export type WidthMm1 = number;
 export type SchemaVersion19 = 1;
+export type WidthMm1 = number;
+export type SchemaVersion20 = 1;
 export type ParentRevisionId = string | null;
 export type DrawingDistanceMm = number;
 /**
@@ -174,14 +186,14 @@ export type DrawingDistanceMm = number;
  */
 export type ExpectedStartMm = [number, number];
 export type PenLifts = number;
-export type SchemaVersion20 = 1;
+export type SchemaVersion21 = 1;
 /**
  * @minItems 2
  * @maxItems 2
  */
 export type End = [number, number];
 export type PenDown = boolean;
-export type SchemaVersion21 = 1;
+export type SchemaVersion22 = 1;
 /**
  * @minItems 2
  * @maxItems 2
@@ -190,45 +202,45 @@ export type Start = [number, number];
 export type Segments = ExecutionSegment[];
 export type Strokes1 = number;
 export type TravelDistanceMm = number;
-export type Prompt1 = string;
+export type Prompt2 = string;
 export type Revision2 = number;
 export type RevisionId = string;
 export type RoundingToleranceMm = number;
-export type SchemaVersion22 = 1;
+export type SchemaVersion23 = 1;
 export type SimulationProfile = "unverified-preview-v1";
 export type Title = string;
 export type OffsetXMm = number;
 export type OffsetYMm = number;
 export type PreserveAspect = boolean;
 export type RotationDegrees = number;
-export type SchemaVersion23 = 1;
+export type SchemaVersion24 = 1;
 export type Warnings = string[];
 export type Regenerate = boolean;
-export type SchemaVersion24 = 1;
+export type SchemaVersion25 = 1;
 export type SeedLocked = boolean;
 export type CenterOnOrigin = boolean;
 export type Content = string;
-export type Detail1 = "low" | "medium" | "high";
+export type Detail2 = "low" | "medium" | "high";
 export type Filename1 = string;
-export type FitHeightMm = number | null;
-export type FitWidthMm = number | null;
+export type FitHeightMm1 = number | null;
+export type FitWidthMm1 = number | null;
 export type Kind = "gcode" | "image";
-export type SchemaVersion25 = 1;
+export type SchemaVersion26 = 1;
 export type CreatedAt = string;
 export type DrawingId1 = string;
 export type Generator1 = string;
 export type Integrity = "ok" | "damaged";
 export type IntegrityMessage = string | null;
-export type Prompt2 = string;
+export type Prompt3 = string;
 export type Revision3 = number;
 export type RevisionId1 = string;
-export type SchemaVersion26 = 1;
+export type SchemaVersion27 = 1;
 export type Title1 = string;
 export type Items = HistoryEntry[];
 export type Limit = number;
 export type Offset = number;
 export type RecoveryNotices = string[];
-export type SchemaVersion27 = 1;
+export type SchemaVersion28 = 1;
 export type Total = number;
 export type AnchorYMm2 = number;
 export type BaseReferenceId1 = "reference-350" | "reference-400";
@@ -245,20 +257,20 @@ export type PenLiftAndHoldingTested1 = boolean;
 export type PenUpDegrees2 = number;
 export type RopeMaxMm1 = number;
 export type RopeMinMm1 = number;
-export type SchemaVersion28 = 1;
+export type SchemaVersion29 = 1;
 export type SeparationMm2 = number;
 export type SpoolDiameterMm2 = number;
 export type StepsPerTurn2 = number;
 export type Verified2 = boolean;
 export type WorkspaceTested1 = boolean;
 export type ExpectedRevision = string | null;
-export type SchemaVersion29 = 1;
+export type SchemaVersion30 = 1;
 export type SelectForPreparation = boolean;
-export type Mode = "physical" | "simulation";
+export type Mode1 = "physical" | "simulation";
 export type ProfileId = string | null;
 export type ProfileRevision = string | null;
 export type RevisionId2 = string;
-export type SchemaVersion30 = 1;
+export type SchemaVersion31 = 1;
 export type CreatedAt1 = string;
 export type DrawingId2 = string;
 /**
@@ -272,9 +284,9 @@ export type GcodeSha2561 = string;
 export type HardwareExecutionVerified = false;
 export type Id2 = string;
 export type ManualOriginRequired = true;
-export type Mode1 = "physical" | "simulation";
+export type Mode2 = "physical" | "simulation";
 export type RevisionId3 = string;
-export type SchemaVersion31 = 1;
+export type SchemaVersion32 = 1;
 export type State2 = "prepared_locally";
 export type Title2 = string;
 export type Warnings1 = string[];
@@ -282,13 +294,13 @@ export type Enabled = boolean;
 export type JobId = string | null;
 export type LastTransferId = string | null;
 export type Message1 = string;
-export type SchemaVersion32 = 1;
+export type SchemaVersion33 = 1;
 export type Status1 = string;
 export type TargetId = string | null;
 export type DiscoveryError = string | null;
 export type DiscoverySupported = boolean;
 export type LocalMirrorSha256 = string | null;
-export type SchemaVersion33 = 1;
+export type SchemaVersion34 = 1;
 export type SelectedTargetId = string | null;
 export type Available1 = boolean;
 export type CurrentMainSha256 = string | null;
@@ -299,11 +311,11 @@ export type Kind1 = "physical_card" | "test_directory";
 export type Label3 = string;
 export type Path = string;
 export type Reason4 = string;
-export type SchemaVersion34 = 1;
+export type SchemaVersion35 = 1;
 export type VolumeUuid = string;
 export type Writable = boolean;
 export type Targets = StorageTarget[];
-export type SchemaVersion35 = 1;
+export type SchemaVersion36 = 1;
 export type TargetId1 = string;
 export type AcknowledgeReplace = boolean;
 export type ComputerOwnsCard = boolean;
@@ -311,12 +323,12 @@ export type ExpectedExistingSha256 = string | null;
 export type ExpectedJobSha256 = string;
 export type ExpectedLocalMirrorSha256 = string | null;
 export type ManualStartUnderstood = boolean;
-export type SchemaVersion36 = 1;
+export type SchemaVersion37 = 1;
 export type StageLocalMirror = boolean;
 export type TargetId2 = string;
 export type AcknowledgeReplace1 = boolean;
 export type ExpectedExistingSha2561 = string | null;
-export type SchemaVersion37 = 1;
+export type SchemaVersion38 = 1;
 export type Backup = string | null;
 export type BytesVerified = number;
 export type CreatedAt2 = string;
@@ -326,28 +338,28 @@ export type JobId1 = string;
 export type LocalMirrorUpdated = boolean;
 export type Message2 = string;
 export type PreviousSha256 = string | null;
-export type SchemaVersion38 = 1;
+export type SchemaVersion39 = 1;
 export type Status2 = "copying" | "verified" | "failed" | "interrupted";
 export type TargetId3 = string;
 export type TargetKind = "physical_card" | "test_directory" | "local_mirror";
 export type Enabled1 = boolean;
 export type JobId2 = string | null;
-export type SchemaVersion39 = 1;
 export type SchemaVersion40 = 1;
+export type SchemaVersion41 = 1;
 export type WriteToken = string;
 export type ExpectedRevision1 = string;
 export type ProfileId1 = string;
-export type SchemaVersion41 = 1;
+export type SchemaVersion42 = 1;
 export type Error = string | null;
 export type Accessible = boolean;
 export type Description = string;
 export type Device = string;
 export type Hwid = string;
 export type LikelyArduino = boolean;
-export type SchemaVersion42 = 1;
+export type SchemaVersion43 = 1;
 export type Simulated = boolean;
 export type Ports = SerialPortInfo[];
-export type SchemaVersion43 = 1;
+export type SchemaVersion44 = 1;
 export type Connection = "disconnected" | "connecting" | "connected" | "incompatible" | "lost";
 export type BootId = string;
 export type Capabilities = string[];
@@ -355,7 +367,7 @@ export type ConfigId = string;
 export type Dialect3 = string;
 export type FirmwareVersion = string;
 export type Protocol = number;
-export type SchemaVersion44 = 1;
+export type SchemaVersion45 = 1;
 export type Message3 = string;
 export type Port = string | null;
 export type AcknowledgedSeq = number;
@@ -368,7 +380,7 @@ export type Message4 = string;
 export type OriginRevision = number;
 export type Port1 = string;
 export type PositionMm = [number, number] | null;
-export type SchemaVersion45 = 1;
+export type SchemaVersion46 = 1;
 export type SentSeq = number;
 export type StartedAt = string;
 export type State3 =
@@ -388,7 +400,7 @@ export type Token = string;
 export type TotalCommands = number;
 export type UpdatedAt = string;
 export type RecentRuns = UsbRun[];
-export type SchemaVersion46 = 1;
+export type SchemaVersion47 = 1;
 export type Simulated1 = boolean;
 export type BootId2 = string;
 export type CompletedSeq = number;
@@ -406,23 +418,23 @@ export type PositionSource = "commanded";
 export type Reason5 = string;
 export type ReceivedSeq = number;
 export type Result = string;
-export type SchemaVersion47 = 1;
+export type SchemaVersion48 = 1;
 export type State4 = string;
 export type StatusAgeS = number | null;
 export type Port2 = string;
-export type SchemaVersion48 = 1;
+export type SchemaVersion49 = 1;
 export type AreaClearConfirmed = boolean;
 export type ExpectedBootId = string;
 export type ExpectedConfigId = string;
 export type ExpectedOriginRevision = number;
-export type SchemaVersion49 = 1;
+export type SchemaVersion50 = 1;
 export type ExpectedBootId1 = string;
 export type ExpectedOriginRevision1 = number;
 export type RouteConfirmed = boolean;
-export type SchemaVersion50 = 1;
+export type SchemaVersion51 = 1;
 export type DurationS = number;
 export type ProcessingS = number;
-export type SchemaVersion51 = 1;
+export type SchemaVersion52 = 1;
 export type Text = string;
 
 export interface DrawingSpec {
@@ -585,6 +597,10 @@ export interface ApiError {
   schema_version?: SchemaVersion16;
 }
 export interface GenerateRequest {
+  detail?: Detail1;
+  fit_height_mm?: FitHeightMm;
+  fit_width_mm?: FitWidthMm;
+  mode?: Mode;
   prompt: Prompt;
   schema_version?: SchemaVersion17;
 }
@@ -599,11 +615,11 @@ export interface DrawingDraft {
   import_source?: ImportedSource | null;
   parent_revision_id: ParentRevisionId;
   preview: ExecutionPreview;
-  prompt: Prompt1;
+  prompt: Prompt2;
   revision: Revision2;
   revision_id: RevisionId;
   rounding_tolerance_mm?: RoundingToleranceMm;
-  schema_version?: SchemaVersion22;
+  schema_version?: SchemaVersion23;
   simulation_profile?: SimulationProfile;
   spec: DrawingSpec;
   title: Title;
@@ -611,13 +627,27 @@ export interface DrawingDraft {
   warnings: Warnings;
 }
 export interface ImportedSource {
+  ai?: AiProvenance | null;
   content_sha256: ContentSha256;
   dialect: Dialect2;
   filename: Filename;
   input_strokes: InputStrokes;
   notes: Notes1;
   original_bounds: DrawingBounds;
-  schema_version?: SchemaVersion19;
+  schema_version?: SchemaVersion20;
+}
+/**
+ * Which provider request produced an AI drawing's source image. Never contains credentials.
+ */
+export interface AiProvenance {
+  elapsed_s: ElapsedS;
+  image_sha256: ImageSha256;
+  model: Model;
+  prompt: Prompt1;
+  provider?: Provider;
+  quality: Quality;
+  schema_version?: SchemaVersion18;
+  size: Size;
 }
 export interface DrawingBounds {
   height_mm: HeightMm1;
@@ -625,7 +655,7 @@ export interface DrawingBounds {
   max_y_mm: MaxYMm1;
   min_x_mm: MinXMm1;
   min_y_mm: MinYMm1;
-  schema_version?: SchemaVersion18;
+  schema_version?: SchemaVersion19;
   width_mm: WidthMm1;
 }
 export interface ExecutionPreview {
@@ -633,7 +663,7 @@ export interface ExecutionPreview {
   drawing_distance_mm: DrawingDistanceMm;
   expected_start_mm?: ExpectedStartMm;
   pen_lifts: PenLifts;
-  schema_version?: SchemaVersion20;
+  schema_version?: SchemaVersion21;
   segments: Segments;
   strokes: Strokes1;
   travel_distance_mm: TravelDistanceMm;
@@ -641,7 +671,7 @@ export interface ExecutionPreview {
 export interface ExecutionSegment {
   end: End;
   pen_down: PenDown;
-  schema_version?: SchemaVersion21;
+  schema_version?: SchemaVersion22;
   start: Start;
 }
 export interface DrawingTransform {
@@ -649,11 +679,11 @@ export interface DrawingTransform {
   offset_y_mm?: OffsetYMm;
   preserve_aspect?: PreserveAspect;
   rotation_degrees?: RotationDegrees;
-  schema_version?: SchemaVersion23;
+  schema_version?: SchemaVersion24;
 }
 export interface RevisionRequest {
   regenerate?: Regenerate;
-  schema_version?: SchemaVersion24;
+  schema_version?: SchemaVersion25;
   seed_locked?: SeedLocked;
   spec?: DrawingSpec | null;
   transform?: DrawingTransform | null;
@@ -661,19 +691,19 @@ export interface RevisionRequest {
 export interface ImportRequest {
   center_on_origin?: CenterOnOrigin;
   content: Content;
-  detail?: Detail1;
+  detail?: Detail2;
   filename: Filename1;
-  fit_height_mm?: FitHeightMm;
-  fit_width_mm?: FitWidthMm;
+  fit_height_mm?: FitHeightMm1;
+  fit_width_mm?: FitWidthMm1;
   kind?: Kind;
-  schema_version?: SchemaVersion25;
+  schema_version?: SchemaVersion26;
 }
 export interface HistoryResponse {
   items: Items;
   limit: Limit;
   offset: Offset;
   recovery_notices?: RecoveryNotices;
-  schema_version?: SchemaVersion27;
+  schema_version?: SchemaVersion28;
   total: Total;
 }
 export interface HistoryEntry {
@@ -682,16 +712,16 @@ export interface HistoryEntry {
   generator: Generator1;
   integrity: Integrity;
   integrity_message?: IntegrityMessage;
-  prompt: Prompt2;
+  prompt: Prompt3;
   revision: Revision3;
   revision_id: RevisionId1;
-  schema_version?: SchemaVersion26;
+  schema_version?: SchemaVersion27;
   title: Title1;
 }
 export interface CalibrationSaveRequest {
   calibration: CalibrationInput;
   expected_revision?: ExpectedRevision;
-  schema_version?: SchemaVersion29;
+  schema_version?: SchemaVersion30;
   select_for_preparation?: SelectForPreparation;
 }
 export interface CalibrationInput {
@@ -711,7 +741,7 @@ export interface CalibrationInput {
   pen_up_degrees: PenUpDegrees2;
   rope_max_mm: RopeMaxMm1;
   rope_min_mm: RopeMinMm1;
-  schema_version?: SchemaVersion28;
+  schema_version?: SchemaVersion29;
   separation_mm: SeparationMm2;
   spool_diameter_mm: SpoolDiameterMm2;
   steps_per_turn: StepsPerTurn2;
@@ -719,11 +749,11 @@ export interface CalibrationInput {
   workspace_tested?: WorkspaceTested1;
 }
 export interface PreparationRequest {
-  mode?: Mode;
+  mode?: Mode1;
   profile_id?: ProfileId;
   profile_revision?: ProfileRevision;
   revision_id: RevisionId2;
-  schema_version?: SchemaVersion30;
+  schema_version?: SchemaVersion31;
 }
 export interface PreparedJob {
   created_at: CreatedAt1;
@@ -735,11 +765,11 @@ export interface PreparedJob {
   hardware_execution_verified?: HardwareExecutionVerified;
   id: Id2;
   manual_origin_required?: ManualOriginRequired;
-  mode: Mode1;
+  mode: Mode2;
   preview: ExecutionPreview;
   profile: CalibrationProfile | null;
   revision_id: RevisionId3;
-  schema_version?: SchemaVersion31;
+  schema_version?: SchemaVersion32;
   state?: State2;
   title: Title2;
   warnings: Warnings1;
@@ -749,7 +779,7 @@ export interface TargetsResponse {
   discovery_error?: DiscoveryError;
   discovery_supported: DiscoverySupported;
   local_mirror_sha256?: LocalMirrorSha256;
-  schema_version?: SchemaVersion33;
+  schema_version?: SchemaVersion34;
   selected_target_id: SelectedTargetId;
   targets: Targets;
 }
@@ -758,7 +788,7 @@ export interface AutoSyncState {
   job_id?: JobId;
   last_transfer_id?: LastTransferId;
   message?: Message1;
-  schema_version?: SchemaVersion32;
+  schema_version?: SchemaVersion33;
   status?: Status1;
   target_id?: TargetId;
 }
@@ -772,12 +802,12 @@ export interface StorageTarget {
   label: Label3;
   path: Path;
   reason: Reason4;
-  schema_version?: SchemaVersion34;
+  schema_version?: SchemaVersion35;
   volume_uuid: VolumeUuid;
   writable: Writable;
 }
 export interface TargetSelectionRequest {
-  schema_version?: SchemaVersion35;
+  schema_version?: SchemaVersion36;
   target_id: TargetId1;
 }
 export interface ExportRequest {
@@ -787,14 +817,14 @@ export interface ExportRequest {
   expected_job_sha256: ExpectedJobSha256;
   expected_local_mirror_sha256?: ExpectedLocalMirrorSha256;
   manual_start_understood?: ManualStartUnderstood;
-  schema_version?: SchemaVersion36;
+  schema_version?: SchemaVersion37;
   stage_local_mirror?: StageLocalMirror;
   target_id: TargetId2;
 }
 export interface StageRequest {
   acknowledge_replace?: AcknowledgeReplace1;
   expected_existing_sha256?: ExpectedExistingSha2561;
-  schema_version?: SchemaVersion37;
+  schema_version?: SchemaVersion38;
 }
 export interface TransferRecord {
   backup: Backup;
@@ -806,7 +836,7 @@ export interface TransferRecord {
   local_mirror_updated?: LocalMirrorUpdated;
   message: Message2;
   previous_sha256: PreviousSha256;
-  schema_version?: SchemaVersion38;
+  schema_version?: SchemaVersion39;
   status: Status2;
   target_id: TargetId3;
   target_kind: TargetKind;
@@ -815,21 +845,21 @@ export interface AutoSyncRequest {
   enabled: Enabled1;
   export?: ExportRequest | null;
   job_id?: JobId2;
-  schema_version?: SchemaVersion39;
+  schema_version?: SchemaVersion40;
 }
 export interface SessionResponse {
-  schema_version?: SchemaVersion40;
+  schema_version?: SchemaVersion41;
   write_token: WriteToken;
 }
 export interface ProfileSelectionRequest {
   expected_revision: ExpectedRevision1;
   profile_id: ProfileId1;
-  schema_version?: SchemaVersion41;
+  schema_version?: SchemaVersion42;
 }
 export interface PortsResponse {
   error?: Error;
   ports: Ports;
-  schema_version?: SchemaVersion43;
+  schema_version?: SchemaVersion44;
 }
 export interface SerialPortInfo {
   accessible?: Accessible;
@@ -837,7 +867,7 @@ export interface SerialPortInfo {
   device: Device;
   hwid: Hwid;
   likely_arduino: LikelyArduino;
-  schema_version?: SchemaVersion42;
+  schema_version?: SchemaVersion43;
   simulated?: Simulated;
 }
 export interface MachineState {
@@ -847,7 +877,7 @@ export interface MachineState {
   port?: Port;
   recent_runs?: RecentRuns;
   run?: UsbRun | null;
-  schema_version?: SchemaVersion46;
+  schema_version?: SchemaVersion47;
   simulated?: Simulated1;
   status?: DeviceStatus | null;
   status_age_s?: StatusAgeS;
@@ -859,7 +889,7 @@ export interface DeviceHello {
   dialect: Dialect3;
   firmware_version: FirmwareVersion;
   protocol: Protocol;
-  schema_version?: SchemaVersion44;
+  schema_version?: SchemaVersion45;
 }
 export interface UsbRun {
   acknowledged_seq?: AcknowledgedSeq;
@@ -872,7 +902,7 @@ export interface UsbRun {
   origin_revision: OriginRevision;
   port: Port1;
   position_mm?: PositionMm;
-  schema_version?: SchemaVersion45;
+  schema_version?: SchemaVersion46;
   sent_seq?: SentSeq;
   started_at: StartedAt;
   state: State3;
@@ -894,25 +924,25 @@ export interface DeviceStatus {
   reason: Reason5;
   received_seq: ReceivedSeq;
   result: Result;
-  schema_version?: SchemaVersion47;
+  schema_version?: SchemaVersion48;
   state: State4;
 }
 export interface ConnectRequest {
   port: Port2;
-  schema_version?: SchemaVersion48;
+  schema_version?: SchemaVersion49;
 }
 export interface UsbStartRequest {
   area_clear_confirmed?: AreaClearConfirmed;
   expected_boot_id: ExpectedBootId;
   expected_config_id: ExpectedConfigId;
   expected_origin_revision: ExpectedOriginRevision;
-  schema_version?: SchemaVersion49;
+  schema_version?: SchemaVersion50;
 }
 export interface HomeRequest {
   expected_boot_id: ExpectedBootId1;
   expected_origin_revision: ExpectedOriginRevision1;
   route_confirmed?: RouteConfirmed;
-  schema_version?: SchemaVersion50;
+  schema_version?: SchemaVersion51;
 }
 /**
  * Recognized words for the composer. Text only: it never starts generation or motion.
@@ -920,6 +950,6 @@ export interface HomeRequest {
 export interface VoiceTranscript {
   duration_s: DurationS;
   processing_s: ProcessingS;
-  schema_version?: SchemaVersion51;
+  schema_version?: SchemaVersion52;
   text: Text;
 }

@@ -1,5 +1,63 @@
 {
   "$defs": {
+    "AiProvenance": {
+      "additionalProperties": false,
+      "description": "Which provider request produced an AI drawing's source image. Never contains credentials.",
+      "properties": {
+        "elapsed_s": {
+          "minimum": 0,
+          "title": "Elapsed S",
+          "type": "number"
+        },
+        "image_sha256": {
+          "title": "Image Sha256",
+          "type": "string"
+        },
+        "model": {
+          "title": "Model",
+          "type": "string"
+        },
+        "prompt": {
+          "title": "Prompt",
+          "type": "string"
+        },
+        "provider": {
+          "const": "openai",
+          "default": "openai",
+          "title": "Provider",
+          "type": "string"
+        },
+        "quality": {
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "title": "Quality",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "size": {
+          "title": "Size",
+          "type": "string"
+        }
+      },
+      "required": [
+        "model",
+        "quality",
+        "size",
+        "prompt",
+        "image_sha256",
+        "elapsed_s"
+      ],
+      "title": "AiProvenance",
+      "type": "object"
+    },
     "ApiError": {
       "additionalProperties": false,
       "properties": {
@@ -1293,6 +1351,61 @@
     "GenerateRequest": {
       "additionalProperties": false,
       "properties": {
+        "detail": {
+          "anyOf": [
+            {
+              "enum": [
+                "low",
+                "medium",
+                "high"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Detail"
+        },
+        "fit_height_mm": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 2000,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fit Height Mm"
+        },
+        "fit_width_mm": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 2000,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fit Width Mm"
+        },
+        "mode": {
+          "default": "auto",
+          "enum": [
+            "auto",
+            "offline",
+            "ai"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
         "prompt": {
           "maxLength": 2000,
           "minLength": 1,
@@ -1667,6 +1780,17 @@
     "ImportedSource": {
       "additionalProperties": false,
       "properties": {
+        "ai": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AiProvenance"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "content_sha256": {
           "title": "Content Sha256",
           "type": "string"
@@ -1676,7 +1800,8 @@
             "picasso",
             "linear-mm",
             "picasso-json",
-            "image"
+            "image",
+            "ai-image"
           ],
           "title": "Dialect",
           "type": "string"

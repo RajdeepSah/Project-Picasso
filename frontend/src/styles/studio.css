@@ -220,6 +220,18 @@ code { font-family: "DM Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospa
 .example-commands { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 12px; }
 .example-commands button { height: 30px; padding: 0 22px; border: 1px solid var(--line-strong); border-radius: 999px; font-size: 13px; color: #6a6f69; }
 .example-commands button:hover { background: #f0eee6; color: var(--ink); border-color: #cbc7bc; }
+.composer-footer { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 9px 16px; }
+.command-options { display: flex; align-items: center; gap: 9px; margin-top: 12px; }
+.pill-segmented { display: flex; height: 30px; border: 1px solid var(--line-strong); border-radius: 999px; overflow: hidden; }
+.pill-segmented button { padding: 0 13px; font-size: 13px; color: #6a6f69; border-left: 1px solid var(--line-strong); }
+.pill-segmented button:first-child { border-left: 0; }
+.pill-segmented button:not(:disabled):hover { background: #f0eee6; color: var(--ink); }
+.pill-segmented button[aria-checked="true"] { background: var(--lime); color: var(--lime-ink); font-weight: 500; }
+.route-pill { position: relative; display: flex; align-items: center; height: 30px; border: 1px solid var(--line-strong); border-radius: 999px; color: #6a6f69; }
+.route-pill select { appearance: none; height: 100%; padding: 0 30px 0 14px; border: 0; background: transparent; font: inherit; font-size: 13px; color: inherit; cursor: pointer; }
+.route-pill svg { position: absolute; right: 11px; pointer-events: none; }
+.route-pill:hover { background: #f0eee6; color: var(--ink); }
+.route-pill:has(select:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
 
 /* Forest inspector */
 .side-column { min-width: 0; min-height: 0; display: flex; flex-direction: column; padding-top: 25px; }
@@ -590,6 +602,8 @@ code { font-family: "DM Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospa
   .submit-command { width: 46px; height: 46px; }
   .example-commands { gap: 7px; }
   .example-commands button { padding: 0 14px; }
+  .command-options { width: 100%; justify-content: space-between; margin-top: 4px; }
+  .pill-segmented button { padding: 0 11px; }
   .side-column { padding: 16px 16px 0; }
   .inspector { padding: 14px 14px 24px; border-radius: 20px; }
   .inspector-tabs button { font-size: 15px; gap: 9px; }

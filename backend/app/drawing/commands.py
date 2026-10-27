@@ -17,7 +17,7 @@ FILLER = {"draw", "create", "make", "a", "an", "the", "beautiful", "lovely", "pl
           "simple", "sparse", "standard", "intricate", "complex", "dense"}
 
 
-def resolve_command(prompt: str) -> DrawingSpec:
+def resolve_command(prompt: str, default_detail: str = "standard") -> DrawingSpec:
     text = prompt.lower().replace("×", "x")
     # Prefer the longest match so "geometric pattern" is one subject.
     matches = list(re.finditer(r"\b(?:geometric pattern|circle|ellipse|oval|rectangle|square|spiral|butterfly|mandala|pattern)\b", text))
@@ -81,7 +81,7 @@ def resolve_command(prompt: str) -> DrawingSpec:
     detail_matches = [i for i, group in enumerate(detail_sets) if group & set(words)]
     if len(detail_matches) > 1:
         raise DrawingError("AMBIGUOUS_COMMAND", "Choose one detail level: simple, standard or intricate.")
-    detail = ("sparse", "standard", "dense")[detail_matches[0]] if detail_matches else "standard"
+    detail = ("sparse", "standard", "dense")[detail_matches[0]] if detail_matches else default_detail
     seed = parameters.pop("seed", 0)
     try:
         return DrawingSpec(generator=SUBJECTS[subject], dimensions=Dimensions(width_mm=width, height_mm=height),
