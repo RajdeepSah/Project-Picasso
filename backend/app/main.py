@@ -311,8 +311,10 @@ def create_app(*, frontend_dir: Path | None = None, instance_id: str | None = No
         files = app.state.repository.load(revision_id, 'revision')
         return Response(files['preview.svg'], media_type='image/svg+xml', headers={'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'"})
 
+    EXTENSIONS = {"gcode": "nc"}  # G-code downloads as .nc, the extension the drawbot firmware reads
+
     @app.get("/api/drawings/{revision_id}/export")
-    def export_draft(revision_id: str, format: Literal["json", "svg", "gcode", "png"] = "json"):
+    def export_draft(revision_id: str, format: Literal["json", "svg", "gcode", "png", "txt"] = "json"):
         import hashlib
         stored = app.state.drafts.export(revision_id)
         if format == "png":
@@ -322,9 +324,10 @@ def create_app(*, frontend_dir: Path | None = None, instance_id: str | None = No
                 "json": (stored.json_bytes, "application/json"),
                 "svg": (stored.svg_bytes, "image/svg+xml"),
                 "gcode": (stored.gcode_bytes, "text/plain"),
+                "txt": (stored.gcode_bytes, "text/plain"),
             }[format]
         return Response(content, media_type=media, headers={
-            "Content-Disposition": f'attachment; filename="{stored.filename}.{format}"',
+            "Content-Disposition": f'attachment; filename="{stored.filename}.{EXTENSIONS.get(format, format)}"',
             "X-Picasso-Execution-Ready": "false", "X-Picasso-Content-SHA256": hashlib.sha256(content).hexdigest(),
         })
 

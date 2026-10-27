@@ -85,7 +85,7 @@ export const homeMachine = (request: HomeRequest) => mutate<MachineState>('/api/
 export const controlMachine = (action: 'pause' | 'resume' | 'stop') => mutate<MachineState>(`/api/machine/${action}`, {}, freshSignal());
 export const startUsbRun = (jobId: string, request: UsbStartRequest) => mutate<UsbRun>(`/api/jobs/${encodeURIComponent(jobId)}/usb-start`, request, freshSignal());
 
-export async function downloadDraft(id: string, format: 'gcode' | 'svg' | 'png', signal: AbortSignal) {
+export async function downloadDraft(id: string, format: 'gcode' | 'svg' | 'png' | 'txt', signal: AbortSignal) {
   const response = await fetch(`/api/drawings/${encodeURIComponent(id)}/export?format=${format}`, {
     signal: AbortSignal.any([signal, AbortSignal.timeout(10000)]), cache: 'no-store',
   });
@@ -93,5 +93,5 @@ export async function downloadDraft(id: string, format: 'gcode' | 'svg' | 'png',
     const error = await response.json().catch(() => null) as ApiError | null;
     throw new Error(error?.message ?? 'Draft download failed. Please try again.');
   }
-  return { blob: await response.blob(), filename: response.headers.get('Content-Disposition')?.match(/filename="([^"]+)"/)?.[1] ?? `picasso-drawing.${format}` };
+  return { blob: await response.blob(), filename: response.headers.get('Content-Disposition')?.match(/filename="([^"]+)"/)?.[1] ?? `picasso-drawing.${format === 'gcode' ? 'nc' : format}` };
 }

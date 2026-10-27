@@ -87,7 +87,7 @@ code { font-family: "DM Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospa
 .document-popover { left: -6px; width: 290px; }
 .popover-label { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); padding: 10px 10px 6px; }
 .popover-note { font-size: 12.5px; line-height: 1.5; color: var(--muted); padding: 4px 10px 8px; }
-.popover-formats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 2px 4px 6px; }
+.popover-formats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; padding: 2px 4px 6px; }
 .popover-formats button { height: 36px; border: 1px solid var(--line-strong); border-radius: var(--r-sm); font-size: 13.5px; font-weight: 500; background: #fff; }
 .popover-formats button:not(:disabled):hover { border-color: var(--forest); background: #f3f6e6; }
 .popover-item { width: 100%; justify-content: flex-start; align-items: flex-start; gap: 12px; padding: 9px 10px; border-radius: var(--r-sm); text-align: left; font-size: 14px; color: var(--ink); }

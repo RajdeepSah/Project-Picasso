@@ -26,10 +26,11 @@ def test_revision_export_and_hardware_boundaries(tmp_path):
         assert revised['parent_revision_id'] == original_id
         width, height = (f"{revised['preview']['bounds'][key]:.0f}" for key in ('width_mm', 'height_mm'))
         assert client.get(f'/api/drawings/{original_id}').json() == draft
-        for format in ('json', 'svg', 'gcode', 'png'):
+        for format in ('json', 'svg', 'gcode', 'png', 'txt'):
             response = client.get(f'/api/drawings/{revised["revision_id"]}/export?format={format}')
             assert response.status_code == 200
-            assert f'filename="picasso-mandala-{width}x{height}mm-rev2.{format}"' in response.headers['content-disposition']
+            extension = 'nc' if format == 'gcode' else format
+            assert f'filename="picasso-mandala-{width}x{height}mm-rev2.{extension}"' in response.headers['content-disposition']
             assert response.headers['x-picasso-execution-ready'] == 'false'
             assert hashlib.sha256(response.content).hexdigest() == response.headers['x-picasso-content-sha256']
             if format == 'json':

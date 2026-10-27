@@ -1,11 +1,14 @@
 import { ChevronDown, Download } from 'lucide-react';
 import { usePopover } from './Popover';
 
-export type DownloadFormat = 'gcode' | 'svg' | 'png';
+export type DownloadFormat = 'gcode' | 'svg' | 'png' | 'txt';
 
-const formats: [DownloadFormat, string][] = [['gcode', 'G-code'], ['svg', 'SVG'], ['png', 'PNG']];
+const formats: [DownloadFormat, string, string][] = [
+  ['gcode', 'G-code', 'G-code for the drawbot (.nc)'], ['svg', 'SVG', 'Vector preview (.svg)'],
+  ['png', 'PNG', 'Raster preview (.png)'], ['txt', 'TXT', 'G-code as plain text (.txt)'],
+];
 
-/** Export G-code directly; SVG and PNG sit behind the chevron. */
+/** Export G-code directly; SVG, PNG and plain-text G-code sit behind the chevron. */
 export function ExportMenu({ blocked, download }: { blocked: string; download: (format: DownloadFormat) => void }) {
   const { open, setOpen, root } = usePopover();
   return <div className="export-control" ref={root}>
@@ -14,8 +17,8 @@ export function ExportMenu({ blocked, download }: { blocked: string; download: (
     <button className="export-more" aria-label="More export options" aria-expanded={open} aria-controls="export-options" onClick={() => setOpen(!open)}><ChevronDown size={17} /></button>
     {open && <div className="popover export-popover" id="export-options" data-popover>
       <p className="popover-label">Download as</p>
-      <div className="popover-formats">{formats.map(([format, label]) =>
-        <button key={format} disabled={!!blocked} onClick={() => { setOpen(false); download(format); }}>{label}</button>)}</div>
+      <div className="popover-formats">{formats.map(([format, label, hint]) =>
+        <button key={format} disabled={!!blocked} title={hint} onClick={() => { setOpen(false); download(format); }}>{label}</button>)}</div>
       {blocked && <p className="popover-note">{blocked}.</p>}
     </div>}
   </div>;
