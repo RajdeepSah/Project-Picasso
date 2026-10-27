@@ -51,7 +51,7 @@ export function ImportDialog({ paper, close, imported }: { paper: PaperId; close
     if (!file) return;
     setBusy(true); setError(''); abort.current = new AbortController();
     try {
-      // Images are centred and fitted to the page (85% of it, leaving a margin); G-code keeps its own coordinates.
+      // Every import is centred on the page. Images are also fitted to 85% of it, leaving a margin; G-code keeps its own size.
       const page = paperSize(paper);
       const request: ImportRequest = kind === 'image'
         ? { filename: file.name, kind, detail, content: await base64(file), fit_width_mm: page ? page[0] * .85 : null, fit_height_mm: page ? page[1] * .85 : null }

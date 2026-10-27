@@ -38,6 +38,21 @@ def test_supported_subjects_are_deterministic_and_roundtrip(prompt, name):
     assert first.execution_ready is False
     assert all(len(line.encode()) <= 63 for line in first.gcode.splitlines())
     assert "-0.000" not in first.gcode
+    assert first.gcode.endswith("G0 Z5\nG0 X0.000 Y0.000 Z5\n")
+    last = first.preview.segments[-1]
+    assert tuple(last.end) == (0, 0) and not last.pen_down
+    box = first.preview.bounds
+    assert abs(box.min_x_mm + box.max_x_mm) <= .002 and abs(box.min_y_mm + box.max_y_mm) <= .002
+
+
+@pytest.mark.parametrize("prompt", ["Draw a butterfly", "Draw a spiral with 3 turns"])
+def test_rotated_drawings_stay_centred_on_the_page(prompt):
+    service = DraftService()
+    draft = generate(prompt, service)
+    rotated = service.revise(draft.revision_id, RevisionRequest(transform={"rotation_degrees": 37}), Event())
+    box = rotated.preview.bounds
+    assert abs(box.min_x_mm + box.max_x_mm) <= .002 and abs(box.min_y_mm + box.max_y_mm) <= .002
+    assert rotated.gcode.endswith("G0 Z5\nG0 X0.000 Y0.000 Z5\n")
 
 
 @pytest.mark.parametrize("prompt", ["Draw a cat", "Draw a circle and a butterfly", "Draw a red circle",
@@ -142,6 +157,8 @@ def test_budgets_cancel_deadline_complexity_and_post_rounding_collapse():
     "G0 Z5\nG0 X0.000 Y0.000 Z5\nG1 X1.000 Y0.000 Z0\nG0 Z5",
     "G0 Z5\nG0 X0.000 Y0.000 Z5\nG1 X-0.000 Y1.000 Z0\nG0 Z5\n",
     "G0 Z5\nG0 X1e2 Y0.000 Z5\nG0 Z5\n", "G0 Z5\n" + " " * 64 + "\nG0 Z5\n",
+    "G0 Z5\nG0 X0.000 Y0.000 Z5\nG1 X1.000 Y0.000 Z0\nG0 Z5\n",  # never returns to the page centre
+    "G0 Z5\nG0 X0.000 Y0.000 Z5\nG1 X1.000 Y0.000 Z0\nG1 X0.000 Y0.000 Z0\n",  # returns with the pen down
 ])
 def test_strict_parser_rejects_unsafe_or_noncanonical_input(code):
     with pytest.raises(DrawingError):

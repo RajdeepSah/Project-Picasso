@@ -98,7 +98,8 @@ def test_prepared_job_streams_to_completion_on_the_simulated_firmware(bench):
     run = bench.finish()
     lines = job.gcode.splitlines()
     assert run.state == "completed" and run.acknowledged_seq == len(lines) == run.total_commands
-    end = tuple(float(word[1:]) for word in lines[-2].split()[1:3])
+    end = tuple(float(word[1:]) for word in lines[-1].split()[1:3])
+    assert end == (0, 0)  # the job returns, pen up, to the page centre
     assert run.position_mm == pytest.approx(end, abs=1e-3)
     report = bench.device_report()
     assert report["outcome"] == "completed" and report["position"] == pytest.approx(end, abs=2.5e-4)

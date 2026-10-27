@@ -79,12 +79,13 @@ def test_api_measured_profiles_edit_conflict_and_job_restore(tmp_path):
         assert response.json()['code'] == 'STALE_PREPARATION'
 
 
-def test_import_modal_axes_coordinate_comments_and_explicit_origin():
+def test_import_modal_axes_coordinate_comments_centred_on_the_page():
     service = DraftService()
     content = '; X999 Y999 Z0 are comment text\nG21\nG90\nG0 X10 Y20 Z3\nG1 Z0\nG1 X30\nY40\nX10\nY20\nG0 Z3\nM2\n'
     original = service.import_drawing(ImportRequest(filename='modal.nc',content=content), Event())
-    assert original.preview.bounds.min_x_mm == 10 and original.preview.bounds.max_y_mm == 40
-    assert original.transform.offset_x_mm == 20 and original.transform.offset_y_mm == 30
+    assert original.preview.bounds.min_x_mm == -10 and original.preview.bounds.max_y_mm == 10
+    assert original.transform.offset_x_mm == 0 and original.transform.offset_y_mm == 0
+    assert original.import_source.original_bounds.min_x_mm == 10 and original.import_source.original_bounds.max_y_mm == 40
     centered = service.import_drawing(ImportRequest(filename='modal.nc',content=content,center_on_origin=True,fit_width_mm=100), Event())
     assert centered.preview.bounds.width_mm == centered.preview.bounds.height_mm == 100
     assert centered.preview.bounds.min_x_mm == centered.preview.bounds.min_y_mm == -50

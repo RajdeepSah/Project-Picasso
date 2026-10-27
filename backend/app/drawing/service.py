@@ -129,7 +129,7 @@ class DraftService:
         detail = request.detail or "medium"
         image = self.images.generate(request.prompt, detail, cancel)
         source = ai_image_source(image.data, image.provenance, cancel)
-        return self._place(source, request.fit_width_mm, request.fit_height_mm, True, detail, request.prompt, cancel, title=_ai_title(request.prompt))
+        return self._place(source, request.fit_width_mm, request.fit_height_mm, detail, request.prompt, cancel, title=_ai_title(request.prompt))
 
     def revise(self, revision_id: str, request: RevisionRequest, cancel: threading.Event) -> DrawingDraft:
         parent = self.get(revision_id)
@@ -147,9 +147,9 @@ class DraftService:
 
     def import_drawing(self, request: ImportRequest, cancel: threading.Event) -> DrawingDraft:
         source = normalize_import(request, cancel)
-        return self._place(source, request.fit_width_mm, request.fit_height_mm, request.center_on_origin, request.detail, f"Imported {source.filename}", cancel)
+        return self._place(source, request.fit_width_mm, request.fit_height_mm, request.detail, f"Imported {source.filename}", cancel)
 
-    def _place(self, source, fit_width, fit_height, center, detail, prompt, cancel, title=None) -> DrawingDraft:
+    def _place(self, source, fit_width, fit_height, detail, prompt, cancel, title=None) -> DrawingDraft:
         image = source.dialect in ("image", "ai-image")
         box = source.original_bounds
         width, height = max(box.width_mm, .001), max(box.height_mm, .001)
@@ -163,10 +163,8 @@ class DraftService:
             raise DrawingError("IMPORT_TOO_LARGE", "Fit the imported drawing to dimensions no larger than 2000 mm.")
         spec = DrawingSpec(generator="imported", dimensions=Dimensions(width_mm=width, height_mm=height),
                            detail=IMAGE_DETAIL[detail] if image else "standard")
-        centered = center or image
-        transform = DrawingTransform(offset_x_mm=0 if centered else (box.min_x_mm+box.max_x_mm)/2,
-                                     offset_y_mm=0 if centered else (box.min_y_mm+box.max_y_mm)/2)
-        return self._build(spec, transform, prompt, cancel, import_source=source, title=title)
+        # Every drawing is centred on the page centre (0, 0); original bounds stay in the import source.
+        return self._build(spec, DrawingTransform(), prompt, cancel, import_source=source, title=title)
 
     def _build(self, spec, transform, prompt, cancel, parent=None, import_source=None, title=None) -> DrawingDraft:
         if not self._workers.acquire(blocking=False):

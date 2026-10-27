@@ -232,10 +232,9 @@ def generate_geometry(spec: DrawingSpec, transform: DrawingTransform, budget: Bu
         sx = sy = min(sx, sy)
     center = ((left + right) / 2, (top + bottom) / 2)
     def world(point: Point) -> Point:
-        x, y = rotate(((point[0] - center[0]) * sx, (point[1] - center[1]) * sy), math.radians(transform.rotation_degrees))
-        return x + transform.offset_x_mm, y + transform.offset_y_mm
+        return rotate(((point[0] - center[0]) * sx, (point[1] - center[1]) * sy), math.radians(transform.rotation_degrees))
     tolerance = TOLERANCE[spec.detail]
-    strokes = []
+    paths = []
     for contour in contours:
         budget.check()
         points: list[Point] = []
@@ -258,9 +257,17 @@ def generate_geometry(spec: DrawingSpec, transform: DrawingTransform, budget: Bu
                 else:
                     budget.point()
                     points.append(world(curve.end))
+        paths.append(points)
+    # Centre the flattened path on the page centre (0, 0): rotation can shift an asymmetric drawing.
+    # Any explicit offset then moves it from there.
+    xs, ys = [x for points in paths for x, _ in points], [y for points in paths for _, y in points]
+    dx = transform.offset_x_mm - (min(xs) + max(xs)) / 2
+    dy = transform.offset_y_mm - (min(ys) + max(ys)) / 2
+    strokes = []
+    for points in paths:
         rounded = []
         for x, y in points:
-            point = (round(x, 3) or 0.0, round(y, 3) or 0.0)
+            point = (round(x + dx, 3) or 0.0, round(y + dy, 3) or 0.0)
             if not rounded or point != rounded[-1]:
                 rounded.append(point)
         strokes.append(rounded)

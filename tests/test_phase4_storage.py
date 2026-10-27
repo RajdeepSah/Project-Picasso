@@ -146,7 +146,7 @@ def test_full_segment_rope_minimum_not_just_endpoints(system):
     from backend.app.drawing.gcode import parse
     from backend.app.storage.preparation import validate_physical_path
     profile = calibration(rope_min_mm=225)
-    preview = parse('G0 Z5\nG0 X-140.000 Y0.000 Z5\nG1 X0.000 Y100.000 Z0\nG0 Z5\n')
+    preview = parse('G0 Z5\nG0 X-140.000 Y0.000 Z5\nG1 X0.000 Y100.000 Z0\nG0 Z5\nG0 X0.000 Y0.000 Z5\n')
     with pytest.raises(DrawingError, match='rope limits'):
         validate_physical_path(preview, profile)
 
@@ -337,12 +337,11 @@ def test_linux_discovery_filters_and_isolates_unsafe_cards(tmp_path, monkeypatch
 
 def test_consecutive_sd_jobs_require_origin_again_instead_of_inheriting_prior_endpoint(system):
     s = system
-    first_end = s.job.preview.segments[-1].end
-    assert tuple(first_end) != (0, 0)
+    last = s.job.preview.segments[-1]
+    assert tuple(last.start) != (0, 0) and tuple(last.end) == (0, 0) and not last.pen_down  # returns pen up to the page centre
     s.exporter.export(s.job.id, export_request(s))
     draft = s.drafts.generate(GenerateRequest(prompt='Draw a rectangle 50 x 30 mm'), Event())
     second = s.jobs.prepare(PreparationRequest(revision_id=draft.revision_id, profile_id=s.profile.id, profile_revision=s.profile.revision))
-    assert tuple(second.preview.segments[-1].end) != tuple(first_end)
     assert second.manual_origin_required and tuple(second.expected_start_mm) == (0, 0)
     assert tuple(second.preview.segments[0].start) == (0, 0)
     assert second.hardware_execution_verified is False

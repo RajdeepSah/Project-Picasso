@@ -345,7 +345,7 @@ class ImportRequest(Contract):
     content: str = Field(min_length=1, max_length=10_700_000)
     kind: Literal["gcode", "image"] = "gcode"
     detail: DetailLevel = "medium"
-    center_on_origin: bool = False
+    center_on_origin: bool = False  # accepted for compatibility; every import is centred on the page
     fit_width_mm: PositiveMm | None = None
     fit_height_mm: PositiveMm | None = None
 

@@ -10,6 +10,7 @@ from .geometry import MAX_COORDINATE, MAX_PATH_MM, MAX_POINTS, Budget, validate_
 MAX_BYTES = 1_000_000
 DECIMAL = r"-?(?:0|[1-9]\d*)\.\d{3}"
 MOVE = re.compile(rf"G([01]) X({DECIMAL}) Y({DECIMAL}) Z([05])")
+PAGE_CENTER = (0.0, 0.0)  # every job starts here with the pen up and returns here once drawn
 
 
 def encode(drawing: PolylineDrawing) -> str:
@@ -22,19 +23,20 @@ def encode(drawing: PolylineDrawing) -> str:
         lines.append(f"G0 X{number(x)} Y{number(y)} Z5")
         lines.extend(f"G1 X{number(x)} Y{number(y)} Z0" for x, y in stroke.points[1:])
         lines.append("G0 Z5")
+    lines.append(f"G0 X{number(PAGE_CENTER[0])} Y{number(PAGE_CENTER[1])} Z5")
     code = "\n".join(lines) + "\n"
     if len(code) > MAX_BYTES:
         raise DrawingError("DRAWING_TOO_COMPLEX", "Export exceeds the 2 MB draft limit.")
     return code
 
 
-def parse(code: str, *, expected_start=(0.0, 0.0), budget: Budget | None = None) -> ExecutionPreview:
+def parse(code: str, *, expected_start=PAGE_CENTER, budget: Budget | None = None) -> ExecutionPreview:
     def invalid(message="Only canonical G0/G1 explicit X/Y/Z commands are accepted. Comments, modal axes, feed words and arcs are unsupported."):
         raise DrawingError("INVALID_GCODE", message)
     if not isinstance(code, str) or not code.isascii() or len(code) > MAX_BYTES:
         invalid("G-code must be ASCII and no larger than 2 MB.")
-    if not code.startswith("G0 Z5\n") or not code.endswith("G0 Z5\n"):
-        invalid("A file must begin and end with G0 Z5 and a final LF.")
+    if not code.startswith("G0 Z5\n") or not code.endswith(" Z5\n"):
+        invalid("A file must begin with G0 Z5, end with the pen raised and have a final LF.")
     position = tuple(expected_start)
     if len(position) != 2 or any(not math.isfinite(value) or abs(value) > MAX_COORDINATE for value in position):
         invalid("The expected starting position is invalid.")
@@ -86,6 +88,8 @@ def parse(code: str, *, expected_start=(0.0, 0.0), budget: Budget | None = None)
         position = endpoint
     if not drawn_points or drawing_length <= 0:
         invalid("No nonzero drawing segments were found.")
+    if position != tuple(expected_start):
+        invalid("A file must end by travelling, pen up, back to its starting position at the page centre.")
     if drawing_length + travel_length > MAX_PATH_MM:
         invalid("Total drawing and travel exceeds 250 metres.")
     xs, ys = zip(*drawn_points)
@@ -98,13 +102,15 @@ def parse(code: str, *, expected_start=(0.0, 0.0), budget: Budget | None = None)
 
 def verify_roundtrip(drawing: PolylineDrawing, preview: ExecutionPreview):
     expected = []
-    position = tuple(preview.expected_start_mm)
+    start = position = tuple(preview.expected_start_mm)
     for stroke in drawing.strokes:
         first = tuple(stroke.points[0])
         if position != first:
             expected.append((position, first, False))
         expected.extend((tuple(a), tuple(b), True) for a, b in zip(stroke.points, stroke.points[1:]) if a != b)
         position = tuple(stroke.points[-1])
+    if position != start:
+        expected.append((position, start, False))
     actual = [(tuple(segment.start), tuple(segment.end), segment.pen_down) for segment in preview.segments]
     if expected != actual or len(drawing.strokes) != preview.strokes or preview.pen_lifts != preview.strokes:
         raise DrawingError("EXPORT_MISMATCH", "Exported paths do not match the drawing. No draft was stored.", 500)

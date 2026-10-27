@@ -146,7 +146,7 @@ test('offline API is visible and reconnect preserves the command', async ({ page
   await expect(page.getByRole('textbox', { name: 'Drawing command' })).toHaveValue('Draw a butterfly');
 });
 
-test('saved history reopens after reload and supplied mandala G-code imports at its own coordinates', async ({ page }) => {
+test('saved history reopens after reload and supplied mandala G-code imports centred on the page', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByText('Running locally')).toBeVisible();
   const original = await command(page, 'Draw a circle diameter 83');
@@ -159,7 +159,9 @@ test('saved history reopens after reload and supplied mandala G-code imports at 
   const imported = await importFile(page, 'G-code', '../SdCard/01 Test GCode/mandala_11x14.gcode');
   expect(imported.import_source.dialect).toBe('linear-mm');
   expect(imported.import_source.original_bounds.width_mm).toBe(252);
-  expect(imported.transform.offset_x_mm).toBe(139.7);
+  expect(imported.transform.offset_x_mm).toBe(0);
+  expect(imported.preview.bounds.min_x_mm).toBe(-126);
+  expect(imported.gcode.endsWith('G0 Z5\nG0 X0.000 Y0.000 Z5\n')).toBe(true);
   await expect(page.getByTestId('actual-bounds')).toHaveText('252.00 × 252.00 mm');
   await expect(page.getByRole('button', { name: 'Regenerate drawing' })).toBeDisabled();
 });
@@ -309,10 +311,7 @@ test('Execute beside Simulation connects, draws over USB, returns to origin and 
   await expect(run.getByText('COMPLETED', { exact: true })).toBeVisible({ timeout: 60000 });
   await expect(page.getByRole('button', { name: 'Stop the machine' })).not.toBeVisible();
 
-  // The circle ends away from (0,0): the next run needs an explicit, confirmed Go to origin.
-  await expect(start).toBeDisabled();
-  await sheet.getByRole('checkbox', { name: /straight pen-up route .* to \(0,0\) is clear/ }).check();
-  await sheet.getByRole('button', { name: 'Go to origin' }).click();
+  // The circle returns pen up to the page centre (0,0), so the next run starts without Go to origin.
   await expect(sheet.locator('.usb-checks li.ok')).toHaveCount(4, { timeout: 30000 });
   await sheet.getByRole('checkbox', { name: 'The drawing area is clear and I am watching the machine.' }).check();
   await start.click();
@@ -322,6 +321,14 @@ test('Execute beside Simulation connects, draws over USB, returns to origin and 
   await expect(page.getByRole('button', { name: 'Stop the machine' })).not.toBeVisible({ timeout: 15000 });
   await expect(execute).toBeEnabled();
   await expect.poll(async () => (await (await page.request.get('/api/machine')).json()).recent_runs[0].state, { timeout: 15000 }).toBe('aborted');
+
+  // A stopped run leaves the pen away from (0,0): the next run needs an explicit, confirmed Go to origin.
+  await execute.click();
+  await expect(sheet.getByText(/Prepared job .* fits the recorded workspace/)).toBeVisible();
+  await expect(start).toBeDisabled();
+  await sheet.getByRole('checkbox', { name: /straight pen-up route .* to \(0,0\) is clear/ }).check();
+  await sheet.getByRole('button', { name: 'Go to origin' }).click();
+  await expect(sheet.locator('.usb-checks li.ok')).toHaveCount(4, { timeout: 30000 });
   const token = (await (await page.request.get('/api/session')).json()).write_token;
   await page.request.post('/api/machine/disconnect', { headers: { 'X-Picasso-Token': token } });
 });

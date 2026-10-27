@@ -127,7 +127,7 @@ class JobManager:
         verify_roundtrip(draft.geometry, preview)
         profile = None
         crc = firmware.gcode_crc32(draft.gcode)
-        warnings = ["Manually establish both physical and firmware (0,0) before every legacy SD drawing. A previous drawing need not finish at origin.",
+        warnings = ["Manually establish both physical and firmware (0,0) at the page centre before every legacy SD drawing. Drawings finish there pen up, but an interrupted one need not.",
                     "Copy verification does not start the machine or measure its position. Physical commissioning remains an operator responsibility.",
                     f"Canonical Picasso firmware shows CRC {crc} after checking main.nc; confirm it matches before starting. The legacy sketch cannot."]
         if request.mode == 'physical':

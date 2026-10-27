@@ -40,7 +40,7 @@ def test_revision_export_and_hardware_boundaries(tmp_path):
                 assert response.content.startswith(b'\x89PNG\r\n\x1a\n')
             else:
                 assert response.text == revised['gcode']
-                assert response.text.endswith('G0 Z5\n')
+                assert response.text.endswith('G0 Z5\nG0 X0.000 Y0.000 Z5\n')
         assert client.post('/api/jobs/prepare', json={'revision_id': original_id}).json()['code'] == 'PROFILE_UNVERIFIED'
         assert client.post('/api/machine/start').status_code == 404
         assert client.post('/api/jobs/anything/sd-export').status_code == 422

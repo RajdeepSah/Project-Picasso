@@ -32,9 +32,9 @@ Do not emit F, G2/G3, I/J/R, G20/G21, G90/G91, G28, G92, M3/M5, M2/M30, or dwell
 2. Travel to the first point of a stroke with explicit `Z5`.
 3. Emit the first drawable endpoint with `G1 ... Z0`; the old parser lowers and settles the pen before moving from the stroke's starting point.
 4. Emit each further endpoint with explicit `Z0`. For a closed path, explicitly include the final point equal to the start if needed.
-5. Emit `G0 Z5` before travelling to another stroke. End the entire file with `G0 Z5\n`.
+5. Emit `G0 Z5` before travelling to another stroke. After the last stroke, emit `G0 Z5` and then `G0 X0.000 Y0.000 Z5\n`. The file always ends with the pen raised back at its `(0,0)` start.
 
-Do not include an automatic return-to-origin or release the motors at job end unless the verified hardware profile and operator workflow explicitly support it. A one-point stroke has no drawable segment and should be rejected or removed under a documented policy.
+`(0,0)` is the centre of the selected page. Every drawing's bounds are centred there, apart from any explicit offset the operator sets. Every job starts there with the pen up, and the final pen-up travel brings it back, so a completed job leaves the carriage ready for the next one. The parser rejects a file that does not end pen up at its declared start, and the return travel is validated like any other segment. Do not release the motors at job end unless the verified hardware profile and operator workflow explicitly support it. A one-point stroke has no drawable segment and should be rejected or removed under a documented policy.
 
 The legacy `pen_up()` has no settling delay. Consecutive pen-up and travel lines do not guarantee that the pen has physically cleared the paper. Export compatibility alone cannot fix that; pen-up bench checks or the Phase 5 timing fix remain necessary before marking physical operation verified.
 
@@ -50,6 +50,7 @@ G1 X10.000 Y10.000 Z0
 G1 X-10.000 Y10.000 Z0
 G1 X-10.000 Y-10.000 Z0
 G0 Z5
+G0 X0.000 Y0.000 Z5
 ```
 
 The G0/G1 words make exported files readable to normal tooling; explicit coordinates and Z state provide compatibility with the legacy parser. Future firmware should enforce actual opcode semantics for exactly this documented subset rather than continue accepting arbitrary coordinate-bearing lines.
@@ -71,7 +72,7 @@ There is no approved physical workspace in Phase 1. `±175` or `±200` X limits 
 
 ## Imported files and sample reuse
 
-Phase 4 accepts this strict subset and a separately declared absolute-mm linear dialect. The latter resolves modal axes, strips balanced comments, maps Z≤0 to pen down and Z>0 to pen up, accepts G17/G21/G90 and standalone M2/M30, and rejects arcs, relative/inch coordinates, offsets and unknown semantics. Feed is explicitly ignored because legacy firmware cannot honor it. Source pen-up detours are regenerated between strokes; source motions are not copied verbatim. The exact known vendor branding banner is recognized only before commands. Original bounds and chosen explicit center/fit are retained. See [STORAGE_AND_COMMISSIONING.md](STORAGE_AND_COMMISSIONING.md).
+Phase 4 accepts this strict subset and a separately declared absolute-mm linear dialect. The latter resolves modal axes, strips balanced comments, maps Z≤0 to pen down and Z>0 to pen up, accepts G17/G21/G90 and standalone M2/M30, and rejects arcs, relative/inch coordinates, offsets and unknown semantics. Feed is explicitly ignored because legacy firmware cannot honor it. Source pen-up detours are regenerated between strokes; source motions are not copied verbatim. The exact known vendor branding banner is recognized only before commands. Imports are always centred on the page centre `(0,0)`. Their original bounds and chosen fit are retained. See [STORAGE_AND_COMMISSIONING.md](STORAGE_AND_COMMISSIONING.md).
 
 The current mandala file includes standard setup/end commands and positive paper coordinates. Other samples contain exporter headers/comments and varying Z patterns. Preserve originals, import into canonical paths, transform and validate, then regenerate restricted output. Copying a sample as `main.nc` without that process is not a compatibility strategy.
 
