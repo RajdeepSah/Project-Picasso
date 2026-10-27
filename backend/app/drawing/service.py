@@ -5,8 +5,10 @@ from dataclasses import dataclass
 import hashlib
 import json
 import math
+import re
 import threading
 import uuid
+from xml.sax.saxutils import escape
 
 from ..models import Dimensions, DrawingDraft, DrawingSpec, DrawingTransform, GenerateRequest, ImportRequest, RevisionRequest
 from .commands import resolve_command
@@ -19,10 +21,13 @@ WARNINGS = [
     "Simulation only. No physical machine profile or workspace is verified.",
     "Initial travel assumes a starting position of (0, 0) mm; this is not a hardware position reading.",
     "Draft downloads are unverified, not prepared jobs. Do not execute them until calibration and pen settling are verified.",
-    "Draft revisions live in memory and are lost on restart. Download JSON to retain a copy; durable history arrives in Phase 4.",
+    "Draft revisions live in memory and are lost on restart.",
 ]
 IMAGE_SIZE_MM = 180  # default fit box for a traced image when the caller gives none
 IMAGE_DETAIL = {"low": "sparse", "medium": "standard", "high": "dense"}
+PNG_PX_PER_MM = 10     # ≈254 dpi; large drawings are scaled down to PNG_MAX_SIDE
+PNG_MAX_SIDE = 4000
+EXPORT_MARGIN_MM = 5
 AI_SETUP_HINT = "Requests beyond these shapes can be drawn with OpenAI line art once OPENAI_API_KEY is set in .env."
 
 
@@ -38,18 +43,48 @@ class StoredDraft:
         return len(self.json_bytes) + len(self.gcode_bytes) + len(self.svg_bytes)
 
 
+def export_name(draft: DrawingDraft) -> str:
+    """Download basename naming what, how big and which revision: "picasso-butterfly-120x95mm-rev3"."""
+    source = draft.import_source
+    name = source.filename.rsplit(".", 1)[0] if source and not source.ai else draft.title
+    slug = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")[:40].rstrip("-") or draft.spec.generator
+    box = draft.preview.bounds
+    return f"picasso-{slug}-{box.width_mm:.0f}x{box.height_mm:.0f}mm-rev{draft.revision}"
+
+
 def svg_bytes(draft: DrawingDraft) -> bytes:
     box = draft.preview.bounds
-    margin = 5
+    margin = EXPORT_MARGIN_MM
     width, height = box.width_mm + margin * 2, box.height_mm + margin * 2
-    # Values come only from finite validated points. No untrusted SVG/XML input.
+    # Values come only from finite validated points. No untrusted SVG/XML input; the title is escaped.
     path = " ".join(f"M{s.start[0]:.3f},{-s.start[1]:.3f} L{s.end[0]:.3f},{-s.end[1]:.3f}"
                     for s in draft.preview.segments if s.pen_down)
     metadata = json.dumps({"execution_ready": False, "simulation_start_mm": [0, 0], "gcode_sha256": draft.gcode_sha256})
     return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{width:.3f}mm" height="{height:.3f}mm" '
             f'viewBox="{box.min_x_mm - margin:.3f} {-box.max_y_mm - margin:.3f} {width:.3f} {height:.3f}">'
-            f'<title>Unverified Picasso drawing draft</title><metadata>{metadata}</metadata>'
+            f'<title>{escape(draft.title)} · Picasso drawing</title><metadata>{metadata}</metadata>'
             f'<path d="{path}" fill="none" stroke="black" stroke-width="0.3" stroke-linecap="round" stroke-linejoin="round"/></svg>').encode()
+
+
+def png_bytes(draft: DrawingDraft) -> bytes:
+    """The same pen-down paths and margin as the SVG, rasterized black on white."""
+    import numpy as np
+    from .vectorize import cv2  # vectorize applies OpenCV's decode limit before loading it
+    box = draft.preview.bounds
+    margin = EXPORT_MARGIN_MM
+    width, height = box.width_mm + margin * 2, box.height_mm + margin * 2
+    scale = min(PNG_PX_PER_MM, PNG_MAX_SIDE / max(width, height))
+    image = np.full((max(1, round(height * scale)), max(1, round(width * scale))), 255, np.uint8)
+    lines = np.array([(s.start, s.end) for s in draft.preview.segments if s.pen_down], dtype=np.float64).reshape(-1, 2, 2)
+    if len(lines):
+        shift = 4  # sub-pixel endpoints for smoother anti-aliasing
+        pixels = (lines - (box.min_x_mm - margin, box.max_y_mm + margin)) * (scale, -scale)
+        cv2.polylines(image, list(np.round(pixels * (1 << shift)).astype(np.int32)), False, 0,
+                      max(1, round(.3 * scale)), cv2.LINE_AA, shift)
+    ok, encoded = cv2.imencode(".png", image)
+    if not ok:
+        raise DrawingError("EXPORT_FAILED", "The PNG could not be rendered. Try SVG instead.", 500)
+    return encoded.tobytes()
 
 
 class DraftService:
@@ -70,7 +105,7 @@ class DraftService:
             if self.repository is not None:
                 files = self.repository.load(revision_id, "revision")
                 draft = DrawingDraft.model_validate_json(files["draft.json"])
-                return StoredDraft(files["draft.json"], files["drawing.nc"], files["preview.svg"], f"picasso-{draft.spec.generator}-{draft.revision_id[:8]}-UNVERIFIED")
+                return StoredDraft(files["draft.json"], files["drawing.nc"], files["preview.svg"], export_name(draft))
             if revision_id not in self._items:
                 raise DrawingError("DRAFT_NOT_FOUND", "Draft not found. It may have expired or the service restarted. Generate a new drawing.", 404)
             self._items.move_to_end(revision_id)
@@ -155,8 +190,7 @@ class DraftService:
                 chord_tolerance_mm=TOLERANCE[spec.detail], warnings=([*WARNINGS[:3], "Saved automatically in local history."] if self.repository else WARNINGS),
                 import_source=import_source,
             )
-            item = StoredDraft(draft.model_dump_json().encode(), code.encode("ascii"), svg_bytes(draft),
-                               f"picasso-{spec.generator}-{draft.revision_id[:8]}-UNVERIFIED")
+            item = StoredDraft(draft.model_dump_json().encode(), code.encode("ascii"), svg_bytes(draft), export_name(draft))
             if item.size > self.max_bytes:
                 raise DrawingError("DRAWING_TOO_COMPLEX", "Draft exceeds the session memory limit. Reduce detail.")
             budget.check()

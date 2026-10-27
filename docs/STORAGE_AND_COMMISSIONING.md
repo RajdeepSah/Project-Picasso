@@ -2,6 +2,8 @@
 
 Phase 4 software is implemented. Physical-card copy/readback and machine commissioning have **not** been performed. The software never starts a drawing or opens a serial port.
 
+> **UI note:** the studio's export menu no longer includes **Test export without hardware** or **Prepare for drawing**; it only downloads G-code, SVG and PNG. The steps below describe the backend workflow (`/api/jobs/prepare`, `/api/storage/*`, `/api/jobs/{id}/sd-export`), which is unchanged. To draw on the machine from the studio, use **Execute** (USB).
+
 ## Launch and try without hardware
 
 Install once with `python3 scripts/setup.py`, then launch with `python3 scripts/picasso.py`. After source updates, rebuild with `python3 scripts/setup.py --skip-install`. Existing locked dependencies cover this phase; no new runtime packages were added.

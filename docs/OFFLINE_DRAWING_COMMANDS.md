@@ -55,13 +55,15 @@ The initial travel is included, assuming a simulation start of `(0,0)` mm. That 
 
 ## Keep a copy
 
-Choose **Export G-code** in the top bar, or open its menu (the arrow beside it) for **Draft JSON**, **SVG**, or **G-code**. Downloads use the exact selected revision and never regenerate it. They have `UNVERIFIED` in their filenames; the HTTP response also reports `X-Picasso-Execution-Ready: false` and a SHA-256 checksum of the downloaded bytes.
+Choose **Export G-code** in the top bar, or open its menu (the arrow beside it) for **G-code**, **SVG** or **PNG**. Downloads use the exact selected revision and never regenerate it. Filenames say what the drawing is, its size and its revision, for example `picasso-butterfly-120x90mm-rev3.gcode` (imported drawings use the source file's name). The HTTP response also reports `X-Picasso-Execution-Ready: false` and a SHA-256 checksum of the downloaded bytes.
 
-- JSON includes the prompt/spec, transform, rounded geometry, execution preview, warnings, G-code and G-code SHA-256. It is the most complete record to retain. Import drawing can restore its validated geometry as a new imported draft.
-- SVG contains the pen-down path, correctly oriented for a screen, with dimensions/view box and unverified-draft metadata. Travel moves are retained in JSON/G-code rather than drawn into the artwork SVG.
-- `.nc` uses only `G0 Z5`, explicit `G0 X... Y... Z5` travel, and explicit `G1 X... Y... Z0` drawing. It is ASCII with three-decimal XY values and a final LF. See [GCODE_CONTRACT.md](GCODE_CONTRACT.md).
+- `.gcode` uses only `G0 Z5`, explicit `G0 X... Y... Z5` travel, and explicit `G1 X... Y... Z0` drawing. It is ASCII with three-decimal XY values and a final LF. See [GCODE_CONTRACT.md](GCODE_CONTRACT.md). Import drawing reads it back as a new draft.
+- `.svg` contains the pen-down path, correctly oriented for a screen, with millimetre dimensions/view box and the drawing's title. Travel moves stay in the G-code rather than being drawn into the artwork.
+- `.png` is the same pen-down path rendered black on white at 10 px/mm (about 254 dpi), scaled down so the longest side is at most 4000 px.
 
-Downloads are not prepared physical jobs. A download itself does not replace files or start the machine. Phase 4 adds separate measured-profile preparation and reviewed SD export; see [STORAGE_AND_COMMISSIONING.md](STORAGE_AND_COMMISSIONING.md). Actual board/calibration/workspace/start and pen behavior must be verified before physical operation.
+The full draft record is still available from the API as `GET /api/drawings/{revision_id}/export?format=json`; the studio no longer offers it as a download.
+
+Downloads are not prepared physical jobs. A download itself does not replace files or start the machine. Measured-profile preparation and reviewed SD export are separate API workflows; see [STORAGE_AND_COMMISSIONING.md](STORAGE_AND_COMMISSIONING.md). Actual board/calibration/workspace/start and pen behavior must be verified before physical operation.
 
 ## Storage and computational limits
 

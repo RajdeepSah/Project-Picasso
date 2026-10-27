@@ -45,7 +45,7 @@ async function revision(page: Page, action: () => Promise<unknown>) {
   return draft;
 }
 
-test('offline circle to resized mandala, regeneration, exact draft downloads and profile inspection', async ({ page }) => {
+test('offline circle to resized mandala, regeneration, named G-code/SVG/PNG downloads and profile inspection', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/');
@@ -64,18 +64,24 @@ test('offline circle to resized mandala, regeneration, exact draft downloads and
   expect(retained.gcode_sha256).toBe(regenerated.gcode_sha256);
   expect(retained.revision_id).not.toBe(regenerated.revision_id);
   await expect(page.getByRole('button', { name: /Voice input unavailable/ })).toBeDisabled();
-  await expect(await exportOption(page, 'Prepare for drawing')).toBeDisabled();
-  const downloadJson = page.waitForEvent('download');
-  await (await exportOption(page, 'Draft JSON')).click();
-  const jsonFile = await downloadJson;
-  expect(jsonFile.suggestedFilename()).toContain('UNVERIFIED.json');
-  const saved = JSON.parse(await readFile((await jsonFile.path())!, 'utf8'));
-  expect(saved.execution_ready).toBe(false);
-  expect(saved.gcode_sha256).toBe(retained.gcode_sha256);
+  const name = `picasso-mandala-${retained.preview.bounds.width_mm.toFixed(0)}x${retained.preview.bounds.height_mm.toFixed(0)}mm-rev${retained.revision}`;
+  await expect(await exportOption(page, 'SVG')).toBeEnabled();
+  await expect(page.locator('#export-options').getByRole('button')).toHaveText(['G-code', 'SVG', 'PNG']);
+  const downloadSvg = page.waitForEvent('download');
+  await (await exportOption(page, 'SVG')).click();
+  const svgFile = await downloadSvg;
+  expect(svgFile.suggestedFilename()).toBe(`${name}.svg`);
+  expect(await readFile((await svgFile.path())!, 'utf8')).toContain(retained.gcode_sha256);
+  const downloadPng = page.waitForEvent('download');
+  await (await exportOption(page, 'PNG')).click();
+  const pngFile = await downloadPng;
+  expect(pngFile.suggestedFilename()).toBe(`${name}.png`);
+  expect((await readFile((await pngFile.path())!)).subarray(0, 4).toString('latin1')).toBe('\x89PNG');
   await expect(page.getByRole('button', { name: 'Export G-code', exact: true })).toBeEnabled();
   const downloadCode = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Export G-code', exact: true }).click();
   const codeFile = await downloadCode;
+  expect(codeFile.suggestedFilename()).toBe(`${name}.gcode`);
   const bytes = await readFile((await codeFile.path())!);
   expect(createHash('sha256').update(bytes).digest('hex')).toBe(retained.gcode_sha256);
   expect(bytes.toString()).toBe(retained.gcode);
@@ -173,38 +179,10 @@ test('a picture imports as traced, centred line art that plays in the simulation
   await expect(page.getByRole('button', { name: 'Execute', exact: true })).toBeEnabled();
 });
 
-test('prepared simulation exports only to an isolated directory with verified bytes and opt-in sync', async ({ page }) => {
-  await page.goto('/');
-  await expect(page.getByText('Running locally')).toBeVisible();
-  const draft = await command(page, 'Draw a circle diameter 40');
-  await (await exportOption(page, 'Test export without hardware')).click();
-  const dialog = page.getByRole('dialog', { name: 'Try a verified test copy' });
-  await dialog.getByRole('button', { name: 'Prepare simulation job' }).click();
-  await expect(dialog.getByText(/Prepared job .*manual origin required/)).toBeVisible();
-  await dialog.getByRole('button', { name: 'Create test directory' }).click();
-  await expect(dialog.getByText('Test directory — no physical card', { exact: true })).toBeVisible();
-  await dialog.getByRole('checkbox', { name: 'Back up and replace the reviewed main.nc with this frozen job.' }).check();
-  await dialog.getByRole('button', { name: 'Export to test directory', exact: true }).click();
-  await expect(dialog.getByText('Test copy verified', { exact: true })).toBeVisible();
-  const targets = await (await page.request.get('/api/storage/targets')).json();
-  const target = targets.targets.find((item: { id: string }) => item.id === targets.selected_target_id);
-  expect(target.kind).toBe('test_directory');
-  const bytes = await readFile(`${target.path}/main.nc`);
-  expect(createHash('sha256').update(bytes).digest('hex')).toBe(draft.gcode_sha256);
-  await page.screenshot({ path: '../docs/screenshots/phase-6-test-export.png', fullPage: true });
-  await dialog.getByRole('checkbox', { name: 'Back up and replace the reviewed main.nc with this frozen job.' }).check();
-  await dialog.getByRole('checkbox', { name: 'Automatically sync this frozen job', exact: true }).check();
-  await expect.poll(async () => (await (await page.request.get('/api/storage/targets')).json()).auto_sync.status, { timeout: 10000 }).toBe('verified');
-  await dialog.getByRole('checkbox', { name: 'Automatically sync this frozen job', exact: true }).uncheck();
-  await expect.poll(async () => (await (await page.request.get('/api/storage/targets')).json()).auto_sync.enabled).toBe(false);
-  const records = await (await page.request.get('/api/storage/transfers')).json();
-  expect(records.some((record: { status: string; target_kind: string }) => record.status === 'verified' && record.target_kind === 'test_directory')).toBe(true);
-});
-
 test('recording an unverified measured profile does not unlock physical preparation', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByText('Running locally')).toBeVisible();
-  await command(page, 'Draw a circle diameter 50');
+  const draft = await command(page, 'Draw a circle diameter 50');
   await page.getByRole('button', { name: 'Machine', exact: true }).click();
   await page.getByRole('button', { name: 'Record / edit measurements' }).click();
   const dialog = page.getByRole('dialog', { name: 'Record a machine profile' });
@@ -219,20 +197,19 @@ test('recording an unverified measured profile does not unlock physical preparat
   await dialog.getByLabel('Manual origin procedure before every job', { exact: true }).fill('Synthetic fixture only: real origin procedure remains unverified.');
   await dialog.getByRole('button', { name: 'Save & select unverified profile' }).click();
   await expect(dialog).not.toBeVisible();
-  await page.getByRole('button', { name: 'Drawing', exact: true }).click();
-  await expect(await exportOption(page, 'Prepare for drawing')).toBeDisabled();
   const profiles = await (await page.request.get('/api/profiles')).json();
-  expect(profiles.measured_profiles.find((profile: { label: string }) => profile.label === 'Browser fixture — unverified').verified).toBe(false);
-  await (await exportOption(page, 'Test export without hardware')).click();
-  const simulation = page.getByRole('dialog', { name: 'Try a verified test copy' });
-  await simulation.getByRole('button', { name: 'Prepare simulation job' }).click();
-  await expect(simulation.getByText(/Prepared job .*manual origin required/)).toBeVisible();
+  const profile = profiles.measured_profiles.find((item: { label: string }) => item.label === 'Browser fixture — unverified');
+  expect(profile.verified).toBe(false);
+  const token = (await (await page.request.get('/api/session')).json()).write_token;
+  const physical = await page.request.post('/api/jobs/prepare', { headers: { 'X-Picasso-Token': token },
+    data: { revision_id: draft.revision_id, mode: 'physical', profile_id: profile.id, profile_revision: profile.revision } });
+  expect((await physical.json()).code).toBe('PROFILE_UNVERIFIED');
 });
 
 test('measurements differing from both references verify only through the canonical firmware ID', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByText('Running locally')).toBeVisible();
-  await command(page, 'Draw a circle diameter 50');
+  const draft = await command(page, 'Draw a circle diameter 50');
   await page.getByRole('button', { name: 'Machine', exact: true }).click();
   await page.getByRole('button', { name: 'Record / edit measurements' }).click();
   let dialog = page.getByRole('dialog', { name: 'Record a machine profile' });
@@ -271,11 +248,12 @@ test('measurements differing from both references verify only through the canoni
   await dialog.getByRole('button', { name: 'Save & select verified profile' }).click();
   await expect(dialog).not.toBeVisible();
 
-  await page.getByRole('button', { name: 'Drawing', exact: true }).click();
-  await (await exportOption(page, 'Prepare for drawing')).click();
-  const job = page.getByRole('dialog', { name: 'Prepare for the SD workflow' });
-  await job.getByRole('button', { name: 'Prepare physical job' }).click();
-  await expect(job.getByText(/Machine check: canonical firmware shows/)).toContainText(/CRC [0-9a-f]{8}/);
+  const verified = (await (await page.request.get('/api/profiles')).json()).measured_profiles.find((profile: { id: string }) => profile.id === profiles.active_profile_id);
+  expect(verified.verified).toBe(true);
+  const token = (await (await page.request.get('/api/session')).json()).write_token;
+  const job = await page.request.post('/api/jobs/prepare', { headers: { 'X-Picasso-Token': token },
+    data: { revision_id: draft.revision_id, mode: 'physical', profile_id: verified.id, profile_revision: verified.revision } });
+  expect((await job.json()).gcode_crc32).toMatch(/^[0-9a-f]{8}$/);
 });
 
 /** Saves and verifies a profile matching the simulator's compiled configuration; returns its configuration ID. */
@@ -295,48 +273,6 @@ async function verifiedSimulatorProfile(page: Page) {
   expect(verified.ok()).toBe(true);
   return identity as string;
 }
-
-test('a verified job streams over USB to the simulated firmware with acknowledged progress', async ({ page }) => {
-  await page.goto('/');
-  await expect(page.getByText('Running locally')).toBeVisible();
-  const identity = await verifiedSimulatorProfile(page);
-  await page.reload();
-  await expect(page.getByText('Running locally')).toBeVisible();
-  await command(page, 'Draw a circle diameter 40');
-
-  await page.getByRole('button', { name: 'Machine', exact: true }).click();
-  await page.getByRole('combobox', { name: 'Serial port' }).selectOption('sim://picasso-firmware');
-  await page.getByRole('button', { name: 'Connect' }).click();
-  const panel = page.getByRole('region', { name: 'USB machine' });
-  await expect(panel.getByText('Connected', { exact: true })).toBeVisible({ timeout: 30000 });
-  await expect(panel.getByText(`${identity} ✓ profile`)).toBeVisible();
-  await expect(panel.getByText('Confirmed', { exact: true })).toBeVisible();
-  await expect(page.getByText('Machine connected')).toBeVisible({ timeout: 20000 });
-
-  await page.getByRole('button', { name: 'Drawing', exact: true }).click();
-  await (await exportOption(page, 'Prepare for drawing')).click();
-  const dialog = page.getByRole('dialog', { name: 'Prepare for the SD workflow' });
-  await dialog.getByRole('button', { name: 'Prepare physical job' }).click();
-  await expect(dialog.getByText(/Prepared job/)).toBeVisible();
-  await expect(dialog.locator('.usb-checks li.ok')).toHaveCount(4);
-  const start = dialog.getByRole('button', { name: 'Start USB drawing' });
-  await expect(start).toBeDisabled();
-  await dialog.getByRole('checkbox', { name: 'The drawing area is clear and I am watching the machine.' }).check();
-  await start.click();
-  const run = dialog.getByLabel('USB run');
-  await expect(run).toBeVisible();
-  await expect(run.getByText('COMPLETED', { exact: true })).toBeVisible({ timeout: 60000 });
-  await expect(run.getByRole('progressbar')).toHaveAttribute('aria-valuenow', await run.getByRole('progressbar').getAttribute('aria-valuemax') ?? '');
-  await page.evaluate(async () => { await document.fonts.ready; });
-  await page.screenshot({ path: '../docs/screenshots/phase-6-usb-run.png', fullPage: true });
-  const runs = (await (await page.request.get('/api/machine')).json()).recent_runs;
-  expect(runs[0].state).toBe('completed');
-  expect(runs[0].measured_feedback).toBe(false);
-  await dialog.getByRole('button', { name: 'Close export' }).click();
-  await page.getByRole('button', { name: 'Machine', exact: true }).click();
-  await page.getByRole('button', { name: 'Disconnect' }).click();
-  await expect(panel.getByText('Not connected', { exact: true })).toBeVisible();
-});
 
 test('Execute beside Simulation connects, draws over USB, returns to origin and stops from the preview', async ({ page }) => {
   await page.goto('/');

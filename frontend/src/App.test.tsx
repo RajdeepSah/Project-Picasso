@@ -37,8 +37,8 @@ describe('offline drawing studio', () => {
     expect(screen.getByRole('button', { name: /Voice input unavailable/ })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Export G-code' })).toBeEnabled();
     fireEvent.click(screen.getByRole('button', { name: 'More export options' }));
-    expect(screen.getByRole('button', { name: /Prepare for drawing/ })).toBeDisabled();
-    expect(screen.getByRole('button', { name: /Draft JSON/ })).toBeEnabled();
+    for (const name of ['G-code', 'SVG', 'PNG']) expect(screen.getByRole('button', { name })).toBeEnabled();
+    expect(screen.queryByRole('button', { name: /JSON|Prepare for drawing|Test export/ })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Toggle travel paths' }));
     expect(screen.queryByTestId('travel-path')).not.toBeInTheDocument();
   });

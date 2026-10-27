@@ -87,7 +87,7 @@ code { font-family: "DM Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospa
 .document-popover { left: -6px; width: 290px; }
 .popover-label { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--faint); padding: 10px 10px 6px; }
 .popover-note { font-size: 12.5px; line-height: 1.5; color: var(--muted); padding: 4px 10px 8px; }
-.popover-formats { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 6px; padding: 2px 4px 6px; }
+.popover-formats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 2px 4px 6px; }
 .popover-formats button { height: 36px; border: 1px solid var(--line-strong); border-radius: var(--r-sm); font-size: 13.5px; font-weight: 500; background: #fff; }
 .popover-formats button:not(:disabled):hover { border-color: var(--forest); background: #f3f6e6; }
 .popover-item { width: 100%; justify-content: flex-start; align-items: flex-start; gap: 12px; padding: 9px 10px; border-radius: var(--r-sm); text-align: left; font-size: 14px; color: var(--ink); }
@@ -420,26 +420,12 @@ code { font-family: "DM Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospa
 .workflow-step h3 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
 .workflow-step > p { font-size: 13.5px; line-height: 1.65; color: var(--muted); margin-bottom: 12px; }
 .studio-dialog .outline-button, .studio-dialog .subtle-button { --field-line: var(--line-strong); }
-.target-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.target-summary { padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r-md); background: #f6f4ee; font-size: 13.5px; color: var(--ink-soft); }
-.target-summary strong { font-size: 14px; font-weight: 600; }
-.target-summary code { display: block; margin: 8px 0; overflow-wrap: anywhere; }
-.target-summary p { line-height: 1.6; margin-top: 4px; }
 .job-ready { display: flex; align-items: center; gap: 8px; color: var(--ok-fg) !important; }
 .firmware-reconcile { margin-top: 16px; border-top: 1px solid var(--line); }
 .firmware-reconcile .muted-copy { display: flex; gap: 8px; align-items: flex-start; margin: 6px 0 10px; }
 .firmware-id { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; font-size: 13.5px; color: var(--ink-soft); }
-.firmware-id code, .machine-check code { padding: 2px 7px; border-radius: var(--r-xs); background: #efede6; color: var(--ink); overflow-wrap: anywhere; }
+.firmware-id code { padding: 2px 7px; border-radius: var(--r-xs); background: #efede6; color: var(--ink); overflow-wrap: anywhere; }
 .firmware-id a.subtle-button { text-decoration: none; display: inline-flex; align-items: center; }
-.machine-check { margin: 8px 0 0; }
-.local-stage { margin-top: 12px; }
-.export-message { margin-top: 16px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r-md); background: #f3f1ea; font-size: 13.5px; line-height: 1.65; color: var(--ink-soft); }
-.verified-transfer { display: flex; gap: 10px; margin: 16px 0; padding: 14px; border: 1px solid #cfe3c6; border-radius: var(--r-md); background: #eff6ea; color: #3f6b3c; }
-.verified-transfer strong { font-size: 14.5px; font-weight: 600; }
-.verified-transfer p { font-size: 12.5px; line-height: 1.6; overflow-wrap: anywhere; }
-.transfer-log { margin: 18px 0; font-size: 13px; color: var(--muted); }
-.transfer-log summary { cursor: pointer; }
-.transfer-log p { margin: 8px 0; line-height: 1.6; }
 .fatal-screen { max-width: 560px; margin: 15vh auto; padding: 24px; }
 .fatal-screen h1 { font-family: var(--font-serif); font-weight: 400; font-size: 34px; margin: 16px 0; }
 .fatal-screen p { line-height: 1.7; color: var(--muted); }

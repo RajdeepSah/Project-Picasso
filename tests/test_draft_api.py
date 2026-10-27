@@ -24,17 +24,20 @@ def test_revision_export_and_hardware_boundaries(tmp_path):
         assert revised['spec']['seed'] == 6
         assert revised['gcode_sha256'] != draft['gcode_sha256']
         assert revised['parent_revision_id'] == original_id
+        width, height = (f"{revised['preview']['bounds'][key]:.0f}" for key in ('width_mm', 'height_mm'))
         assert client.get(f'/api/drawings/{original_id}').json() == draft
-        for format in ('json', 'svg', 'gcode'):
+        for format in ('json', 'svg', 'gcode', 'png'):
             response = client.get(f'/api/drawings/{revised["revision_id"]}/export?format={format}')
             assert response.status_code == 200
-            assert 'UNVERIFIED' in response.headers['content-disposition']
+            assert f'filename="picasso-mandala-{width}x{height}mm-rev2.{format}"' in response.headers['content-disposition']
             assert response.headers['x-picasso-execution-ready'] == 'false'
             assert hashlib.sha256(response.content).hexdigest() == response.headers['x-picasso-content-sha256']
             if format == 'json':
                 assert response.json() == revised
             elif format == 'svg':
                 assert ET.fromstring(response.content).tag.endswith('svg')
+            elif format == 'png':
+                assert response.content.startswith(b'\x89PNG\r\n\x1a\n')
             else:
                 assert response.text == revised['gcode']
                 assert response.text.endswith('G0 Z5\n')

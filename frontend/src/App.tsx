@@ -6,7 +6,6 @@ import { Brand } from './components/Brand';
 import { HistoryPanel } from './components/HistoryPanel';
 import { ImportDialog } from './components/ImportDialog';
 import { CalibrationDialog } from './components/CalibrationDialog';
-import { JobDialog } from './components/JobDialog';
 import { MachinePanel } from './components/MachinePanel';
 import { ExecuteDialog } from './components/ExecuteDialog';
 import { DocumentMenu } from './components/DocumentMenu';
@@ -45,8 +44,8 @@ function Dialog({ kind, studio, close }: { kind: 'guide' | 'settings'; studio: S
     {kind === 'guide' ? <><p>Generate or import a drawing, refine its paths, and reopen it from saved history.</p>
       <ol className="guide-steps"><li><span>01</span><div><strong>Describe one drawing</strong><p>Type or say it. A circle, ellipse, rectangle, spiral, butterfly, mandala or geometric pattern is drawn offline; add “120 mm wide”, “12 petals” or “seed 7”. With an OpenAI key set up, anything else becomes AI line art traced on this computer. Low, Medium and High set the detail.</p></div></li>
         <li><span>02</span><div><strong>Make it your own</strong><p>Adjust size, detail and paper, or open Advanced for rotation, center and seed. Controls update the path automatically. Playback estimates machine time from the firmware's step timing; its speed control changes only the preview, never the machine.</p></div></li>
-        <li><span>03</span><div><strong>Draw it or keep it</strong><p>Execute streams the drawing to the machine over USB once it is connected, a verified profile is selected and the origin is set on the keypad. Or export G-code, JSON or SVG; revisions save automatically.</p></div></li></ol>
-      <div className="notice"><ShieldCheck size={18} /><p>Nothing is sent to the machine until you connect explicitly and start a run. Draft downloads cannot authorize physical drawing.</p></div>
+        <li><span>03</span><div><strong>Draw it or keep it</strong><p>Execute streams the drawing to the machine over USB once it is connected, a verified profile is selected and the origin is set on the keypad. Or export it as G-code, SVG or PNG; revisions save automatically.</p></div></li></ol>
+      <div className="notice"><ShieldCheck size={18} /><p>Nothing is sent to the machine until you connect explicitly and start a run.</p></div>
     </> : <><p>Drawings are generated on your computer. No account, API key or network service is required; an optional OpenAI key adds AI line art for requests the offline shapes cannot draw.</p><dl className="settings-list">
       <div><dt>Application</dt><dd>{studio?.health.version ?? 'Service offline'}</dd></div><div><dt>Python</dt><dd>{studio?.health.python_version ?? 'Unavailable'}</dd></div>
       <div><dt>Current milestone</dt><dd>Phase 6 · Acknowledged USB control</dd></div><div><dt>Local SD mirror</dt><dd>SdCard/ · unchanged</dd></div><div><dt>Machine profile</dt><dd>Not selected or verified</dd></div><div><dt>Voice input</dt><dd>{studio?.capabilities.voice.available ? 'Offline · Faster-Whisper small' : 'Speech model not installed'}</dd></div><div><dt>AI drawing</dt><dd title={studio?.capabilities.ai.reason}>{studio?.capabilities.ai.available ? 'OpenAI · used only on request' : 'Not set up · offline only'}</dd></div></dl>
@@ -72,7 +71,7 @@ export default function App() {
   const [route, setRouteState] = useState<Route>(() => stored('picasso.route', ['auto', 'offline', 'ai'], 'auto'));
   const [detail, setDetailState] = useState<Detail>(() => stored('picasso.detail', ['low', 'medium', 'high'], 'medium'));
   const [dialog, setDialog] = useState<'guide' | 'settings' | null>(null);
-  const [extra, setExtra] = useState<'import' | 'calibration' | 'test-export' | 'physical-export' | null>(null);
+  const [extra, setExtra] = useState<'import' | 'calibration' | null>(null);
   const [draft, setDraft] = useState<DrawingDraft | null>(null);
   const [session, setSession] = useState<DrawingDraft[]>([]);
   const [fields, setFields] = useState<Edits>(emptyEdits);
@@ -177,7 +176,7 @@ export default function App() {
     const version = ++ticket.current; const abort = new AbortController(); controller.current = abort; setBusy(true);
     try { const file = await downloadDraft(draft.revision_id, format, abort.signal); if (ticket.current !== version) return;
       const url = URL.createObjectURL(file.blob); const anchor = document.createElement('a'); anchor.href = url; anchor.download = file.filename; document.body.append(anchor); anchor.click(); anchor.remove(); window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-      say(`Downloaded ${format === 'gcode' ? 'unverified G-code' : format.toUpperCase()} draft. No hardware operation was performed.`);
+      say(`Downloaded ${file.filename}.`);
     } catch (error) { if (!abort.signal.aborted && ticket.current === version) say(error instanceof Error ? error.message : 'Download failed.', 'error'); }
     finally { if (ticket.current === version) setBusy(false); }
   };
@@ -218,7 +217,7 @@ export default function App() {
       <nav className="view-switch" aria-label="Main navigation">{views.map(([id, label]) => <button key={id} className={view === id ? 'active' : ''} aria-current={view === id ? 'page' : undefined} onClick={() => setView(id)}>{label}</button>)}</nav>
       <div className="topbar-actions">{help('topbar-help')}
         <button className="import-button" disabled={!studio || busy} onClick={() => setExtra('import')}><Upload size={19} /><span className="button-label">Import</span><span className="sr-only"> drawing</span></button>
-        <ExportMenu blocked={executeBlocked} download={format => void download(format)} physicalReady={!!selectedMeasured?.verified} testExport={() => setExtra('test-export')} prepare={() => setExtra('physical-export')} /></div>
+        <ExportMenu blocked={executeBlocked} download={format => void download(format)} /></div>
     </header>
 
     <main id="workspace" className={`workspace ${grid ? 'show-grid' : ''}`}>
@@ -282,6 +281,5 @@ export default function App() {
     {extra === 'calibration' && studio && <CalibrationDialog profiles={studio.profiles} close={() => setExtra(null)} saved={() => { setExtra(null); refreshStudio(); say('Measured profile saved and selected for software preparation. No firmware changed.'); }} />}
     {executeOpen && draft && <ExecuteDialog draft={draft} profile={selectedMeasured} machine={machine} refresh={refreshMachine} executingJobId={executing?.jobId} close={() => setExecuteOpen(false)}
       calibrate={() => { setExecuteOpen(false); setInspector('machine'); setExtra('calibration'); }} started={job => setExecuting({ jobId: job.id, revisionId: job.revision_id })} />}
-    {(extra === 'test-export' || extra === 'physical-export') && draft && <JobDialog draft={draft} mode={extra === 'test-export' ? 'simulation' : 'physical'} profile={selectedMeasured} close={() => setExtra(null)} updated={refreshStudio} />}
   </div>;
 }

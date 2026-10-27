@@ -1,7 +1,6 @@
-import type { ApiError, AutoSyncRequest, AutoSyncState, CalibrationProfile, CalibrationSaveRequest, CapabilitiesResponse, Capability,
-  DrawingDraft, ExportRequest, GenerateRequest, HealthResponse, HistoryResponse, HomeRequest, ImportRequest, MachineState, PortsResponse, PreparedJob,
-  ProfilesResponse, RevisionRequest, SessionResponse, StageRequest, StorageTarget, StudioStatus, TargetsResponse, TransferRecord,
-  UsbRun, UsbStartRequest, VoiceTranscript } from './contracts';
+import type { ApiError, CalibrationProfile, CalibrationSaveRequest, CapabilitiesResponse, Capability,
+  DrawingDraft, GenerateRequest, HealthResponse, HistoryResponse, HomeRequest, ImportRequest, MachineState, PortsResponse, PreparedJob,
+  ProfilesResponse, RevisionRequest, SessionResponse, StudioStatus, UsbRun, UsbStartRequest, VoiceTranscript } from './contracts';
 
 let writeToken = '';
 const freshSignal = () => new AbortController().signal;
@@ -77,15 +76,7 @@ export const importDrawing = (payload: ImportRequest, signal: AbortSignal) => mu
 export const saveCalibration = (payload: CalibrationSaveRequest, id?: string) => mutate<CalibrationProfile>(id ? `/api/profiles/${id}` : '/api/profiles', payload, freshSignal(), id ? 'PUT' : 'POST');
 export const selectCalibration = (profile: CalibrationProfile) => mutate<ProfilesResponse>('/api/profiles/select', { profile_id: profile.id, expected_revision: profile.revision }, freshSignal());
 export const prepareJob = (revision_id: string, mode: 'simulation' | 'physical', profile?: CalibrationProfile) => mutate<PreparedJob>('/api/jobs/prepare', { revision_id, mode, profile_id: mode === 'physical' ? profile?.id : undefined, profile_revision: mode === 'physical' ? profile?.revision : undefined }, freshSignal());
-export const fetchJobs = (id: string, signal: AbortSignal) => get<PreparedJob[]>(`/api/jobs?revision_id=${encodeURIComponent(id)}`, signal);
 export const fetchJob = (id: string, signal: AbortSignal) => get<PreparedJob>(`/api/jobs/${encodeURIComponent(id)}`, signal);
-export const fetchTargets = (signal = freshSignal()) => get<TargetsResponse>('/api/storage/targets', signal);
-export const createTestTarget = () => mutate<StorageTarget>('/api/storage/test-target', {}, freshSignal());
-export const selectTarget = (target_id: string) => mutate<TargetsResponse>('/api/storage/select', { target_id }, freshSignal());
-export const exportJob = (id: string, request: ExportRequest) => mutate<TransferRecord>(`/api/jobs/${id}/sd-export`, request, freshSignal());
-export const stageJob = (id: string, request: StageRequest) => mutate<TransferRecord>(`/api/jobs/${id}/stage`, request, freshSignal());
-export const armAutoSync = (request: AutoSyncRequest) => mutate<AutoSyncState>('/api/storage/auto-sync', request, freshSignal());
-export const fetchTransfers = () => get<TransferRecord[]>('/api/storage/transfers', freshSignal());
 export const fetchPorts = () => get<PortsResponse>('/api/machine/ports', freshSignal());
 export const fetchMachine = (signal = freshSignal()) => get<MachineState>('/api/machine', signal);
 export const connectMachine = (port: string) => mutate<MachineState>('/api/machine/connect', { port }, freshSignal());
@@ -94,7 +85,7 @@ export const homeMachine = (request: HomeRequest) => mutate<MachineState>('/api/
 export const controlMachine = (action: 'pause' | 'resume' | 'stop') => mutate<MachineState>(`/api/machine/${action}`, {}, freshSignal());
 export const startUsbRun = (jobId: string, request: UsbStartRequest) => mutate<UsbRun>(`/api/jobs/${encodeURIComponent(jobId)}/usb-start`, request, freshSignal());
 
-export async function downloadDraft(id: string, format: 'json' | 'svg' | 'gcode', signal: AbortSignal) {
+export async function downloadDraft(id: string, format: 'gcode' | 'svg' | 'png', signal: AbortSignal) {
   const response = await fetch(`/api/drawings/${encodeURIComponent(id)}/export?format=${format}`, {
     signal: AbortSignal.any([signal, AbortSignal.timeout(10000)]), cache: 'no-store',
   });
@@ -102,5 +93,5 @@ export async function downloadDraft(id: string, format: 'json' | 'svg' | 'gcode'
     const error = await response.json().catch(() => null) as ApiError | null;
     throw new Error(error?.message ?? 'Draft download failed. Please try again.');
   }
-  return { blob: await response.blob(), filename: response.headers.get('Content-Disposition')?.match(/filename="([^"]+)"/)?.[1] ?? `picasso-UNVERIFIED.${format === 'gcode' ? 'nc' : format}` };
+  return { blob: await response.blob(), filename: response.headers.get('Content-Disposition')?.match(/filename="([^"]+)"/)?.[1] ?? `picasso-drawing.${format}` };
 }

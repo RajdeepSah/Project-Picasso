@@ -29,7 +29,7 @@ from .machine import transport as serial_transport
 from .machine.controller import MachineController
 from .profiles import load_reference_profiles
 from .drawing.errors import DrawingError
-from .drawing.service import DraftService
+from .drawing.service import DraftService, png_bytes
 from .storage.repository import Repository
 from .storage.preparation import JobManager, ProfileManager
 from .storage.exporter import ExportManager
@@ -312,16 +312,19 @@ def create_app(*, frontend_dir: Path | None = None, instance_id: str | None = No
         return Response(files['preview.svg'], media_type='image/svg+xml', headers={'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'"})
 
     @app.get("/api/drawings/{revision_id}/export")
-    def export_draft(revision_id: str, format: Literal["json", "svg", "gcode"] = "json"):
+    def export_draft(revision_id: str, format: Literal["json", "svg", "gcode", "png"] = "json"):
         import hashlib
         stored = app.state.drafts.export(revision_id)
-        content, media, suffix = {
-            "json": (stored.json_bytes, "application/json", "json"),
-            "svg": (stored.svg_bytes, "image/svg+xml", "svg"),
-            "gcode": (stored.gcode_bytes, "text/plain", "nc"),
-        }[format]
+        if format == "png":
+            content, media = png_bytes(DrawingDraft.model_validate_json(stored.json_bytes)), "image/png"
+        else:
+            content, media = {
+                "json": (stored.json_bytes, "application/json"),
+                "svg": (stored.svg_bytes, "image/svg+xml"),
+                "gcode": (stored.gcode_bytes, "text/plain"),
+            }[format]
         return Response(content, media_type=media, headers={
-            "Content-Disposition": f'attachment; filename="{stored.filename}.{suffix}"',
+            "Content-Disposition": f'attachment; filename="{stored.filename}.{format}"',
             "X-Picasso-Execution-Ready": "false", "X-Picasso-Content-SHA256": hashlib.sha256(content).hexdigest(),
         })
 
