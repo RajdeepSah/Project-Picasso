@@ -3006,6 +3006,41 @@
       "title": "UsbStartRequest",
       "type": "object"
     },
+    "VoiceTranscript": {
+      "additionalProperties": false,
+      "description": "Recognized words for the composer. Text only: it never starts generation or motion.",
+      "properties": {
+        "duration_s": {
+          "minimum": 0,
+          "title": "Duration S",
+          "type": "number"
+        },
+        "processing_s": {
+          "minimum": 0,
+          "title": "Processing S",
+          "type": "number"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "text": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "text",
+        "duration_s",
+        "processing_s"
+      ],
+      "title": "VoiceTranscript",
+      "type": "object"
+    },
     "WorkRegion": {
       "additionalProperties": false,
       "properties": {
@@ -3147,6 +3182,9 @@
     },
     {
       "$ref": "#/$defs/HomeRequest"
+    },
+    {
+      "$ref": "#/$defs/VoiceTranscript"
     }
   ],
   "title": "PicassoContracts"

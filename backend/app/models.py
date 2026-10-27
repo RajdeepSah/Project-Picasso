@@ -525,12 +525,19 @@ class SessionResponse(Contract):
     write_token: str
 
 
+class VoiceTranscript(Contract):
+    """Recognized words for the composer. Text only: it never starts generation or motion."""
+    text: Annotated[str, Field(min_length=1, max_length=2000)]
+    duration_s: Annotated[float, Field(ge=0, allow_inf_nan=False)]
+    processing_s: Annotated[float, Field(ge=0, allow_inf_nan=False)]
+
+
 ALL_CONTRACTS = (DrawingSpec | PolylineDrawing | ProfilesResponse | CapabilitiesResponse
                  | HealthResponse | StudioStatus | ApiError | GenerateRequest | DrawingDraft | RevisionRequest
                  | ImportRequest | HistoryResponse | CalibrationSaveRequest | CalibrationProfile
                  | PreparationRequest | PreparedJob | TargetsResponse | TargetSelectionRequest
                  | ExportRequest | StageRequest | TransferRecord | AutoSyncRequest | AutoSyncState | SessionResponse | ProfileSelectionRequest
-                 | PortsResponse | MachineState | ConnectRequest | UsbStartRequest | HomeRequest)
+                 | PortsResponse | MachineState | ConnectRequest | UsbStartRequest | HomeRequest | VoiceTranscript)
 
 ProfilesResponse.model_rebuild()
 DrawingDraft.model_rebuild()

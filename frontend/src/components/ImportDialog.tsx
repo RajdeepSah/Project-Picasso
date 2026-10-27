@@ -13,7 +13,7 @@ const details: [Detail, string, string][] = [
   ['high', 'High', 'Finer edges and patterns. Takes longest to draw.'],
 ];
 const accept: Record<Kind, string> = { image: 'image/png,image/jpeg,image/webp,image/bmp,image/tiff', gcode: '.gcode,.nc,.ngc,.tap,.txt' };
-const limit: Record<Kind, number> = { image: 8_000_000, gcode: 1_000_000 };
+const limit: Record<Kind, number> = { image: 8_000_000, gcode: 2_000_000 };
 const isImage = (file: File) => file.type.startsWith('image/') || /\.(png|jpe?g|webp|bmp|tiff?)$/i.test(file.name);
 const size = (bytes: number) => bytes >= 1e6 ? `${(bytes / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1e3))} KB`;
 
@@ -74,7 +74,7 @@ export function ImportDialog({ paper, close, imported }: { paper: PaperId; close
       {thumbnail ? <img src={thumbnail} alt="" className="drop-thumbnail" /> : file ? <FileCode2 size={30} strokeWidth={1.5} /> : <Upload size={26} strokeWidth={1.6} />}
       {file ? <span className="drop-title">{file.name}</span>
         : <span className="drop-title">Drop {kind === 'image' ? 'an image' : 'a G-code file'} or <u>browse</u></span>}
-      <span className="drop-hint">{file ? `${size(file.size)} · choose another` : kind === 'image' ? 'PNG, JPG, WEBP, BMP or TIFF · up to 8 MB' : '.gcode, .nc or .txt · up to 1 MB'}</span>
+      <span className="drop-hint">{file ? `${size(file.size)} · choose another` : kind === 'image' ? 'PNG, JPG, WEBP, BMP or TIFF · up to 8 MB' : '.gcode, .nc or .txt · up to 2 MB'}</span>
     </label>
     {kind === 'image' && <fieldset className="import-detail" disabled={busy}><legend>Detail</legend>
       <div className="import-detail-options">{details.map(([value, label]) => <label key={value} className={detail === value ? 'checked' : ''}>

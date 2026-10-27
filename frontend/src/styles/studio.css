@@ -198,6 +198,12 @@ code { font-family: "DM Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospa
 .composer-field textarea::placeholder { color: #9d9a92; }
 .microphone-button { width: 36px; height: 36px; border-radius: var(--r-sm); color: #8a8f88; }
 .microphone-button:disabled { opacity: .8; }
+.microphone-button:not(:disabled) { color: var(--ink-soft); }
+.microphone-button:not(:disabled):hover { background: var(--hover-bg); }
+/* --level (0–1) follows the input volume while listening, so the ring shows the microphone hears you. */
+.microphone-button.listening { color: #fff; background: var(--danger); box-shadow: 0 0 0 calc(3px + var(--level, 0) * 7px) rgb(180 81 59 / .2); }
+.microphone-button.listening:hover { background: #a14632; }
+.microphone-button.transcribing .spinner { width: 16px; height: 16px; border-color: rgb(29 44 35 / .2); border-top-color: var(--forest); }
 .submit-command { width: 50px; height: 50px; flex: none; border-radius: var(--r-md); background: var(--lime); color: var(--lime-ink); }
 .submit-command:not(:disabled):hover { background: var(--lime-hover); transform: translateY(-1px); }
 .submit-command:disabled { opacity: 1; background: #eef3d2; color: #a3ab8e; }
@@ -610,4 +616,5 @@ code { font-family: "DM Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospa
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
   .paper-busy { opacity: 1; }
+  .microphone-button.listening { box-shadow: 0 0 0 4px rgb(180 81 59 / .2); }
 }

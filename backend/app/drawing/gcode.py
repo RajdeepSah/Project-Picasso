@@ -24,7 +24,7 @@ def encode(drawing: PolylineDrawing) -> str:
         lines.append("G0 Z5")
     code = "\n".join(lines) + "\n"
     if len(code) > MAX_BYTES:
-        raise DrawingError("DRAWING_TOO_COMPLEX", "Export exceeds the 1 MB draft limit.")
+        raise DrawingError("DRAWING_TOO_COMPLEX", "Export exceeds the 2 MB draft limit.")
     return code
 
 
@@ -32,7 +32,7 @@ def parse(code: str, *, expected_start=(0.0, 0.0), budget: Budget | None = None)
     def invalid(message="Only canonical G0/G1 explicit X/Y/Z commands are accepted. Comments, modal axes, feed words and arcs are unsupported."):
         raise DrawingError("INVALID_GCODE", message)
     if not isinstance(code, str) or not code.isascii() or len(code) > MAX_BYTES:
-        invalid("G-code must be ASCII and no larger than 1 MB.")
+        invalid("G-code must be ASCII and no larger than 2 MB.")
     if not code.startswith("G0 Z5\n") or not code.endswith("G0 Z5\n"):
         invalid("A file must begin and end with G0 Z5 and a final LF.")
     position = tuple(expected_start)

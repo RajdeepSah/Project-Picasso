@@ -1,9 +1,10 @@
-import type { ApiError, AutoSyncRequest, AutoSyncState, CalibrationProfile, CalibrationSaveRequest, CapabilitiesResponse,
+import type { ApiError, AutoSyncRequest, AutoSyncState, CalibrationProfile, CalibrationSaveRequest, CapabilitiesResponse, Capability,
   DrawingDraft, ExportRequest, HealthResponse, HistoryResponse, HomeRequest, ImportRequest, MachineState, PortsResponse, PreparedJob,
   ProfilesResponse, RevisionRequest, SessionResponse, StageRequest, StorageTarget, StudioStatus, TargetsResponse, TransferRecord,
-  UsbRun, UsbStartRequest } from './contracts';
+  UsbRun, UsbStartRequest, VoiceTranscript } from './contracts';
 
 let writeToken = '';
+const freshSignal = () => new AbortController().signal;
 
 export type Studio = {
   health: HealthResponse;
@@ -33,23 +34,31 @@ export async function loadStudio(signal: AbortSignal): Promise<Studio> {
   return { health, capabilities, profiles, status };
 }
 
-export async function mutate<T>(path: string, payload: unknown, signal: AbortSignal, method = 'POST', refresh = true): Promise<T> {
+async function send<T>(path: string, body: BodyInit, contentType: string, signal: AbortSignal, method: string, timeout: number, fallback: string, refresh = true): Promise<T> {
   if (!writeToken) writeToken = (await get<SessionResponse>('/api/session', signal)).write_token;
   const response = await fetch(path, {
-    method, headers: { 'Content-Type': 'application/json', 'X-Picasso-Token': writeToken },
-    body: JSON.stringify(payload),
-    signal: AbortSignal.any([signal, AbortSignal.timeout(30000)]),
+    method, headers: { 'Content-Type': contentType, 'X-Picasso-Token': writeToken }, body,
+    signal: AbortSignal.any([signal, AbortSignal.timeout(timeout)]),
   });
   if (!response.ok) {
     const error = await response.json().catch(() => null) as ApiError | null;
     if (refresh && response.status === 403 && error?.code === 'WRITE_TOKEN_REQUIRED') {
       writeToken = '';
-      return mutate<T>(path, payload, signal, method, false);
+      return send<T>(path, body, contentType, signal, method, timeout, fallback, false);
     }
-    throw new Error(error?.message ?? 'The drawing could not be generated. Please try again.');
+    throw new Error(error?.message ?? fallback);
   }
   return response.json() as Promise<T>;
 }
+
+export function mutate<T>(path: string, payload: unknown, signal: AbortSignal, method = 'POST'): Promise<T> {
+  return send<T>(path, JSON.stringify(payload), 'application/json', signal, method, 30000, 'The drawing could not be generated. Please try again.');
+}
+
+// Voice returns text for the composer only; it never generates or starts a drawing.
+export const warmVoice = () => mutate<Capability>('/api/voice/warm', {}, freshSignal());
+export const transcribeAudio = (audio: Blob, signal: AbortSignal) =>
+  send<VoiceTranscript>('/api/voice/transcribe', audio, audio.type || 'application/octet-stream', signal, 'POST', 60000, 'Speech could not be transcribed. Type the command instead.');
 
 export function submitCommand(prompt: string, signal: AbortSignal): Promise<DrawingDraft> {
   return mutate('/api/drawings/generate', { prompt }, signal);
@@ -59,7 +68,6 @@ export function reviseDraft(id: string, payload: RevisionRequest, signal: AbortS
   return mutate(`/api/drawings/${encodeURIComponent(id)}/revisions`, payload, signal);
 }
 
-const freshSignal = () => new AbortController().signal;
 export const fetchDraft = (id: string, signal: AbortSignal) => get<DrawingDraft>(`/api/drawings/${encodeURIComponent(id)}`, signal);
 export const fetchHistory = (query: string, offset: number, signal: AbortSignal) => get<HistoryResponse>(`/api/drawings?query=${encodeURIComponent(query)}&offset=${offset}&limit=12`, signal);
 export const repairArtifact = (id: string) => mutate(`/api/artifacts/${encodeURIComponent(id)}/repair`, {}, freshSignal());

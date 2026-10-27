@@ -95,6 +95,15 @@ def test_import_modal_axes_coordinate_comments_and_explicit_origin():
     with pytest.raises(DrawingError): service.revise(centered.revision_id, RevisionRequest(regenerate=True), Event())
 
 
+def test_import_accepts_up_to_2_mb_of_gcode():
+    body = 'G0 X0 Y0 Z1\nG1 X10 Y10 Z0\nG0 Z1\n'
+    padding = '; padding comment that keeps the line count low\n'
+    fits = padding * ((2_000_000 - len(body)) // len(padding)) + body
+    assert len(fits) <= 2_000_000
+    DraftService().import_drawing(ImportRequest(filename='large.nc', content=fits), Event())
+    with pytest.raises(DrawingError, match='2 MB'):
+        DraftService().import_drawing(ImportRequest(filename='large.nc', content=padding * 2 + fits), Event())
+
 @pytest.mark.parametrize('command', ['G2 X1 Y1 I0 J1', 'G91', 'G20', 'G92 X0 Y0', 'M3', 'G4 P100', 'G1 X1 X2 Y1', 'M01'])
 def test_import_rejects_unknown_semantics_instead_of_dropping_them(command):
     with pytest.raises(DrawingError):

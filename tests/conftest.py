@@ -40,3 +40,5 @@ def isolated_app_storage(tmp_path, monkeypatch):
     mirror.mkdir()
     (mirror / 'main.nc').write_bytes(b'original test mirror\n')
     monkeypatch.setenv('PICASSO_MIRROR_DIR', str(mirror))
+    # Voice is unavailable unless a test injects a recognizer or opts into the installed model.
+    monkeypatch.setenv('PICASSO_VOICE_MODEL_DIR', str(tmp_path / 'no-speech-model'))

@@ -15,6 +15,7 @@ def run(command: list[str], *, frontend: bool = False):
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--skip-install", action="store_true", help="Rebuild using dependencies already installed locally.")
+    parser.add_argument("--no-voice", action="store_true", help="Skip the offline speech model download (about 480 MB); voice input stays unavailable.")
     args = parser.parse_args()
     try:
         prerequisites()
@@ -28,6 +29,8 @@ def main() -> int:
                  "-r", str(ROOT / "backend" / "requirements.lock")])
             print("Installing locked frontend dependencies…", flush=True)
             run(npm_command("ci", "--no-audit", "--no-fund", "--cache", str(ROOT / ".cache" / "npm")), frontend=True)
+            if not args.no_voice:
+                run([str(PYTHON), "-m", "backend.app.voice", "download"])
         if not PYTHON.is_file():
             raise RuntimeError("No project virtual environment. Rerun without --skip-install.")
         print("Generating shared contracts…", flush=True)

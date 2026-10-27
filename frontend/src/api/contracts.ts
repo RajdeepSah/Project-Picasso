@@ -30,7 +30,8 @@ export type PicassoContracts =
   | MachineState
   | ConnectRequest
   | UsbStartRequest
-  | HomeRequest;
+  | HomeRequest
+  | VoiceTranscript;
 export type Detail = "sparse" | "standard" | "dense";
 export type HeightMm = number;
 export type SchemaVersion = 1;
@@ -419,6 +420,10 @@ export type ExpectedBootId1 = string;
 export type ExpectedOriginRevision1 = number;
 export type RouteConfirmed = boolean;
 export type SchemaVersion50 = 1;
+export type DurationS = number;
+export type ProcessingS = number;
+export type SchemaVersion51 = 1;
+export type Text = string;
 
 export interface DrawingSpec {
   detail?: Detail;
@@ -908,4 +913,13 @@ export interface HomeRequest {
   expected_origin_revision: ExpectedOriginRevision1;
   route_confirmed?: RouteConfirmed;
   schema_version?: SchemaVersion50;
+}
+/**
+ * Recognized words for the composer. Text only: it never starts generation or motion.
+ */
+export interface VoiceTranscript {
+  duration_s: DurationS;
+  processing_s: ProcessingS;
+  schema_version?: SchemaVersion51;
+  text: Text;
 }

@@ -2,7 +2,7 @@
 
 A local application being developed to turn drawing commands into previewed, machine-compatible paths for an Arduino wall drawing machine.
 
-**Current milestone: Phase 6 software complete.** Press **Execute** beside *Simulation* to draw the previewed drawing over USB: the studio streams a verified job one acknowledged command at a time, with pause, stop and a firmware host-loss watchdog (serial protocol v1, firmware 0.6.1). The SD card can stay in the Arduino. The UNO runs a USB-only build that fits its memory (87% flash, 64% SRAM). It builds on the Phase 5 canonical firmware and the Phase 4 history, import, preparation and verified SD export. All of this is tested against simulated devices only. **Still pending:** real-card readback, physical commissioning and the hardware USB checks. AI and voice are Phases 7–8.
+**Current milestone: Phase 6 software complete.** Press **Execute** beside *Simulation* to draw the previewed drawing over USB: the studio streams a verified job one acknowledged command at a time, with pause, stop and a firmware host-loss watchdog (serial protocol v1, firmware 0.6.1). The SD card can stay in the Arduino. The UNO runs a USB-only build that fits its memory (87% flash, 64% SRAM). It builds on the Phase 5 canonical firmware and the Phase 4 history, import, preparation and verified SD export. All of this is tested against simulated devices only. **Still pending:** real-card readback, physical commissioning and the hardware USB checks. **Voice input** (offline Faster-Whisper) is available early from Phase 8; optional AI interpretation is Phase 7.
 
 ## Install and launch
 
@@ -14,7 +14,7 @@ From the project root, install once:
 python3 scripts/setup.py
 ```
 
-This creates `.venv/`, installs the exact versions in `backend/requirements.lock` and `frontend/package-lock.json`, generates TypeScript contracts, and builds the interface. First setup needs internet access to the public Python/npm registries. Dependencies and caches stay in this project. On Debian/Ubuntu, a missing `venv`/`ensurepip` error means the matching `python3-venv` package needs to be installed first.
+This creates `.venv/`, installs the exact versions in `backend/requirements.lock` and `frontend/package-lock.json`, downloads the offline speech model (Faster-Whisper *small*, about 480 MB, into `models/`), generates TypeScript contracts, and builds the interface. Add `--no-voice` to skip the model; the microphone button then explains that it is not installed. First setup needs internet access to the public Python/npm registries. Dependencies and caches stay in this project. On Debian/Ubuntu, a missing `venv`/`ensurepip` error means the matching `python3-venv` package needs to be installed first.
 
 Then launch with one command:
 
@@ -54,7 +54,8 @@ python3 scripts/setup.py --skip-install
 - Test the same publication pipeline in an isolated app-owned directory without hardware; opt into syncing one exact prepared job when its approved target is available.
 - Live local-service health, separate unavailable machine/card states, offline error handling and reconnect without losing the command.
 - Getting-started and studio-information dialogs, keyboard submission, and an application error boundary.
-- Physical preparation stays disabled until the selected measured profile is verified. Microphone input remains planned for Phase 8.
+- Physical preparation stays disabled until the selected measured profile is verified.
+- **Voice input:** click the microphone, say *“Draw a butterfly”*, and the words appear in the command box. See [Voice input](#voice-input).
 - **Canonical firmware** in `firmware/WallDrawingMachine/` keeps the original pins, libraries and step sequence. It adds a bounded strict parser, validation of the whole file and workspace before any motion, a deliberate per-job origin, cooperative pause/stop, pen settling both ways, coil holding and distinct completed/aborted/failed results. See [the firmware README](firmware/README.md).
 - **USB control**: list ports without opening them; connect explicitly; verify firmware, configuration ID, boot session, origin and position; then stream a verified physical job one acknowledged command at a time, with pause, resume, stop, live acknowledged progress and a validated *Go to origin*. Runs are recorded locally. Restarts and resets never resume. See the [serial protocol](docs/SERIAL_PROTOCOL.md).
 - **Execute** beside *Simulation*: one sheet connects the machine, checks the verified profile, the drawing's workspace fit and the keypad origin, asks you to confirm the area is clear, then draws over USB. The preview shows acknowledged progress, the commanded position and an always-visible **Stop**.
@@ -69,6 +70,16 @@ To try Phase 4 without hardware: generate a drawing → open the menu beside **E
 History lives under `data/` and survives restarts. Its SQLite database and checksummed artifacts are local to this computer; stop the app before backing up the entire directory. The browser's eight recently viewed entries are shortcuts, not the history retention limit.
 
 ![Phase 6 drawing studio](docs/screenshots/phase-6-studio.png)
+
+## Voice input
+
+1. Click the **microphone** in the command box. The browser asks for microphone permission the first time.
+2. Say one command, for example *“Draw a butterfly”* or *“Create a mandala with 12 petals, 120 mm wide”*. A pause of about a second ends the recording; you can also click the button again. **Esc** cancels. Recordings are limited to 30 seconds.
+3. The recognized words are inserted at the cursor (replacing any selected text). Review or edit them, then press **Enter**.
+
+Voice only fills the command box. It never generates a drawing, prepares a job or moves the machine; those keep their own explicit controls. Speech is recognized on this computer by Faster-Whisper *small* (CPU, int8): audio goes only to the local service, is not stored, and no network is used after setup. The model loads in the background when you first press the microphone, so the first command takes a moment longer. Spoken units are converted to the command grammar (“millimeters” → `mm`, “100 by 60” → `100 x 60`).
+
+A model at a different location can be used with `PICASSO_VOICE_MODEL_DIR`. To install the model later: `.venv/bin/python -m backend.app.voice download`; to check it: `.venv/bin/python -m backend.app.voice check`. The browser must support `MediaRecorder` (current Chrome, Edge, Firefox and Safari); microphone access works on `127.0.0.1`/`localhost` without HTTPS. Tested on Linux with Chromium; real-microphone tests on other browsers/operating systems are pending.
 
 ## Draw from the studio over USB
 
@@ -162,6 +173,7 @@ The running application exposes its full schema at **http://127.0.0.1:8000/docs*
 - `GET /api/drawings?query=mandala&offset=0&limit=20`: searchable persistent history.
 - `POST /api/drawings/generate`, `POST /api/drawings/import`: generate/import and save a draft.
 - `POST /api/drawings/{revision_id}/revisions`: save an immutable adjustment/regeneration.
+- `POST /api/voice/transcribe` (raw recorded audio body) → `{text, duration_s, processing_s}`; `POST /api/voice/warm` loads the speech model in the background. Text only; nothing is generated.
 - `GET /api/drawings/{revision_id}` and `/export?format=json|svg|gcode`: retrieve exact saved artifacts.
 - `POST /api/profiles`, `PUT /api/profiles/{id}`, `POST /api/profiles/select`: measured calibration with revision checking.
 - `GET /api/machine/ports`, `GET /api/machine`, `POST /api/machine/connect|disconnect|home|pause|resume|stop`: explicit USB session and controls. Only listed ports can be opened.
@@ -222,4 +234,4 @@ The maintained sketch is `firmware/WallDrawingMachine/WallDrawingMachine.ino`; t
 
 The implemented stack is React + TypeScript + Vite with Python + FastAPI/Pydantic, standard-library geometry/export, SQLite plus immutable files, and C++11 Arduino firmware with a host test harness. USB access uses pySerial 3.5.
 
-Pending hardware acceptance: the Arduino CLI compile and memory report on the actual board, real-card readback (Phase 4) and the [commissioning checks](docs/FIRMWARE_COMMISSIONING.md). Pending hardware acceptance also includes the Phase 6 USB checks (commissioning guide §10). Next: Phase 7, optional AI interpretation, then Phase 8 voice and release polish.
+Pending hardware acceptance: the Arduino CLI compile and memory report on the actual board, real-card readback (Phase 4) and the [commissioning checks](docs/FIRMWARE_COMMISSIONING.md). Pending hardware acceptance also includes the Phase 6 USB checks (commissioning guide §10). Next: Phase 7, optional AI interpretation, then the rest of Phase 8 (release polish and real-microphone tests across browsers).

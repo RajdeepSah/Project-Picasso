@@ -24,7 +24,7 @@ from .models import (ApiError, AutoSyncRequest, AutoSyncState, CalibrationProfil
                      ImportRequest, PreparationRequest, PreparedJob, ProfileSelectionRequest, RevisionRequest,
                      HealthResponse, MachineStatus, ProfilesResponse, SessionResponse, StageRequest, StudioStatus,
                      StorageTarget, TargetSelectionRequest, TargetsResponse, TransferRecord, ConnectRequest, HomeRequest,
-                     MachineState, PortsResponse, SerialPortInfo, UsbRun, UsbStartRequest)
+                     MachineState, PortsResponse, SerialPortInfo, UsbRun, UsbStartRequest, VoiceTranscript)
 from .machine import transport as serial_transport
 from .machine.controller import MachineController
 from .profiles import load_reference_profiles
@@ -33,12 +33,13 @@ from .drawing.service import DraftService
 from .storage.repository import Repository
 from .storage.preparation import JobManager, ProfileManager
 from .storage.exporter import ExportManager
+from .voice import DEFAULT_MODEL_DIR, VoiceService
 
 
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def capabilities() -> CapabilitiesResponse:
+def capabilities(voice: Capability) -> CapabilitiesResponse:
     def planned(phase: int, reason: str) -> Capability:
         return Capability(available=False, phase=phase, reason=reason)
     return CapabilitiesResponse(
@@ -50,17 +51,18 @@ def capabilities() -> CapabilitiesResponse:
         firmware=Capability(available=True, phase=5, reason="Canonical firmware source and profile-generated configuration are available. Building, uploading and commissioning are explicit operator steps; no board is contacted."),
         serial_control=Capability(available=True, phase=6, reason="Explicit USB connection to Picasso firmware 0.6+ with acknowledged one-command streaming, pause and stop. Hardware execution remains unverified until commissioning."),
         ai=planned(7, "Optional AI interpretation arrives in Phase 7."),
-        voice=planned(8, "Microphone input arrives in Phase 8."),
+        voice=voice,
     )
 
 
-def create_app(*, frontend_dir: Path | None = None, instance_id: str | None = None, data_dir: Path | None = None, mirror_dir: Path | None = None, target_provider=None, machine_transport=None, simulated_device: bool | None = None) -> FastAPI:
+def create_app(*, frontend_dir: Path | None = None, instance_id: str | None = None, data_dir: Path | None = None, mirror_dir: Path | None = None, target_provider=None, machine_transport=None, simulated_device: bool | None = None, voice_service: VoiceService | None = None) -> FastAPI:
     build_dir = frontend_dir if frontend_dir is not None else ROOT / "frontend" / "dist"
     run_id = instance_id or os.environ.get("PICASSO_INSTANCE_ID") or uuid.uuid4().hex
     storage_root = data_dir or Path(os.environ.get('PICASSO_DATA_DIR', ROOT / 'data'))
     mirror_root = mirror_dir or Path(os.environ.get('PICASSO_MIRROR_DIR', ROOT / 'SdCard'))
     write_token = secrets.token_urlsafe(32)
     simulated = os.environ.get('PICASSO_SIMULATED_DEVICE') == '1' if simulated_device is None else simulated_device
+    voice = voice_service or VoiceService(Path(os.environ.get('PICASSO_VOICE_MODEL_DIR', DEFAULT_MODEL_DIR)))
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -157,7 +159,7 @@ def create_app(*, frontend_dir: Path | None = None, instance_id: str | None = No
 
     @app.get("/api/capabilities", response_model=CapabilitiesResponse)
     def get_capabilities():
-        return capabilities()
+        return capabilities(voice.capability())
 
     @app.get("/api/profiles", response_model=ProfilesResponse)
     def get_profiles():
@@ -276,6 +278,16 @@ def create_app(*, frontend_dir: Path | None = None, instance_id: str | None = No
     @app.post('/api/drawings/import', response_model=DrawingDraft)
     async def import_drawing(request: ImportRequest, http_request: Request):
         return await run_generation(http_request, app.state.drafts.import_drawing, request)
+
+    @app.post('/api/voice/warm', response_model=Capability)
+    def voice_warm():
+        return voice.warm()
+
+    @app.post('/api/voice/transcribe', response_model=VoiceTranscript)
+    async def voice_transcribe(http_request: Request):
+        # Raw recorded audio (webm/ogg/mp4/wav). The result is text for review; nothing is generated or drawn.
+        audio = await http_request.body()
+        return await run_generation(http_request, voice.transcribe, audio)
 
     @app.get('/api/drawings', response_model=HistoryResponse)
     def history(query: str = Query(default='', max_length=200), offset: int = Query(default=0, ge=0), limit: int = Query(default=20, ge=1, le=50), drawing_id: str | None = None):

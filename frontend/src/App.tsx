@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { ArrowRight, ArrowUp, ChevronDown, CircleAlert, CircleCheck, CircleHelp, Cpu, HardDrive, Mic, PenLine, Printer, Settings, ShieldCheck, Upload, WifiOff, X } from 'lucide-react';
+import { ArrowRight, ArrowUp, ChevronDown, CircleAlert, CircleCheck, CircleHelp, Cpu, HardDrive, PenLine, Printer, Settings, ShieldCheck, Upload, WifiOff, X } from 'lucide-react';
 import { controlMachine, downloadDraft, fetchDraft, fetchJob, loadStudio, reviseDraft, selectCalibration, submitCommand, type Studio } from './api/client';
 import type { DrawingDraft } from './api/contracts';
 import { Brand } from './components/Brand';
@@ -10,6 +10,7 @@ import { JobDialog } from './components/JobDialog';
 import { MachinePanel } from './components/MachinePanel';
 import { ExecuteDialog } from './components/ExecuteDialog';
 import { DocumentMenu } from './components/DocumentMenu';
+import { VoiceButton } from './components/VoiceButton';
 import { ExportMenu, type DownloadFormat } from './components/ExportMenu';
 import { runActive, useMachine } from './components/UsbRunCard';
 import { DrawingPreview, executedFraction, isPaper, paperOptions, type Execution, type PaperId } from './components/DrawingPreview';
@@ -36,7 +37,7 @@ function Dialog({ kind, studio, close }: { kind: 'guide' | 'settings'; studio: S
       <div className="notice"><ShieldCheck size={18} /><p>Nothing is sent to the machine until you connect explicitly and start a run. Draft downloads cannot authorize physical drawing.</p></div>
     </> : <><p>Drawings are generated on your computer. No account, API key or network service is required.</p><dl className="settings-list">
       <div><dt>Application</dt><dd>{studio?.health.version ?? 'Service offline'}</dd></div><div><dt>Python</dt><dd>{studio?.health.python_version ?? 'Unavailable'}</dd></div>
-      <div><dt>Current milestone</dt><dd>Phase 6 · Acknowledged USB control</dd></div><div><dt>Local SD mirror</dt><dd>SdCard/ · unchanged</dd></div><div><dt>Machine profile</dt><dd>Not selected or verified</dd></div></dl>
+      <div><dt>Current milestone</dt><dd>Phase 6 · Acknowledged USB control</dd></div><div><dt>Local SD mirror</dt><dd>SdCard/ · unchanged</dd></div><div><dt>Machine profile</dt><dd>Not selected or verified</dd></div><div><dt>Voice input</dt><dd>{studio?.capabilities.voice.available ? 'Offline · Faster-Whisper small' : 'Speech model not installed'}</dd></div></dl>
       <div className="notice"><Cpu size={18} /><p>Revisions are stored in local history. Back up the data folder with the app stopped to retain the database, artifacts, profiles and recovery copies together.</p></div></>}
     <button className="primary-button dialog-done" onClick={close}>Back to the studio <ArrowRight size={16} /></button>
   </dialog>;
@@ -133,6 +134,15 @@ export default function App() {
   const command = () => { if (!prompt.trim() || busy || !studio) return; setView('studio'); setZoom(100); void perform(signal => submitCommand(prompt.trim(), signal), 'Simulation only; machine profile unverified.'); };
   const onSubmit = (event: FormEvent) => { event.preventDefault(); command(); };
   const draftCommand = (text: string) => { setView('studio'); setPrompt(text); setFeedback(''); input.current?.focus(); };
+  // Spoken words are inserted at the cursor (replacing any selection) for review; they are never submitted automatically.
+  const dictate = (text: string) => {
+    const field = input.current; const current = field?.value ?? prompt;
+    const start = field?.selectionStart ?? current.length; const end = field?.selectionEnd ?? current.length;
+    const before = current.slice(0, start).trimEnd(); const after = current.slice(end).trimStart();
+    const head = before ? `${before} ${text}` : text; const next = (after ? `${head} ${after}` : head).slice(0, 2000);
+    setView('studio'); setPrompt(next);
+    window.requestAnimationFrame(() => { const caret = Math.min(head.length, next.length); input.current?.focus(); input.current?.setSelectionRange(caret, caret); });
+  };
   const newDrawing = () => { cancel(); setDraft(null); setFields(emptyEdits); draftCommand(''); };
   const regenerate = () => { if (draft && !busy && studio) void perform(signal => reviseDraft(draft.revision_id, { regenerate: true, seed_locked: seedLocked }, signal), seedLocked ? 'Seed retained.' : 'New deterministic seed.'); };
   const download = async (format: DownloadFormat) => {
@@ -198,7 +208,7 @@ export default function App() {
             <form onSubmit={onSubmit} className="composer-form">
               <div className="composer-field"><label className="sr-only" htmlFor="drawing-command">Drawing command</label>
                 <textarea ref={input} id="drawing-command" value={prompt} maxLength={2000} rows={1} onChange={event => setPrompt(event.target.value)} onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) { event.preventDefault(); command(); } }} placeholder="Describe a circle, butterfly, mandala, or geometric pattern…" aria-describedby="command-hint" />
-                <span title="Voice input arrives in Phase 8"><button type="button" disabled className="microphone-button" aria-label="Voice input unavailable until Phase 8"><Mic size={20} /></button></span></div>
+                <VoiceButton available={!!studio?.capabilities.voice.available} reason={studio ? studio.capabilities.voice.reason : 'The local service is offline.'} transcript={dictate} say={say} /></div>
               {busy && <button type="button" className="cancel-generation" onClick={() => { cancel(); say('Cancelled. The previous draft is retained.'); }}>Cancel</button>}
               <button className="submit-command" type="submit" aria-label="Submit drawing command" disabled={!prompt.trim() || !studio || busy}>{busy ? <span className="spinner" /> : <ArrowUp size={22} />}</button>
             </form>

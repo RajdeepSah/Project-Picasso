@@ -29,7 +29,7 @@ Original bounds and source SHA-256 are retained. With **Center drawing at (0,0) 
 
 Pen-down strokes are retained. Source pen-up detours are replaced with direct canonical travel between strokes and from the assumed start, so this importer does not promise verbatim travel equivalence. New travel is previewed and must pass preparation constraints. Unsupported dwell/timing/laser/3D semantics must not be treated as pen plotting.
 
-G-code input is ASCII, at most 1 MB and 20,000 lines; JSON input is at most 8 MB of text. Generated output retains the engine's 20,000-point, 1,000-stroke, 1 MB G-code and 250 m total-path budgets. Imported drawings support size, rotation and placement; seed/detail/regeneration controls do not invent replacement source geometry.
+G-code input is ASCII, at most 2 MB and 100,000 lines; JSON input is at most 8 MB of text. Generated output retains the engine's 20,000-point, 1,000-stroke, 1 MB G-code and 250 m total-path budgets. Imported drawings support size, rotation and placement; seed/detail/regeneration controls do not invent replacement source geometry.
 
 ## Record the actual machine
 

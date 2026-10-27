@@ -12,6 +12,8 @@ from .errors import DrawingError
 from .gcode import parse, verify_roundtrip
 from .geometry import MAX_POINTS, MAX_STROKES, validate_strokes
 
+MAX_IMPORT_BYTES = 2_000_000
+MAX_IMPORT_LINES = 100_000
 WORD = re.compile(r"([A-Z])\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+))")
 
 
@@ -36,8 +38,8 @@ def strip_comments(line):
 
 
 def linear_paths(content: str):
-    if not content.isascii() or len(content) > 1_000_000 or len(content.splitlines()) > 20000:
-        raise DrawingError("IMPORT_TOO_LARGE", "G-code import requires ASCII, at most 1 MB and 20,000 lines.")
+    if not content.isascii() or len(content) > MAX_IMPORT_BYTES or len(content.splitlines()) > MAX_IMPORT_LINES:
+        raise DrawingError("IMPORT_TOO_LARGE", "G-code import requires ASCII, at most 2 MB and 100,000 lines.")
     x = y = None
     down = False
     mode = None

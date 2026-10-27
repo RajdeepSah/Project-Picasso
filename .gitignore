@@ -5,6 +5,7 @@
 # Application dependencies and generated build/runtime files
 .venv/
 .cache/
+models/
 node_modules/
 frontend/dist/
 *.tsbuildinfo
