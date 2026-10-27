@@ -77,8 +77,8 @@ code { font-family: "DM Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospa
 .help-button { width: 40px; height: 40px; border-radius: 50%; color: #2f3d35; }
 .help-button:hover { background: var(--hover-bg); }
 .topbar-help { display: none; }
-.view-gallery .topbar-help, .view-history .topbar-help { display: inline-flex; }
-.view-gallery .floating-help, .view-history .floating-help { display: none; }
+.view-gallery .topbar-help { display: inline-flex; }
+.view-gallery .floating-help { display: none; }
 .floating-help { position: fixed; left: 28px; bottom: 28px; width: 44px; height: 44px; z-index: 5; color: #3a4840; }
 
 /* Popovers (export options, drawing menu) */
@@ -100,7 +100,7 @@ code { font-family: "DM Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospa
 
 /* Workspace */
 .workspace { flex: none; display: grid; grid-template-columns: minmax(0, 1fr) 368px; grid-template-rows: minmax(0, 1fr); padding-right: 21px; height: max(660px, calc(100vh - 70px)); height: max(660px, calc(100dvh - 70px)); }
-.workspace.show-grid, .view-gallery .workspace, .view-history .workspace { background-image: radial-gradient(circle, var(--canvas-dot) 1px, transparent 1.2px); background-size: 20px 20px; background-position: 10px 10px; }
+.workspace.show-grid, .view-gallery .workspace { background-image: radial-gradient(circle, var(--canvas-dot) 1px, transparent 1.2px); background-size: 20px 20px; background-position: 10px 10px; }
 .canvas-column { --stage-left: clamp(104px, 11.7vw, 186px); --composer-left: clamp(104px, 13.7vw, 217px); position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; }
 .document-bar { position: absolute; z-index: 6; top: 15px; left: 23px; right: 31px; display: flex; align-items: center; justify-content: space-between; gap: 12px; pointer-events: none; }
 .document-bar > * { pointer-events: auto; }
@@ -431,12 +431,15 @@ code { font-family: "DM Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospa
 .fatal-screen p { line-height: 1.7; color: var(--muted); }
 .fatal-screen button { margin-top: 24px; }
 
-/* Gallery and history */
+/* Gallery */
 .library { grid-column: 1 / -1; padding: 34px clamp(16px, 4vw, 56px) 96px; }
 .history-panel { max-width: 1240px; margin: 0 auto; }
 .history-toolbar { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; margin-bottom: 26px; }
 .history-toolbar h1 { font-family: var(--font-serif); font-weight: 400; font-size: 36px; line-height: 1.1; color: var(--ink); }
 .history-toolbar p { margin-top: 8px; font-size: 14px; line-height: 1.6; color: var(--muted); }
+.history-controls { display: flex; align-items: center; gap: 10px; }
+.history-controls .pill-segmented { height: 44px; }
+.history-controls .pill-segmented button { display: grid; place-items: center; width: 44px; padding: 0; }
 .history-search { display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 14px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: var(--surface); color: var(--muted); }
 .history-search:focus-within { border-color: var(--forest); box-shadow: 0 0 0 3px rgb(37 55 45 / .1); }
 .history-search input { width: 220px; border: 0; background: transparent; outline: none; font-size: 14.5px; color: var(--ink); }
@@ -601,6 +604,7 @@ code { font-family: "DM Mono", "SF Mono", ui-monospace, Menlo, Consolas, monospa
   .form-grid { grid-template-columns: minmax(0, 1fr); }
   .history-toolbar { flex-direction: column; align-items: stretch; }
   .history-toolbar h1 { font-size: 30px; }
+  .history-controls .history-search { flex: 1; }
   .history-search input { width: 100%; }
   .history-grid { grid-template-columns: minmax(0, 1fr); }
   .history-row { grid-template-columns: 56px minmax(0, 1fr); gap: 4px 14px; }

@@ -16,7 +16,7 @@ import { DrawingPreview, executedFraction, isPaper, paperOptions, paperSize, typ
 import { DrawingInspector, emptyEdits, fieldsFor, revisionPayload, type Edits } from './components/DrawingInspector';
 
 const examples = [['Mandala', 'Create a beautiful mandala'], ['Geometric', 'Draw a geometric pattern'], ['Butterfly', 'Draw a butterfly'], ['Circle', 'Draw a circle']];
-const views = [['studio', 'Studio'], ['gallery', 'Gallery'], ['history', 'History']] as const;
+const views = [['studio', 'Studio'], ['gallery', 'Gallery']] as const;
 const machineLabels: Record<string, string> = { connected: 'Machine connected', connecting: 'Machine connecting', lost: 'Machine connection lost', incompatible: 'Incompatible firmware' };
 type Route = NonNullable<CommandOptions['mode']>;
 type Detail = NonNullable<CommandOptions['detail']>;
@@ -58,7 +58,7 @@ export default function App() {
   const [studio, setStudio] = useState<Studio | null>(null);
   const [loading, setLoading] = useState(true);
   const [retry, setRetry] = useState(0);
-  const [view, setView] = useState<'studio' | 'gallery' | 'history'>('studio');
+  const [view, setView] = useState<'studio' | 'gallery'>('studio');
   const [inspector, setInspector] = useState<'drawing' | 'machine'>('drawing');
   const [referenceId, setReferenceId] = useState('reference-350');
   const [prompt, setPrompt] = useState('');
@@ -221,10 +221,10 @@ export default function App() {
     </header>
 
     <main id="workspace" className={`workspace ${grid ? 'show-grid' : ''}`}>
-      {view !== 'studio' ? <div className="library"><HistoryPanel key={view} layout={view} open={openSaved} /></div> : <>
+      {view !== 'studio' ? <div className="library"><HistoryPanel open={openSaved} /></div> : <>
         <section className="canvas-column" aria-label="Drawing canvas">
           <div className="document-bar">
-            <div className="document-start"><DocumentMenu draft={draft} session={session} open={openSaved} newDrawing={newDrawing} browse={() => setView('history')} info={() => setDialog('settings')} />
+            <div className="document-start"><DocumentMenu draft={draft} session={session} open={openSaved} newDrawing={newDrawing} browse={() => setView('gallery')} info={() => setDialog('settings')} />
               <span className="document-divider" aria-hidden="true" /><span className={`save-status ${save[0]}`} title={draft ? `Revision ${draft.revision} · stored in local history` : undefined}><span className={`status-dot ${save[0]}`} />{save[1]}</span></div>
             <label className="paper-pill"><span className="sr-only">Paper size</span><select value={paper} onChange={event => setPaper(event.target.value as PaperId)}>{paperOptions.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}</select><ChevronDown size={16} /></label>
           </div>

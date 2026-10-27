@@ -151,7 +151,8 @@ test('saved history reopens after reload and supplied mandala G-code imports at 
   await expect(page.getByText('Running locally')).toBeVisible();
   const original = await command(page, 'Draw a circle diameter 83');
   await page.reload();
-  await page.getByRole('button', { name: 'History', exact: true }).click();
+  await page.getByRole('button', { name: 'Gallery', exact: true }).click();
+  await page.getByRole('radio', { name: 'List layout' }).click();
   await page.getByRole('textbox', { name: 'Search drawing history' }).fill('diameter 83');
   await page.getByRole('button', { name: 'Open Circle revision 1', exact: true }).click();
   await expect(page.getByRole('img', { name: /Circle drawing path/ })).toHaveAttribute('data-gcode-sha256', original.gcode_sha256);
