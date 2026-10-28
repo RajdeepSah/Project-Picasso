@@ -1,30 +1,28 @@
 # Project Picasso development plan
 
-Baseline: 2026-10-24. **Phases 1–3 and the Phase 4, 5 and 6 software are complete. Phase 4 real-card verification, the Phase 5 Arduino CLI compile/memory report, physical commissioning and the Phase 6 hardware USB checks remain pending. Phases 7–8 are planned.** This plan is the implementation handoff for Codex. Read the architecture, G-code contract, and relevant audit before changing the associated subsystem.
+Baseline: 2026-10-24. Revised: 2026-10-28. **Phases 1–5 and the Phase 6 software are complete. The original Phase 7 (AI) and Phase 8 (voice) features are implemented as optional extras. Real USB drawings currently stop on a USB disconnect that the machine reports as `HOST_LOST`. All remaining work is in the consolidated roadmap below: A stop the disconnect, B commission and calibrate the machine, C release readiness.** This plan is the implementation handoff for Codex. Read the architecture, G-code contract, and relevant audit before changing the associated subsystem.
 
 ## Outcome and sequencing
 
-The target is a real local drawing studio: launch once, type a drawing command, inspect and adjust the resulting paths, then prepare and transfer an immutable drawing job. The first usable offline drawing workflow is the Phase 3 milestone. Mounted SD export arrives in Phase 4. USB execution requires Phases 5 and 6. Broader AI interpretation and voice follow a reliable path/export/transport system.
+The target is a real local drawing studio: launch once, type, speak or import a drawing, inspect and adjust the resulting paths, then draw it on the machine over USB as an immutable, verified job. The offline workflow, history, import, firmware, USB protocol, voice input and optional AI are built. What remains is making the real machine draw reliably and accurately, and closing the release gaps.
 
 ```text
-1 analysis [complete]
+1 analysis                                   [complete]
+2 runnable local application                 [complete]
+3 offline drawing engine + preview + G-code  [complete]
+4 history/import                             [complete]  SD export: software only, removed from the studio
+5 canonical firmware                         [complete]  USB-only UNO build fits
+6 acknowledged USB execution                 [software complete]  real runs stop on a USB disconnect
+7 optional AI line art                       [implemented, optional]
+8 voice input                                [implemented, optional]
         |
-2 runnable local application [complete]
-        |
-3 offline drawing engine + preview + G-code [complete]
-        |
-4 history/import + verified SD export [software complete; real card pending]
-        |
-5 firmware hardening + hardware commissioning [software complete; compile report + commissioning pending]
-        |
-6 acknowledged USB execution [software complete; hardware checks pending]
-        |
-7 optional AI interpretation/composition
-        |
-8 voice + release polish
+consolidated roadmap (replaces the open parts of Phases 4-8)
+A  stop the USB disconnect behind HOST_LOST  [P0, hardware]
+B  commission and calibrate the machine      [P0, hardware, after A]
+C  release readiness                         [P1, mostly software, in parallel]
 ```
 
-AI work can proceed after Phase 3 if hardware access delays Phase 5, but must use the same validated contracts. Voice can only submit a drawing request, never bypass preparation/start controls. No phase should claim completion for a hardware test that was only simulated.
+Voice and AI only create or fill in a draft; they never prepare, start or resume motion. No phase or step claims completion for a hardware test that was only simulated.
 
 ## Rules for implementing each phase
 
@@ -114,7 +112,7 @@ Exit: the offline creative workflow works in the running app. Physical execution
 
 ## Phase 4 — durable history, import, preparation, and mounted SD export
 
-**Status: software complete; physical-card verification pending.** See [PHASE_4_REPORT.md](PHASE_4_REPORT.md) and [STORAGE_AND_COMMISSIONING.md](STORAGE_AND_COMMISSIONING.md).
+**Status: software complete. Physical-card verification is no longer planned: the SD workflow left the studio in `b5f5b2a`, and the UNO firmware build excludes SD (see the consolidated roadmap).** See [PHASE_4_REPORT.md](PHASE_4_REPORT.md) and [STORAGE_AND_COMMISSIONING.md](STORAGE_AND_COMMISSIONING.md).
 
 **Goal:** save/reopen drawings, prepare verified jobs, and automatically copy the selected artifact when an approved physical card is mounted.
 
@@ -144,7 +142,7 @@ Exit: complete offline-to-card workflow is real and tested in software. If hardw
 
 ## Phase 5 — canonical firmware, parser hardening, and machine commissioning
 
-**Status: software complete; Arduino CLI compile/memory report and physical commissioning pending.** See [PHASE_5_REPORT.md](PHASE_5_REPORT.md), [firmware/README.md](../firmware/README.md) and [FIRMWARE_COMMISSIONING.md](FIRMWARE_COMMISSIONING.md). The tasks below retain the agreed scope as a reference.
+**Status: software complete. The compile and memory report exists (USB-only UNO build, 87% flash and 64% SRAM; CI compiles it). Physical commissioning moved to Step B of the consolidated roadmap.** See [PHASE_5_REPORT.md](PHASE_5_REPORT.md), [firmware/README.md](../firmware/README.md) and [FIRMWARE_COMMISSIONING.md](FIRMWARE_COMMISSIONING.md). The tasks below retain the agreed scope as a reference.
 
 **Goal:** establish a known firmware baseline and reliable local SD execution without changing the existing hardware pin map.
 
@@ -170,81 +168,248 @@ Checks:
 
 Exit: firmware builds and software tests pass. Mark hardware commissioning complete only when the physical checks and profile measurements are recorded; otherwise leave that part pending. No automatic upload occurs on application startup.
 
-## Phase 6 — USB protocol and acknowledged machine control
+## Phases 6–8 — consolidated roadmap
 
-**Status: software complete against simulated devices; hardware USB checks pending.** See [PHASE_6_REPORT.md](PHASE_6_REPORT.md) and [SERIAL_PROTOCOL.md](SERIAL_PROTOCOL.md). The tasks below retain the agreed scope as a reference.
+**Status (2026-10-28): Phase 6 software is complete, but real USB drawings stop on a USB disconnect (Step A). The original Phase 7 (AI) and Phase 8 (voice) features are implemented as optional extras and are closed. Physical commissioning (Step B) and release work (Step C) remain.**
 
-**Goal:** send drawings over an existing suitable USB serial connection with truthful state, progress, pause and stop.
+This section replaces the original Phase 6, 7 and 8 task lists. Those lists remain in git history (`3309c68`), and the Phase 6 work is reported in [PHASE_6_REPORT.md](PHASE_6_REPORT.md) and [SERIAL_PROTOCOL.md](SERIAL_PROTOCOL.md). The review used the code, the test suites, the CI results, the local run records in `data/picasso.sqlite3` and the Linux kernel log. No source code was changed for it.
 
-Inputs: hardened cooperative Phase 5 firmware and measured machine profile. No wireless hardware is assumed.
+Priorities:
 
-Implement in order:
+- **P0** blocks any real-world drawing.
+- **P1** is required before release.
+- **P2** is optional; do it only if time allows.
 
-1. Write `docs/SERIAL_PROTOCOL.md` before coding both endpoints. Specify protocol version, boot/session ID, firmware capabilities, calibration/profile hash, origin/reference revision, commanded XY, framing, bounded lengths, sequence IDs, errors, job boundaries and completion semantics. Keep framing overhead separate from the 63-byte G-code payload limit and size AVR buffers deliberately.
-2. Add idle-only handshake/config-reference messages and status available while idle, running or paused. Design firmware and host together; unsupported/old firmware remains unavailable for start. Handshake must not move motors or assume origin.
-3. Implement pySerial port selection with explicit connect, timeouts, selected-port ownership, reset/boot handling and handshake. Never flood every serial port with drawing commands during discovery.
-4. Stream exactly one motion command at a time initially, acknowledge after motion/pen completion, and retain sequence identity within a boot session to prevent duplicates. Use a dedicated bounded worker/async transport with a priority control queue, so status/pause/stop can be sent while a motion ACK is pending without blocking the API or waiting for the motion lock. A timeout enters fault/unknown and never blindly resends movement. SD mode and USB mode are mutually exclusive.
-5. Implement start/pause/resume/stop state transitions. Before start, check the job's expected XY against current commanded position and bind execution to the current boot/session/reference. A mismatch requires reprepare or an explicit validated preposition route, never a hidden travel. Pause finishes a bounded motion slice, raises/settles pen and keeps required holding torque; resume restores pen state only after explicit user action. Stop aborts the job. Recovery after position uncertainty requires re-reference, not automatic continuation.
-6. Report acknowledged progress, currently executing line, commanded position estimate, profile/reference state and faults. Do not call it measured carriage feedback; there are no observed encoders.
-7. Test full command-to-preview-to-prepare-to-stream workflow and document OS-specific serial permissions/driver troubleshooting. Firmware flashing remains an explicit maintenance operation.
+### Evidence snapshot
 
-Checks:
+| Check | Result on 2026-10-28 |
+| --- | --- |
+| Python tests: backend, firmware host, simulated device, launcher | **216 pass** locally. |
+| Frontend | 27 component tests, the typecheck and the contract-drift check pass locally. |
+| CI on `main` | **Failing on the last two pushes.** `3309c68` fails a stale browser assertion: the export menu now also lists TXT (`frontend/e2e/studio.spec.ts:69`). `0450613` failed an intermittent `VoiceButton` component test that passed on the next run. The firmware compile job passes. |
+| Original-file manifest (`audit_project.py --verify`) | **FAIL.** Only the root `WallDrawingMachine.ino` differs (R1). |
+| Real hardware | CH340-based UNO with firmware 0.6.1, USB-only build, and profile *Picasso test01* (configuration ID `15d5c47b142d0344`). On 2026-10-27, two USB runs of a 120 mm circle (116 commands) both stopped at command 20 (Step A). |
 
-- Fake serial device tests: handshake/version mismatch, profile mismatch, reset/new session, ACK loss/delay, duplicate sequence, oversized line, malformed response, disconnect during motion, application crash and stale job request.
-- Hold the first motion ACK in a fake device and prove STOP is sent/handled before that ACK, while the status API remains responsive.
-- Prove no automatic duplicate execution/reconnect resume, no concurrent SD/USB job, and no start without origin/profile match.
-- On actual hardware, stream a small known drawing, verify observed completion and test pause/stop with measured latency. Record which checks require the physical board.
+### Completed
 
-Exit: real USB operation is complete only with hardware evidence. A simulated protocol demonstration is labeled as such. USB-to-SD file upload is optional later work, separate from line streaming.
+| Feature | Evidence | Physical status |
+| --- | --- | --- |
+| One-command setup and launcher; loopback-only service | `test_launcher.py`, `test_runtime_integration.py` | n/a |
+| Offline shapes (circle, ellipse, rectangle, spiral, butterfly, mandala, pattern), live adjustments, regeneration, immutable revisions | `test_drawing_engine.py`, `test_draft_api.py`; 92 offline revisions in local history | n/a |
+| Preview built from the exported G-code; simulation playback; every job starts at the page centre and returns there pen up | `test_drawing_engine.py`, `timeline.test.ts`, [GCODE_CONTRACT.md](GCODE_CONTRACT.md) | Not yet checked on paper (B5) |
+| Durable history, search, thumbnails, integrity repair | `test_phase4_storage.py`, `test_phase4_api.py`; 124 local artifacts | n/a |
+| Image import (OpenCV trace at Low, Medium or High detail) and absolute-mm G-code import | `test_image_import.py`, `ImportDialog.test.tsx`; 26 imported revisions in local history | n/a |
+| Export as `.nc`, `.txt`, `.svg` or `.png` with descriptive names | `test_draft_api.py`; the browser journey needs updating (C1) | n/a |
+| Measured profiles, generated `machine_config.h`, configuration ID check | `test_firmware_config.py`; the real board reported the matching ID | Values not physically verified (R2, B9) |
+| Canonical firmware 0.6.1; the USB-only UNO build uses 87% flash and 64% SRAM | 133 C++ core checks; CI compile job | Flashed to the real UNO |
+| Serial protocol v1: handshake, one acknowledged command at a time, pause, resume, stop, *Go to origin*, 3 s host watchdog; Execute sheet with its start checks | 18 fake-device controller tests, 9 protocol tests on the simulated sketch, 4 simulated end-to-end runs | Real board: handshake, configuration match, keypad origin, `BEGIN` and 19 acknowledged commands worked. **No real run has completed** (Step A). |
+| Voice input: local Faster-Whisper, fills the command box only | `test_voice.py`, `VoiceButton.test.tsx` (one flaky test, C1) | Real microphone checked in Chromium on Linux |
+| Optional AI line art: OpenAI image, traced locally by OpenCV; Auto, Offline and AI modes; the key stays in the backend | `test_ai.py` (mocked provider) | Two real provider requests in local history on 2026-10-27 |
 
-## Phase 7 — optional AI command interpretation and composition
+### Removed or not needed
 
-**Goal:** understand a broader range of drawing requests while keeping geometry and machine validation deterministic.
+Do not reintroduce these.
 
-Inputs: stable Phase 3 contracts; history stores model/provider/version provenance when used. Can be scheduled while hardware checks are pending.
+| Item (original phase) | Decision and reason |
+| --- | --- |
+| SD-card export in the studio, automatic card sync, real-card readback (4) | Removed from the studio in `b5f5b2a`. The UNO cannot hold the SD code and the protocol together, so the USB-only build compiles SD out, and drawing over USB replaces the card. The API endpoints remain dormant; do not extend them (R4). |
+| SD-specific commissioning: guide §5.2 (SD circle), §7 (SD errors), §9 (D10/SPI during card start-up) | Not applicable to the USB-only UNO build. A circle drawn over USB replaces §5.2 (B5). |
+| USB-to-SD file upload (6) | Not needed: line-by-line USB streaming is the execution path. |
+| A provider that returns a schema-checked DrawingSpec; composition from vetted primitives (7.1, 7.4) | Superseded by the implemented image-and-trace pipeline, which never executes provider output. |
+| A documented AI prompt-set evaluation (Phase 7 checks) | Too heavy for an optional feature. A three-prompt smoke test replaces it (C7). |
+| Follow-up commands such as "make it smaller" (7.6) | Not implemented. The inspector's size, rotation and placement controls do this with no AI cost. Recommended drop (R6). |
+| Browser Web Speech API adapter (8.1) | Replaced by the implemented local Faster-Whisper adapter, which also works offline. |
+| Desktop packaging (8.5) | Not needed: the one-command local browser app is the release form. |
+| Cross-browser and macOS/Windows verification (Phase 8 checks) | Recommended out of scope: release on Linux with Chromium, the tested pair (R5). |
+| Feed/speed control, G2/G3 arcs, automatic reconnect or resume after a fault, measured position feedback | Excluded by design: legacy dialect, safety rules, no encoders. |
 
-Implement in order:
+### Decisions needed
 
-1. Introduce a provider interface returning schema-constrained DrawingSpec/composition data, never raw executable G-code, Python, shell or arbitrary SVG markup. Keep supported offline commands first and selectable.
-2. Select a currently supported provider/model using its official documentation at implementation time; keep credentials in backend environment configuration. Add setup UI indicating provider availability, optional usage/cost information and explicit network mode.
-3. Validate every response against bounded generator/composition schemas: allowed primitives, repetition/symmetry, dimensions, seed, point budgets and recursion/depth limits. Reject unsupported content with a clear request for simplification.
-4. Implement richer composition from vetted primitives. Do not promise arbitrary illustrations if only primitive composition exists; expand the drawing vocabulary with evaluated generators/templates and describe its actual limits.
-5. Add provider timeout/cancellation, rate-limit/offline errors and deterministic fallback suggestions. Regeneration creates a new saved revision with provenance; it never starts hardware or changes a prepared artifact.
-6. Add optional follow-up adjustment commands such as “make it smaller” that resolve against the selected drawing revision and preserve explicit size/placement controls.
+These are flagged rather than assumed. Record each answer here.
 
-Checks:
+- **R1. Root `WallDrawingMachine.ino`.** The README and firmware audit call it an empty placeholder. Commit `1f8c738` ("Voice input integrated") added 646 lines to it.
+  - The contents look like the vendor sketch with translated comments and lost characters, for example `( X_SEPARATION0.5)` and an unterminated `/* reset=/`. It would not compile.
+  - It is the only file that fails the original manifest.
+  - Was it intentional? Either restore the empty placeholder, or move the file to a reference folder and re-baseline the manifest with a recorded reason.
+  - Never flash it. The maintained sketch is `firmware/WallDrawingMachine/`.
+- **R2. Profile *Picasso test01* is marked verified,** with all three attestations ticked. Its own notes say motor directions, pen movement, rope tension, workspace limits and drawing accuracy have not been verified. Use it only for supervised bench tests until B9.
+- **R3. Power arrangement.** It is not recorded anywhere. Are the two ULN2003 boards and the servo powered from the Arduino's 5 V, which means from USB, or from a separate supply with a common ground? Step A depends on the answer.
+- **R4. Dormant SD endpoints.** Recommended: leave the code as it is, with no hardware testing and no studio entry. Removing it would be a separate clean-up.
+- **R5. Release platform.** Recommended: Linux with Chromium only, stated in the README.
+- **R6. Follow-up adjustment commands.** Recommended: drop.
 
-- Use mocked provider responses to test malformed schemas, unsupported generators, excessive complexity, malicious instruction fields, outages and cancellations.
-- Confirm no credentials enter frontend bundles/logs and no provider output bypasses geometry validation.
-- Evaluate a documented prompt set: circle, butterfly, mandala, dense geometric pattern, unsupported object, oversized request and contextual size change. Record actual provider checks separately from mocks.
+### Step A — Stop the USB disconnect behind `HOST_LOST` (P0)
 
-Exit: richer commands produce validated drawings through the same preview/export pipeline, and offline supported drawings continue to work without credentials.
+**What the evidence shows.** Both real runs on 2026-10-27 (12:32 and 12:34 CDT) stopped at the same point:
 
-## Phase 8 — voice input, usability, and release preparation
+- command 20 sent and command 19 acknowledged, about 7.8 s after the start;
+- the host message was "The serial connection closed";
+- the kernel log records `usb 6-1: USB disconnect` for the CH340 in exactly those seconds, then a new device attaching within the same second.
 
-**Goal:** optional voice-to-command input and a documented, maintainable release.
+What this means:
 
-Inputs: stable command pipeline. Review current browser speech capabilities before selecting the implementation.
+- **The USB-serial chip itself dropped off the bus.** That is an electrical or USB-level event: a dip in the board's 5 V supply, interference, or the cable or port. Nobody unplugged it, because it reattached within a second.
+- **`HOST_LOST` is the consequence, not the cause.** Once the computer loses the port it stops sending, and the firmware stops the job after 3 s, as designed.
+- **Host timeouts, polling and the watchdog are not involved.** The host polled every 0.5 s right up to the disconnect. Do not lengthen the watchdog or add automatic reconnect: neither fixes a vanishing device, and both weaken safety.
+- **The failure repeats at the same command, so it can be tested.** Command 20 is where the right motor first reverses: its rope goes from shortening by 3 steps to lengthening by 1. The left motor reversed at command 3 without a problem, so this is a correlation to test, not a proven cause.
+- **Boot IDs went from 6 to 8 between the runs.** That is one more reset than a single reconnect explains, so the disconnect may also have reset the board. Watch for this in A1.
 
-Implement in order:
+**A1 — Record the power arrangement and reproduce with the kernel log open** · P0 · hardware
 
-1. Implement a speech adapter with permission handling, listening/cancel state and visible transcript. Use a supported browser API only with feature detection and documented privacy/availability behavior; offer manual input always. A local speech model can be an optional later installation rather than a hidden large download.
-2. Put recognized words into the drawing composer for inspection/submission. Voice never directly starts motion, resumes a faulted machine or changes hardware calibration.
-3. Refine responsive layout, keyboard/accessibility, reduced motion, large-preview performance and meaningful error recovery. Add helpful preset/history workflows only after core interactions are tested.
-4. Provide a clean installation guide, supported OS/runtime versions, first-run guide, hardware commissioning/troubleshooting guide, data backup/export procedure and dependency/license notices. Keep secrets and vendor Windows binaries out of runtime packages.
-5. Verify the single-command built-app launcher, clean shutdown, startup recovery and offline operation. Optionally evaluate desktop packaging after the local browser application is reliable.
+- *Purpose:* confirm the failure mode before changing anything.
+- *Do:*
+  1. Answer R3.
+  2. Run `journalctl -kf` in a terminal.
+  3. Connect, set the origin and run the same circle again: prepared job `0d8d75df…`, or a fresh 120 mm circle.
+  4. With the cable still connected but no run active, run *Setup → Test square* and a few *Jog ropes* moves from the keypad.
+- *Done when:* you know whether the disconnect repeats at command 20, and whether keypad-only motion, with no USB traffic, also causes one. If keypad motion alone causes it, the cause is electrical and independent of the app.
 
-Checks:
+**A2 — Isolate the cause, one change at a time** · P0 · hardware
 
-- Speech adapter tests for unavailable API, denied permission, cancellation, recognition errors and transcript submission; real microphone tests on supported browser/OS pairs.
-- Browser end-to-end suite for supported command → adjustment → save → prepare → SD/serial transport, with real hardware tests distinguished from test adapters.
-- Fresh setup/relaunch on supported systems, history migration/backup recovery, accessibility checks and final hardware regression checklist.
+- *Purpose:* find the smallest change that stops the disconnect.
+- *Do:* re-run the A1 circle after each change, and stop at the first one that works.
+  1. Power the ULN2003 motor boards, and the servo, from a separate 5 V supply rated for at least 2 A. Join its ground to the Arduino's ground. Do not power them from the Arduino's 5 V pin.
+  2. Use a short, good-quality USB cable plugged straight into the computer, without a hub. Route it away from the motor wires, and add a ferrite if one is available.
+  3. If it still fails at command 20, test the reversal correlation with two short segments that reverse one motor, and with the servo unplugged.
+- *Done when:* the change that removes the disconnect is identified and recorded in the commissioning record.
 
-Exit: documented release with clear capability status. Any missing physical, provider or microphone test remains listed rather than hidden behind a “fully complete” claim.
+**A3 — Apply the fix and prove stability** · P0 · hardware; firmware only if A2 points there
+
+- *Purpose:* reliable drawing over USB.
+- *Do:*
+  - Make the A2 change permanent.
+  - Add the power requirement to the commissioning guide prerequisites (§0).
+  - Change firmware only if A2 shows a firmware cause, and even then keep protocol v1 and the watchdog unchanged.
+- *Done when:* these all complete with no `USB disconnect` line in `journalctl -k` and no `HOST_LOST`:
+  - three consecutive runs of the 120 mm circle;
+  - one drawing that takes at least 10 minutes, such as an imported picture.
+
+**A4 — Keep the cause visible in the app** · P1 · software, small
+
+- *Purpose:* the run record says only "The serial connection closed". The underlying pySerial error is discarded in `_read_loop` in `backend/app/machine/controller.py`. Future failures should be diagnosable without guesswork.
+- *Do:* include the transport error text in the run and connection messages. Do not change any behaviour.
+- *Done when:* a controller test whose fake transport raises `TransportClosed("device disconnected")` shows that text in the run message, and all existing tests pass.
+
+Optional, P2: ModemManager is active on this computer. It cannot cause a bus-level disconnect, so add a udev rule that makes it ignore the CH340 (`ENV{ID_MM_DEVICE_IGNORE}="1"`) only if A2 finds disconnects that are not electrical.
+
+### Step B — Commission and calibrate the real machine (P0, after Step A)
+
+Follow [FIRMWARE_COMMISSIONING.md](FIRMWARE_COMMISSIONING.md). Every check is a physical observation: record numbers, photos or slow-motion video, not just "OK". The proposed tolerances are starting points; the team confirms them before testing.
+
+**B0 — Update the guide for the USB-only UNO** · P1 · docs
+
+- Replace §5.2's SD circle with a circle drawn with Execute over USB.
+- Mark §7 and §9 as applying to USB+SD builds only.
+- Add the A3 power requirement to §0.
+- *Done when:* the guide no longer asks for an SD job on the UNO.
+
+| Task | Guide | Purpose | Done when |
+| --- | --- | --- | --- |
+| **B1** Boot and reset on connect | §1, §10.1 | Know when the origin is lost | Boot and reset-on-connect behaviour is recorded. The handshake configuration ID equals the *Info* screen. |
+| **B2** Pen servo angles and settling | §2 | Clean lifts, no drag lines | Measured up and down times fit the 300 ms settings, or the settings are raised and the firmware rebuilt. |
+| **B3** Rope directions, jog signs, spool | §3 | Correct direction and scale | Each rope moves the expected way. One 64-step jog measures about 3.7 mm with the 38.1 mm spool. |
+| **B4** Origin and repeatability | §4 | A trustworthy (0,0) | Three test-square and *Go to origin* cycles bring the pen back within the agreed tolerance of the mark. Proposed: 1 mm or less. |
+| **B5** Dimensions, orientation, match with the preview | §5.1, plus the B0 USB circle | Paper matches the preview and the G-code | Test-square sides measure 20 mm and diagonals 28.28 mm, and a 40 mm circle drawn over USB measures 40 mm, within tolerance (proposed ±0.5 mm). +X is right and +Y is up. The shape matches the studio preview. |
+| **B6** Holding, drift and heat | §6 | Safe idle between jobs | After a 10-minute hold there is no drift, and motors and drivers are warm, not hot. The `PICASSO_RELEASE_AFTER_JOB` decision is recorded. |
+| **B7** Pause and stop latency | §8, §10.3 | A reliable stop | Studio *Stop* and keypad ESC are each measured on video, and the pen clears the paper every time. |
+| **B8** USB fault behaviour | §10.4, §10.5 | Faults end safely | Pulling the cable raises the pen and shows `HOST_LOST` within about 3 s. The studio shows the fault and nothing resumes after reconnecting. A USB start is refused while a keypad menu is open. |
+| **B9** Re-verify the profile | §11 | The verified flag means something | Profile values are corrected from B3–B5; any change means regenerating the configuration and reflashing. Then the notes are updated with the measurements and the profile is marked verified. This resolves R2. |
+
+### Step C — Release readiness (P1 unless noted)
+
+These are mostly software tasks and can run in parallel with Steps A and B.
+
+**C1 — Make CI green**
+
+- *Purpose:* a trustworthy `main` branch.
+- *Do:*
+  - Update the export-menu assertion at `frontend/e2e/studio.spec.ts:69` to include TXT.
+  - Make the `toHaveValue('Draw a spiral')` wait in `VoiceButton.test.tsx` reliable.
+  - Add `--no-voice` to the CI setup step. CI currently downloads the 480 MB speech model on every run, although the tests point voice at an empty model directory.
+- *Done when:* two consecutive CI runs on `main` are green.
+
+**C2 — Keep supported shapes offline**
+
+- *Purpose:* in real use, "circle of radius 1 cm" became a billed OpenAI request and came back as a 178 × 183 mm traced drawing instead of a 20 mm circle. The cause is that the grammar accepts only mm. "draw a circle 2 inches wide" and "make it smaller" also go to OpenAI in Auto mode.
+- *Do:*
+  - Accept `cm` and `in`/`inch(es)` in the offline grammar, converted to mm.
+  - In Auto mode, never send a prompt that names an offline shape to the AI; report the parse error instead.
+  - Update [OFFLINE_DRAWING_COMMANDS.md](OFFLINE_DRAWING_COMMANDS.md).
+- *Done when:* unit tests show "circle of radius 1 cm" becoming a 20 mm offline circle and "circle 2 inches wide" a 50.8 mm one, while a mocked AI transport is never called. The existing AI tests still pass.
+
+**C3 — Resolve the root sketch (after R1)**
+
+- *Done when:* `python3 -B scripts/audit_project.py --verify docs/project-inventory.json` passes, or the manifest has been regenerated with the reason recorded.
+
+**C4 — Documentation pass**
+
+- *Purpose:* the documents describe the app as shipped.
+- *Do:* update the README:
+  - the status line and "Next phases": Phases 7–8 are done, so point to this roadmap;
+  - the export formats: `.nc`, `.txt`, `.svg` and `.png`;
+  - the statement about the root sketch (after R1);
+  - a short troubleshooting entry for `HOST_LOST` and USB disconnects (power, cable, `journalctl -k`);
+  - the supported platform (R5);
+  - backup: stop the app, then copy `data/`.
+- *Done when:* a teammate can go from the README to setup, a first drawing and Execute without asking questions.
+
+**C5 — Fresh-install check**
+
+- *Purpose:* prove the one-command promise.
+- *Do:* in a new clone or a new Linux user, run `python3 scripts/setup.py` and then `python3 scripts/picasso.py`. Draw an offline circle with no `.env` and no device.
+- *Done when:* it works, and the time taken is recorded.
+
+**C6 — Final hardware acceptance and report** (after A and B)
+
+- *Purpose:* one honest record of what was proven physically.
+- *Do:*
+  - On the commissioned machine, over USB, draw an offline mandala, an image imported at Medium detail, a voice-entered command and, if a key is available, one AI drawing. Each must complete.
+  - Stop one drawing midway.
+  - Write a final report that separates hardware evidence from simulation, with photos.
+- *Done when:* the report is written and the release checklist below is complete.
+
+**C7 — Optional** · P2
+
+- A three-prompt AI smoke test with a real key: a supported shape stays offline, an object becomes AI line art, and an invalid key shows its error.
+- A keyboard-only pass through generate, adjust and Execute.
+
+### Order
+
+```text
+A1 → A2 → A3 → B0–B9 → C6
+A4, C1, C2, C3, C4, C5 and C7: software, any time, in parallel with A and B
+```
+
+### Release checklist
+
+Project Picasso is ready for real-world use when every item is true and the evidence is recorded.
+
+**Software**
+
+- [ ] CI is green on `main` for two consecutive pushes (C1).
+- [ ] Local checks pass: pytest, frontend contracts, typecheck, component tests and browser journeys.
+- [ ] The original-file manifest passes, or was re-baselined with a recorded reason (C3).
+- [ ] Supported shapes never reach the paid AI path (C2).
+
+**Hardware** (measurements, photos or video for each)
+
+- [ ] The power arrangement is recorded, and the cause of the USB disconnect is found and fixed (A1–A3).
+- [ ] Three consecutive 120 mm circles and one drawing of at least 10 minutes complete over USB, with no USB disconnect and no `HOST_LOST`.
+- [ ] Commissioning checks B1–B8 are recorded.
+- [ ] The profile is re-verified from those measurements, and its notes no longer say calibration is pending (B9).
+- [ ] Studio *Stop*, keypad ESC and a cable pull each end a run safely, with the latency measured.
+
+**Usability and documentation**
+
+- [ ] The README and the commissioning guide describe the app as shipped (C4, B0).
+- [ ] A fresh Linux install works with one setup command and one launch command (C5).
+- [ ] The final report separates hardware evidence from simulation (C6).
 
 ## Hardware information needed before commissioning
 
-This does not block Phase 2 or offline drawing work. Collect it when the physical machine is available:
+This does not block Phase 2 or offline drawing work. Collect it when the physical machine is available.
+
+Known as of 2026-10-28: a CH340-based UNO-compatible board (USB ID `1a86:7523`) running canonical firmware 0.6.1, USB-only build. The operator measured 416.56 mm spacing, 304.8 mm anchor height and a 38.1 mm spool; these are not yet physically verified. **Still unknown and needed first: the power arrangement (R3).**
 
 - Board model, processor/USB bridge, exact Arduino core/FQBN and known currently working firmware if available.
 - Measured motor-anchor separation and height relative to the manual pen origin; actual spool diameter and winding arrangement.
@@ -260,8 +425,8 @@ Do not fill these values by inference from an installer, drawing filename, STL o
 
 1. After documented setup, one command opens the working local application.
 2. “Draw a beautiful mandala” produces a valid offline preview; supported adjustments and regeneration preserve history.
-3. Preview dimensions, pen/travel paths and the exact exported machine instructions agree.
-4. The selected immutable job reaches a mounted card with readback verification, or streams over a verified USB protocol.
+3. Preview dimensions, pen/travel paths and the exact exported machine instructions agree, in software and on paper (B5).
+4. The selected immutable job streams over the verified USB protocol and completes on the real machine. SD-card export is no longer part of the studio.
 5. Hardware start requires known profile/origin/state; progress and completion reflect the available transport evidence.
 6. Physical calibration, drawing output and stop behavior are measured and recorded.
-7. Optional AI and voice add input capability without becoming prerequisites for ordinary drawing.
+7. Optional AI and voice add input capability without becoming prerequisites for ordinary drawing. Both are implemented.
