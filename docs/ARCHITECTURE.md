@@ -152,7 +152,7 @@ Every mutation requires a random per-launch token from `/api/session`; the UI re
 
 ## Machine state and execution
 
-Track application availability, SD availability, and machine connectivity independently. “No hardware detected” is a valid state with generation and preview still usable.
+Track application availabitwouldlity, SD availability, and machine connectivity independently. “No hardware detected” is a valid state with generation and preview still usable.
 
 Planned serial states are `disconnected → connecting → idle_unreferenced → ready → running → paused → completed`, with `fault` and `stopping/aborted` branches. A board reset creates a new session and invalidates origin and previous sequence state. Opening a serial port may toggle DTR/RTS; accommodate reset and handshake explicitly, as described in the [pySerial documentation](https://pyserial.readthedocs.io/en/latest/pyserial_api.html).
 
